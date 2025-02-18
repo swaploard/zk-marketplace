@@ -6,7 +6,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload, ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { Upload, ArrowLeft, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useState } from "react";
 
@@ -92,7 +92,6 @@ export default function NFTForm() {
     setValue("media", null as unknown as File);
   };
 
-  console.log("logs", errors, file, previewUrl);
   return (
     <div className="min-h-screen bg-black text-white p-6">
       <div className="max-w-6xl mx-auto space-y-8">
