@@ -1,14 +1,16 @@
 "use client";
-
+import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Upload, ArrowLeft, Trash2 } from "lucide-react";
+import axios from "axios";
+import Link from "next/link";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload, ArrowLeft, Trash2 } from "lucide-react";
-import Link from "next/link";
-import { useCallback, useState } from "react";
+import {PIN_FILE_TO_IPFS_URL} from "../../ApiEndpoints/pinatEndpoints";
 
 const nftSchema = z.object({
   media: z
@@ -50,10 +52,6 @@ export default function NFTForm() {
     resolver: zodResolver(nftSchema),
   });
 
-  const onSubmit = (data: NFTFormData) => {
-    console.log("NFT Created:", data);
-  };
-
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
@@ -92,6 +90,32 @@ export default function NFTForm() {
     setValue("media", null as unknown as File);
   };
 
+  const onSubmit = async (data: NFTFormData) => {
+    const { media, ...rest } = data;
+  
+    if (!media) {
+      console.error("No media file provided");
+      return;
+    }
+    
+    try {
+      const formData = new FormData();
+      formData.append("file", media);
+      
+      const pinataMetadata = JSON.stringify(rest);
+      formData.append("pinataMetadata", pinataMetadata);
+  
+      const pinataOptions = JSON.stringify({ cidVersion: 1 });
+      formData.append("pinataOptions", pinataOptions);
+
+      const uploadRequest = await axios.post(PIN_FILE_TO_IPFS_URL, formData)
+
+      console.log("Upload successful", await uploadRequest);
+    } catch (err) {
+      console.error("Error uploading file:", err);
+    }
+  };
+  
   return (
     <div className="min-h-screen bg-black text-white p-6">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -141,7 +165,10 @@ export default function NFTForm() {
                       }}
                       className="absolute top-2 right-2 bg-transparent rounded-full p-1 bg-slate-100 hover:bg-gray-600 transition-colors"
                     >
-                      <Trash2 size={20} className="bg-transparent text-red-500" />
+                      <Trash2
+                        size={20}
+                        className="bg-transparent text-red-500"
+                      />
                     </button>
                   </div>
                 ) : file?.type.startsWith("video/") ? (
@@ -159,7 +186,10 @@ export default function NFTForm() {
                       }}
                       className="absolute top-2 right-2 bg-transparent rounded-full p-1 bg-slate-100 hover:bg-gray-600 transition-colors"
                     >
-                      <Trash2 size={20} className="bg-transparent text-red-500" />
+                      <Trash2
+                        size={20}
+                        className="bg-transparent text-red-500"
+                      />
                     </button>
                   </div>
                 ) : (
