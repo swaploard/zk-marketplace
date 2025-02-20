@@ -25,18 +25,19 @@ import {
 } from "iron-session";
 
 import { cookies } from "next/headers";
-
 export const sessionOptions: IronSessionOptions = {
   /**
    * The password to use for encrypting the session data.
    *
    * **This should be changed to a secure password in production!**
+   * 
+   * Must be at least 32 characters long.
    */
-  password: "change-this-this-is-not-a-secure-password",
+  password: process.env.NEXT_SESSION_PASSWORD,
   /**
    * The name of the cookie to store the session data in.
    */
-  cookieName: "cookieNameInBrowser",
+  cookieName: "siwe-session",
   /**
    * Options for the cookie.
    */
@@ -46,7 +47,7 @@ export const sessionOptions: IronSessionOptions = {
      *
      * This is set to `true` in production, but `false` in development.
      */
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.NEXT_NODE_ENV === "production",
   },
 };
 

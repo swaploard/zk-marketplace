@@ -32,7 +32,6 @@ export default function UserMenu() {
     }
     setMounted(!mounted)
   }
-  console.log(systemTheme, theme);
 
   return (
     <DropdownMenu open={open} className="border border-gray-600" >

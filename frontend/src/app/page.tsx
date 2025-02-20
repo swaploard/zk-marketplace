@@ -1,19 +1,14 @@
 "use client";
 
 import { useAccount } from "wagmi";
-import { useSession, signIn, signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { redirect } from "next/navigation";
 
 import Image from "next/image";
 
 import { Badge } from "../components/ui/badge";
-import { Switch } from "@/components/ui/switch"
 
 export default function Home() {
-  
-  const { data: session, status } = useSession();
   const { isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
   const [mounted, setMounted] = useState<boolean>(false);

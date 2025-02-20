@@ -15,8 +15,8 @@ export const metadata = {
 
 export default async function RootLayout({ children }) {
   const session = await getServerSession(authConfig);
-  const headersList = headers();
-  const cookie = await headersList.get("cookie");
+  const headersList = await  headers();
+  const cookie = headersList.get("cookie");
   return (
     <html lang="en">
       <body className={inter.className}>
