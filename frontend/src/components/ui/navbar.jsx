@@ -16,13 +16,13 @@ function Navbar(props) {
           <span className="text-blue-500 dark:text-gray-400 text-xl font-semibold">OpenSea</span>
         </Link>
         <div className="flex items-center gap-6">
-          <Link href="/drops" className="text-blue-500 dark:text-gray-400 hover:text-gray-300 font-serif ">
+          <Link href="/drops" className="text-blue-500 dark:text-gray-400 hover:text-gray-300">
             Drops
           </Link>
-          <Link href="/stats" className="text-blue-500 dark:text-gray-400 hover:text-gray-300 font-serif">
+          <Link href="/stats" className="text-blue-500 dark:text-gray-400 hover:text-gray-300">
             Stats
           </Link>
-          <Link href="/create" className="text-blue-500 dark:text-gray-400 hover:text-gray-300 font-serif">
+          <Link href="/create" className="text-blue-500 dark:text-gray-400 hover:text-gray-300">
             Create
           </Link>
         </div>

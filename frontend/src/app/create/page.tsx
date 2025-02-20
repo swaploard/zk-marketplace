@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Upload, ArrowLeft, Trash2 } from "lucide-react";
 import axios from "axios";
+import {useAxios} from "@/axios/index";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -42,7 +43,7 @@ type NFTFormData = z.infer<typeof nftSchema>;
 export default function NFTForm() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-
+  const { axiosInstance } = useAxios();
   const {
     register,
     handleSubmit,
@@ -108,7 +109,7 @@ export default function NFTForm() {
       const pinataOptions = JSON.stringify({ cidVersion: 1 });
       formData.append("pinataOptions", pinataOptions);
 
-      const uploadRequest = await axios.post(PIN_FILE_TO_IPFS_URL, formData)
+      const uploadRequest = await axiosInstance?.post(PIN_FILE_TO_IPFS_URL, formData)
 
       console.log("Upload successful", await uploadRequest);
     } catch (err) {

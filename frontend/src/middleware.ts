@@ -1,17 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const protectedRoutes = ['/', '/create'];
+const protectedRoutes = ['/', '/create', "/api/files"];
 const publicRoutes = ['/login', '/signup'];
 
-// Middleware function
 export default async function middleware(req: NextRequest) {
 
   const path = req.nextUrl.pathname;
-
   const cookie = req.cookies.get("siwe-session");;
 
   const isProtectedRoute = protectedRoutes.includes(path);
   const isPublicRoute = publicRoutes.includes(path);
+  
+  const apiPath = path.startsWith("/api/");
+
+  if(!cookie && apiPath) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+   }
 
   if (isProtectedRoute && !cookie) {
     const redirectUrl = new URL("/signup", req.url);
@@ -28,5 +32,5 @@ export default async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/create"],
+  matcher: ["/", "/create", "/api/:path*"],
 };
