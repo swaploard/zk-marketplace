@@ -11,9 +11,15 @@ export default async function middleware(req: NextRequest) {
   const isProtectedRoute = protectedRoutes.includes(path);
   const isPublicRoute = publicRoutes.includes(path);
   
-  const apiPath = path.startsWith("/api/");
+  const apiPath = () => {
+    if(path.includes("api/auth")){
+      return false ;
+    }else if(path.includes("api/files")){
+      return true;
+    }
+  }
 
-  if(!cookie && apiPath) {
+  if(!cookie && apiPath()) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
    }
 
