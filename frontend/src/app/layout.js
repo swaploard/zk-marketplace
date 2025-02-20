@@ -1,11 +1,13 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
 import { headers } from "next/headers";
-import Providers from "./authProviders/Providers";
 import { getServerSession } from "next-auth";
+import { Toaster } from "react-hot-toast";
 
 import { authConfig } from "../../auth";
 import Navbar from "../components/ui/navbar";
+import Providers from "./authProviders/Providers";
+
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
@@ -22,7 +24,7 @@ export default async function RootLayout({ children }) {
       <body className={inter.className}>
         <Providers session={session} cookie={cookie}>
         <Navbar />
-
+        <Toaster position="top-right" />
           {children}
         </Providers>
       </body>
