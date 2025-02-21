@@ -8,6 +8,9 @@ export const useAxios = () => {
     withCredentials: true
   });
 
+  
+  axiosInstance.defaults.headers.common['Content-Type'] = 'multipart/form-data';
+
   axiosInstance.interceptors.response.use(
     (response) => response,
     (error) => {

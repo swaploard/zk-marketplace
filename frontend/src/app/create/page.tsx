@@ -4,14 +4,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Upload, ArrowLeft, Trash2 } from "lucide-react";
-import axios from "axios";
-import {useAxios} from "@/axios/index";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {PIN_FILE_TO_IPFS_URL} from "../../ApiEndpoints/pinatEndpoints";
+
+import useAddFile from "../../store/fileAdd";
 
 const nftSchema = z.object({
   media: z
@@ -40,10 +39,13 @@ const nftSchema = z.object({
 
 type NFTFormData = z.infer<typeof nftSchema>;
 
+
 export default function NFTForm() {
+  const addFile = useAddFile((state: any) => state.addFile);
+
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const { axiosInstance } = useAxios();
+ 
   const {
     register,
     handleSubmit,
@@ -109,9 +111,7 @@ export default function NFTForm() {
       const pinataOptions = JSON.stringify({ cidVersion: 1 });
       formData.append("pinataOptions", pinataOptions);
 
-      const uploadRequest = await axiosInstance?.post(PIN_FILE_TO_IPFS_URL, formData)
-
-      console.log("Upload successful", await uploadRequest);
+      const uploadRequest = await addFile(formData);
     } catch (err) {
       console.error("Error uploading file:", err);
     }
