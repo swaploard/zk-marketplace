@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Upload, ArrowLeft, Trash2 } from "lucide-react";
+import { Upload, ArrowLeft, Trash2, Plus } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -228,6 +228,27 @@ export default function NFTForm() {
 
           {/* Form Fields */}
           <div className="space-y-6">
+          <div className="space-y-2">
+              <label className="block text-sm font-medium">
+                Collection <span className="text-red-500">*</span>
+              </label>
+              <Button variant="outline" className="w-full justify-between h-auto py-3 bg-zinc-900 border-zinc-800">
+                <div className="flex items-center gap-2">
+                  <div className="h-10 w-10 bg-zinc-800 rounded-lg flex items-center justify-center">
+                    <Plus className="h-5 w-5" />
+                  </div>
+                  <span>Create a new collection</span>
+                </div>
+                <Plus className="h-4 w-4" />
+              </Button>
+              <p className="text-xs text-gray-400">
+                Not all collections are eligible.{" "}
+                <Link href="#" className="text-blue-500">
+                  Learn more
+                </Link>
+              </p>
+            </div>
+
             <div className="space-y-2">
               <label className="block text-sm font-medium">
                 Collection <span className="text-red-500">*</span>

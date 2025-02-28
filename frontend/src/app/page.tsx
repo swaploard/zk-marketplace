@@ -2,31 +2,41 @@
 import { useEffect } from "react";
 
 import Image from "next/image";
+import Navbar from "../components/ui/navbar";
+
 import { Badge } from "../components/ui/badge";
 import useFilesList from "../store/filesList"
+import toast from 'react-hot-toast';
 
 interface filesState {
   reset: () => void;
   getFiles: () => Promise<void>;
-} 
+}
 
 export default function Home() {
-  
+
   const getFiles = useFilesList((state: filesState) => state.getFiles);
   const { files, error, loading } = useFilesList((state: any) => state);
-  useEffect(()=> {
-    getFiles();
-  },[])
 
-   
+  useEffect(() => {
+
+    toast.promise(getFiles(), {
+      loading: 'Loading',
+      success: 'Got the data',
+      error: 'Error when fetching',
+    });
+  }, [])
+
+
   return (
     <div className="min-h-screen bg-black  text-white">
       {/* Navigation */}
+      <Navbar />
 
       {/* Main Content */}
       <main className="px-6 py-8">
         <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">Notable collections 
+          <h2 className="text-2xl font-bold mb-6">Notable collections
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
