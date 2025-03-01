@@ -91,13 +91,10 @@ export async function PUT(req: NextRequest) {
   }
 }
 
-
 export async function POST(req: Request) {
     await connectMongo();
-  
     try {
       const { walletAddress } = await req.json();
-  
       if (!walletAddress || typeof walletAddress !== "string") {
         return NextResponse.json(
           { success: false, message: "Wallet address is required and must be a string" },
@@ -108,8 +105,8 @@ export async function POST(req: Request) {
       const existingUser = await User.findOne({ walletAddress });
       if (existingUser) {
         return NextResponse.json(
-          { success: false, message: "User with this wallet address already exists" },
-          { status: 409 }
+          { success: true, user: existingUser },
+          { status: 201 }
         );
       }
   

@@ -6,12 +6,13 @@ import {
   RainbowKitProvider as NextRainbowKitProvider,
   RainbowKitAuthenticationProvider,
 } from "@rainbow-me/rainbowkit";
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 
 import { useSession } from "next-auth/react";
 import { authenticationAdapter } from "@/utils/authenticationAdapter";
 import ReactQueryProvider from "./ReactQueryProvider";
 import { config } from "@/config";
+import useUserStore, {UserStore} from "../../store/userSlice"
 
 type RainbowKitProviderProps = {
   children: ReactNode;
@@ -22,8 +23,17 @@ export default function RainbowKitProvider({
   children,
   cookie,
 }: RainbowKitProviderProps) {
-  const { status } = useSession();
+  const { setUser } = useUserStore((state: UserStore) => state);
+  const { status, data } = useSession();
   const initialState = cookieToInitialState(config, cookie);
+  useEffect(() => {
+    if (status === "authenticated") {
+      const wallet = {
+        walletAddress: data.user.walletAddress,
+      }
+      setUser(wallet);
+    }
+  },[data, status]);
 
   return (
     <WagmiProvider config={config} initialState={initialState}>

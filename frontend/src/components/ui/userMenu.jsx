@@ -14,9 +14,10 @@ import {
 } from "./dropdown-menu";
 import { useState } from "react";
 import { User } from "lucide-react";
+import Link from "next/link";
+import { useTheme } from "next-themes";
 import { Switch } from "./switch";
 
-import { useTheme } from "next-themes";
 
 export default function UserMenu() {
   const [mounted, setMounted] = useState(false);
@@ -45,8 +46,8 @@ export default function UserMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem className=" ">
-            Profile
-            <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+          <Link href="/user/profile">Profile </Link>
+          <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
           </DropdownMenuItem>
           <DropdownMenuItem>
             Billing
