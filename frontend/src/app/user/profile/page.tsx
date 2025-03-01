@@ -42,17 +42,51 @@ export default function Profile() {
       timeZone: "UTC"
     }).format(new Date(isoString));
   }
-  const handleFileSelect =
-    (setImage: React.Dispatch<React.SetStateAction<string | null>>) =>
-    (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (type: 'profile' | 'banner') => 
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) =>
-          e.target?.result && setImage(e.target.result as string);
-        reader.readAsDataURL(file);
+      if (!file) return;
+
+      // Set preview image
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          type === 'profile' 
+            ? setProfileImage(e.target.result as string)
+            : setBannerImage(e.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+      await handleImageUpload(file, type);
+  };
+
+  const handleImageUpload = async (file: File, type: 'profile' | 'banner') => {
+    if (!file || !user?.walletAddress) return;
+    
+    const formData = new FormData();
+    formData.append('walletAddress', user.walletAddress);
+    formData.append(type === 'profile' ? 'profileImage' : 'profileBanner', file);
+
+    try {
+      const response = await fetch('/api/profile', {
+        method: 'PUT',
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `${type} update failed`);
       }
-    };
+
+      const data = await response.json();
+      console.log("data", data)
+    } catch (err) {
+      console.error(`${type} update failed:`, err);
+    } finally {
+      type === 'profile' ? setProfileImage(null) : setBannerImage(null);
+    }
+  };
+  
 
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
@@ -110,7 +144,7 @@ export default function Profile() {
           ref={bannerFileInputRef}
           accept="image/*"
           className="hidden"
-          onChange={handleFileSelect(setBannerImage)}
+          onChange={handleFileSelect('banner')}
         />
       </div>
 
@@ -174,8 +208,8 @@ export default function Profile() {
                     ref={profileFileInputRef}
                     accept="image/*"
                     className="hidden"
-                    onChange={handleFileSelect(setProfileImage)}
-                  />
+                    onChange={handleFileSelect('profile')}
+                    />
 
                   {/* Rest of profile info remains same */}
                 </div>
