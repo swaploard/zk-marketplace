@@ -17,12 +17,12 @@ import {
 import userSlice, { UserStore } from "../../../store/userSlice";
 
 export default function Profile() {
-  const { user, loading, error } = userSlice((state: UserStore) => state);
-  const [bannerImage, setBannerImage] = useState<string | null>(null);
+  const { user, loading, error, updateUser } = userSlice((state: UserStore) => state);
+  const [bannerImage, setBannerImage] = useState<string | null>(user?.profileBanner);
   const [showEditButton, setShowEditButton] = useState(false);
   const bannerFileInputRef = useRef<HTMLInputElement>(null);
 
-  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [profileImage, setProfileImage] = useState<string | null>(user?.profileImage);
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const profileFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -67,24 +67,7 @@ export default function Profile() {
     formData.append('walletAddress', user.walletAddress);
     formData.append(type === 'profile' ? 'profileImage' : 'profileBanner', file);
 
-    try {
-      const response = await fetch('/api/profile', {
-        method: 'PUT',
-        body: formData
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `${type} update failed`);
-      }
-
-      const data = await response.json();
-      console.log("data", data)
-    } catch (err) {
-      console.error(`${type} update failed:`, err);
-    } finally {
-      type === 'profile' ? setProfileImage(null) : setBannerImage(null);
-    }
+    updateUser(formData)
   };
   
 
@@ -236,12 +219,12 @@ export default function Profile() {
               </div>
               <div className="text-gray-400 text-sm flex items-center gap-2">
                 <span>
-                  {user.walletAddress
+                  {user?.walletAddress
                     ? truncateAddress(user.walletAddress)
                     : "0xCF00...A283"}
                 </span>
                 <span className="text-gray-600">•</span>
-                <span>{formatDateToMonthYear(user.createdAt)}</span>
+                <span>{formatDateToMonthYear(user?.createdAt)}</span>
               </div>
             </div>
           </div>

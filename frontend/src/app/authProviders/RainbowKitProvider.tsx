@@ -23,7 +23,7 @@ export default function RainbowKitProvider({
   children,
   cookie,
 }: RainbowKitProviderProps) {
-  const { setUser } = useUserStore((state: UserStore) => state);
+  const { createUser } = useUserStore((state: UserStore) => state);
   const { status, data } = useSession();
   const initialState = cookieToInitialState(config, cookie);
   useEffect(() => {
@@ -31,7 +31,7 @@ export default function RainbowKitProvider({
       const wallet = {
         walletAddress: data.user.walletAddress,
       }
-      setUser(wallet);
+      createUser(wallet);
     }
   },[data, status]);
 

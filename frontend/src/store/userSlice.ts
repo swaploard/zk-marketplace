@@ -9,7 +9,8 @@ export interface UserStore {
     error: string | null;
     loading: boolean;
     getUser: () => void;
-    setUser: (user: any) => void;
+    createUser: (user: any) => void;
+    updateUser: (user: any) => void;
   }
 
 const useUserStore = create((set) => ({
@@ -31,7 +32,7 @@ const useUserStore = create((set) => ({
         }
     },  
 
-    setUser: async (user) => {
+    createUser: async (user) => {
         set({ loading: true, error: null });
         try {
             const response = await axiosInstance.post(USER_PROFILE_URL,user, {
@@ -46,7 +47,23 @@ const useUserStore = create((set) => ({
         } catch (error) {
             set({ error: error.message || "An error occurred", loading: false });
         }
-    }
+    },
+
+    updateUser: async (user) => {
+        set({ loading: true, error: null });
+        try {
+            const response = await axiosInstance.put(USER_PROFILE_URL, user, {
+                responseType: 'json',
+            });
+            if (response.status === 201) {
+                set({ user: response.data.user, loading: false });
+            } else {
+                set({ error: "Failed to fetch user", loading: false });
+            }
+        } catch (error) {
+            set({ error: error.message || "An error occurred", loading: false });
+        }
+    },
 }));
 
 export default useUserStore;
