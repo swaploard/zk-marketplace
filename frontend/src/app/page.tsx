@@ -2,11 +2,12 @@
 import { useEffect } from "react";
 
 import Image from "next/image";
-import Navbar from "../components/ui/navbar";
+import Navbar from "@/components/ui/navbar";
 
-import { Badge } from "../components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import useFilesList from "../store/filesList"
 import toast from 'react-hot-toast';
+import { handlePromiseToaster } from "@/components/toaster/promise";
 
 interface filesState {
   reset: () => void;
@@ -19,12 +20,7 @@ export default function Home() {
   const { files, error, loading } = useFilesList((state: any) => state);
 
   useEffect(() => {
-
-    toast.promise(getFiles(), {
-      loading: 'Loading',
-      success: 'Got the data',
-      error: 'Error when fetching',
-    });
+    handlePromiseToaster(getFiles, error, "hand On", "Done");
   }, [])
 
 

@@ -15,6 +15,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { handlePromiseToaster } from "@/components/toaster/promise";
+
 import useUserStore, { IUserStore } from "../../../store/userSlice";
 
 export const profileFormSchema = z.object({
@@ -30,7 +32,7 @@ export const profileFormSchema = z.object({
 export type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export default function ProfileUpdate() {
-  const { user, updateUser } = useUserStore((state: IUserStore) => state);
+  const { user, error, loading, updateUser } = useUserStore((state: IUserStore) => state);
   const [isHoveringProfile, setIsHoveringProfile] = useState(false);
   const [isHoveringBanner, setIsHoveringBanner] = useState(false);
   const [profileImage, setProfileImage] = useState<string>(
@@ -111,8 +113,7 @@ export default function ProfileUpdate() {
     } else if (user?.profileBanner) {
       formData.append("profileBanner", user.profileBanner);
     }
-
-    updateUser(formData);
+    handlePromiseToaster(updateUser(formData), error, "Updating...", "Updated Successfully");
 
     reset(data, {
       keepValues: true, 

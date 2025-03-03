@@ -27,3 +27,11 @@ const useAddFile = create((set, get) => ({
 }));
 
 export default useAddFile;
+
+export interface FileStoreState {
+  file: any;
+  previewUrl: string | null;
+  loading: boolean;
+  error: string | null;
+  addFile: (formData: FormData) => Promise<void>;
+}

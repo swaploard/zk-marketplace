@@ -9,8 +9,9 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { handlePromiseToaster } from "@/components/toaster/promise";
 
-import useAddFile from "../../store/fileAdd";
+import useAddFile, { FileStoreState} from "../../store/fileAdd";
 
 const nftSchema = z.object({
   media: z
@@ -41,7 +42,7 @@ type NFTFormData = z.infer<typeof nftSchema>;
 
 
 export default function NFTForm() {
-  const addFile = useAddFile((state: any) => state.addFile);
+  const {error, loading, addFile} = useAddFile((state: FileStoreState) => state);
 
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -110,8 +111,7 @@ export default function NFTForm() {
   
       const pinataOptions = JSON.stringify({ cidVersion: 1 });
       formData.append("pinataOptions", pinataOptions);
-
-      const uploadRequest = await addFile(formData);
+      handlePromiseToaster(addFile(formData), error, "Adding New NFT", "Done");
     } catch (err) {
       console.error("Error uploading file:", err);
     }

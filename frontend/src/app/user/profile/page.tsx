@@ -13,6 +13,7 @@ import {
   LayoutPanelTop,
   Columns,
 } from "lucide-react";
+import { handlePromiseToaster } from "@/components/toaster/promise";
 
 import userSlice, { IUserStore } from "../../../store/userSlice";
 
@@ -66,8 +67,7 @@ export default function Profile() {
     const formData = new FormData();
     formData.append('walletAddress', user.walletAddress);
     formData.append(type === 'profile' ? 'profileImage' : 'profileBanner', file);
-
-    updateUser(formData)
+    handlePromiseToaster(updateUser(formData), error, "Uploading", "Uploaded successfully");
   };
   
 
