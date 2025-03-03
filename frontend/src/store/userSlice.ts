@@ -4,7 +4,7 @@ import {USER_PROFILE_URL} from "../ApiEndpoints/pinatEndpoints";
 
 const { axiosInstance } = useAxios();
 
-export interface UserStore {
+export interface IUserStore {
     user: any;
     error: string | null;
     loading: boolean;

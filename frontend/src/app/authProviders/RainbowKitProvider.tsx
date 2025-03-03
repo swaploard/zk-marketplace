@@ -12,7 +12,7 @@ import { useSession } from "next-auth/react";
 import { authenticationAdapter } from "@/utils/authenticationAdapter";
 import ReactQueryProvider from "./ReactQueryProvider";
 import { config } from "@/config";
-import useUserStore, {UserStore} from "../../store/userSlice"
+import useUserStore, {IUserStore} from "../../store/userSlice"
 
 type RainbowKitProviderProps = {
   children: ReactNode;
@@ -23,7 +23,7 @@ export default function RainbowKitProvider({
   children,
   cookie,
 }: RainbowKitProviderProps) {
-  const { createUser } = useUserStore((state: UserStore) => state);
+  const { createUser } = useUserStore((state: IUserStore) => state);
   const { status, data } = useSession();
   const initialState = cookieToInitialState(config, cookie);
   useEffect(() => {

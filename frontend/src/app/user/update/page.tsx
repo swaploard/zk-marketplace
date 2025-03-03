@@ -1,8 +1,8 @@
 "use client";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRef, useState } from "react";
 import {
   Copy,
   Globe,
@@ -11,28 +11,34 @@ import {
   Twitter,
   Pencil,
 } from "lucide-react";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRef, useState } from "react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import useUserStore, { IUserStore } from "../../../store/userSlice";
 
 export const profileFormSchema = z.object({
   username: z.string().min(1, "Username is required"),
   bio: z.string().min(1, "Bio is required"),
   email: z.string().email(),
   links: z.string().url().optional().or(z.literal("")),
-  profileImage: z.string().url().optional().or(z.literal('')),
-  profileBanner: z.string().url().optional().or(z.literal('')),
+  profileImage: z.string(),
+  profileBanner: z.string(),
   walletAddress: z.string(),
 });
 
 export type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export default function ProfileUpdate() {
+  const { user, updateUser } = useUserStore((state: IUserStore) => state);
   const [isHoveringProfile, setIsHoveringProfile] = useState(false);
   const [isHoveringBanner, setIsHoveringBanner] = useState(false);
-  const [profileImage, setProfileImage] = useState<string>("");
-  const [bannerImage, setBannerImage] = useState<string>("");
+  const [profileImage, setProfileImage] = useState<string>(
+    user?.profileImage || ""
+  );
+  const [bannerImage, setBannerImage] = useState<string>(
+    user?.profileBanner || ""
+  );
 
   const profileImageInputRef = useRef<HTMLInputElement>(null);
   const bannerImageInputRef = useRef<HTMLInputElement>(null);
@@ -40,14 +46,19 @@ export default function ProfileUpdate() {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    reset,
+    formState: { errors, isSubmitting, isValid, isDirty, isSubmitted },
     setValue,
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      // walletAddress: "0x704c1234567890abcdef1234567890abcd3340" // Full valid address
-      profileImage: "",
-      profileBanner: "",
+      username: user?.username || "",
+      bio: user?.bio || "",
+      email: user?.email || "",
+      links: "",
+      profileImage: user?.profileImage || "",
+      profileBanner: user?.profileBanner || "",
+      walletAddress: user?.walletAddress || "",
     },
   });
 
@@ -80,9 +91,34 @@ export default function ProfileUpdate() {
   };
 
   const onSubmit = async (data: ProfileFormValues) => {
-    console.log(data);
-  };
+    const formData = new FormData();
 
+    formData.append("username", data.username);
+    formData.append("bio", data.bio);
+    formData.append("email", data.email);
+    formData.append("walletAddress", data.walletAddress);
+
+    const profileFile = profileImageInputRef.current?.files?.[0];
+    if (profileFile) {
+      formData.append("profileImage", profileFile);
+    } else if (user?.profileImage) {
+      formData.append("profileImage", user.profileImage);
+    }
+
+    const bannerFile = bannerImageInputRef.current?.files?.[0];
+    if (bannerFile) {
+      formData.append("profileBanner", bannerFile);
+    } else if (user?.profileBanner) {
+      formData.append("profileBanner", user.profileBanner);
+    }
+
+    updateUser(formData);
+
+    reset(data, {
+      keepValues: true, 
+      keepDirty: false, 
+    });
+  };
   return (
     <div className="min-h-screen bg-black text-white p-6 flex justify-center">
       <div className="w-full max-w-4xl grid md:grid-cols-[1fr_300px] gap-8">
@@ -229,8 +265,12 @@ export default function ProfileUpdate() {
 
           <Button
             type="submit"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2 rounded-md"
-            disabled={isSubmitting}
+            className={`${
+              !isDirty || !isValid || isSubmitting
+                ? "bg-gray-600 hover:bg-gray-600 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
+            } text-white px-8 py-2 rounded-md transition-colors`}
+            disabled={!isDirty || !isValid || isSubmitting}
           >
             {isSubmitting ? "Saving..." : "Save"}
           </Button>

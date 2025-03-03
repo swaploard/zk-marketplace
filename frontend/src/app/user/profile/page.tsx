@@ -14,10 +14,10 @@ import {
   Columns,
 } from "lucide-react";
 
-import userSlice, { UserStore } from "../../../store/userSlice";
+import userSlice, { IUserStore } from "../../../store/userSlice";
 
 export default function Profile() {
-  const { user, loading, error, updateUser } = userSlice((state: UserStore) => state);
+  const { user, loading, error, updateUser } = userSlice((state: IUserStore) => state);
   const [bannerImage, setBannerImage] = useState<string | null>(user?.profileBanner);
   const [showEditButton, setShowEditButton] = useState(false);
   const bannerFileInputRef = useRef<HTMLInputElement>(null);
