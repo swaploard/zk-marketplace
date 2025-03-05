@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { useAxios } from "@/axios/index";
-import { PIN_FILE_TO_IPFS_URL } from "../ApiEndpoints/pinatEndpoints";
+import { PIN_FILE_TO_IPFS_URL } from "../ApiEndpoints/pinataEndpoints";
 
 const { axiosInstance } = useAxios();
 

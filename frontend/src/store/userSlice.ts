@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import {useAxios} from "@/axios/index";
-import {USER_PROFILE_URL} from "../ApiEndpoints/pinatEndpoints";
+import {USER_PROFILE_URL} from "../ApiEndpoints/pinataEndpoints";
 
 const { axiosInstance } = useAxios();
 

@@ -1,30 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import path from "path";
-import fs from "fs/promises";
-import { v4 as uuidv4 } from "uuid";
+
 import connectMongo from "@/lib/mongodb";
 import User from "@/models/User";
-
-const UPLOAD_DIR = path.join(process.cwd(), "public/uploads");
-
-async function saveFile(file: File) {
-  try {
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const filename = `${uuidv4()}-${file.name}`;
-    const sanitizedName = filename
-    .replace(/\s+/g, '_')     
-    .replace(/[^a-zA-Z0-9-_.]/g, '') 
-    .toLowerCase(); 
-    const filepath = path.join(UPLOAD_DIR, sanitizedName);
-    
-    await fs.mkdir(UPLOAD_DIR, { recursive: true });
-    await fs.writeFile(filepath, buffer);
-    
-    return `/uploads/${sanitizedName}`;
-  } catch (error) {
-    throw new Error("Failed to save file");
-  }
-}
+import { saveFile } from "@/utils/routeHelper/saveImage";
 
 export async function PUT(req: NextRequest) {
   await connectMongo();
