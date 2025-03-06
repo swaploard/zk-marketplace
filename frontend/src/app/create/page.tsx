@@ -1,17 +1,29 @@
 "use client";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Upload, ArrowLeft, Trash2, Plus } from "lucide-react";
+import {
+  Upload,
+  ArrowLeft,
+  Trash2,
+  ChevronDown,
+  LayoutGrid,
+} from "lucide-react";
 import Link from "next/link";
+import { useAccount } from "wagmi";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { handlePromiseToaster } from "@/components/toaster/promise";
+import CollectionListPopover from "@/components/CollectionListPopover";
 
-import useAddFile, { FileStoreState} from "../../store/fileAdd";
+import useAddFile, { FileStoreState } from "../../store/fileAdd";
+import useCollectionStore, {
+  ICollectionStore,
+} from "../../store/collectionSlice";
 
 const nftSchema = z.object({
   media: z
@@ -26,13 +38,13 @@ const nftSchema = z.object({
           "image/svg+xml",
           "video/mp4",
         ].includes(file.type),
-      "Invalid file type. Allowed: JPG, PNG, GIF, SVG, MP4"
+      "Invalid file type. Allowed: JPG, PNG, GIF, SVG, MP4",
     ),
   collection: z.string().min(1, "Collection is required"),
   name: z.string().min(1, "NFT name is required"),
   supply: z.preprocess(
     (val) => Number(val),
-    z.number().int().positive("Supply must be at least 1")
+    z.number().int().positive("Supply must be at least 1"),
   ),
   description: z.string().optional(),
   externalLink: z.string().url("Invalid URL format").optional(),
@@ -40,13 +52,15 @@ const nftSchema = z.object({
 
 type NFTFormData = z.infer<typeof nftSchema>;
 
-
 export default function NFTForm() {
-  const {error, loading, addFile} = useAddFile((state: FileStoreState) => state);
+  const { error, addFile } = useAddFile((state: FileStoreState) => state);
+  const { collections, getCollections } = useCollectionStore(
+    (state: ICollectionStore) => state,
+  );
+  const { address } = useAccount();
 
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
- 
   const {
     register,
     handleSubmit,
@@ -56,6 +70,9 @@ export default function NFTForm() {
     resolver: zodResolver(nftSchema),
   });
 
+  useEffect(() => {
+    getCollections(address);
+  }, []);
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
@@ -71,21 +88,21 @@ export default function NFTForm() {
       event.preventDefault();
       const droppedFile = event.dataTransfer.files?.[0];
       if (droppedFile) {
-        setFile(droppedFile);
+        setFile(droppedFile); 
         setValue("media", droppedFile);
         // Generate a preview URL for the file
         const url = URL.createObjectURL(droppedFile);
         setPreviewUrl(url);
       }
     },
-    [setValue]
+    [setValue],
   );
 
   const handleDragOver = useCallback(
     (event: React.DragEvent<HTMLDivElement>) => {
       event.preventDefault();
     },
-    []
+    [],
   );
 
   const handleRemoveImage = () => {
@@ -95,20 +112,20 @@ export default function NFTForm() {
   };
 
   const onSubmit = async (data: NFTFormData) => {
-    const { media, ...rest } = data;
-  
+    const { media, collection, ...rest } = data;
+
     if (!media) {
       console.error("No media file provided");
       return;
     }
-    
+
     try {
       const formData = new FormData();
       formData.append("file", media);
-      
+      formData.append("collection", collection)
       const pinataMetadata = JSON.stringify(rest);
       formData.append("pinataMetadata", pinataMetadata);
-  
+
       const pinataOptions = JSON.stringify({ cidVersion: 1 });
       formData.append("pinataOptions", pinataOptions);
       handlePromiseToaster(addFile(formData), error, "Adding New NFT", "Done");
@@ -116,7 +133,7 @@ export default function NFTForm() {
       console.error("Error uploading file:", err);
     }
   };
-  
+
   return (
     <div className="min-h-screen bg-black text-white p-6">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -152,12 +169,14 @@ export default function NFTForm() {
               <>
                 {file?.type.startsWith("image/") ? (
                   <div className="relative w-full h-full">
-                    <img
+                    {/* Use regular img tag for blob URLs */}
+                    <Image
                       src={previewUrl}
                       alt="Preview"
                       className="w-full h-full object-cover rounded-lg"
+                      width={500}
+                      height={500}
                     />
-
                     <button
                       type="button"
                       onClick={(e) => {
@@ -228,19 +247,29 @@ export default function NFTForm() {
 
           {/* Form Fields */}
           <div className="space-y-6">
-          <div className="space-y-2">
+            <div className="space-y-2">
               <label className="block text-sm font-medium">
                 Collection <span className="text-red-500">*</span>
               </label>
-              <Button variant="outline" className="w-full justify-between h-auto py-3 bg-zinc-900 border-zinc-800">
-                <div className="flex items-center gap-2">
-                  <div className="h-10 w-10 bg-zinc-800 rounded-lg flex items-center justify-center">
-                    <Plus className="h-5 w-5" />
-                  </div>
-                  <span>Create a new collection</span>
-                </div>
-                <Plus className="h-4 w-4" />
-              </Button>
+              <CollectionListPopover
+                PopoverTriggerElement={
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between h-auto py-3 bg-zinc-900 border-zinc-800"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="h-10 w-10 bg-zinc-800 rounded-lg flex items-center justify-center">
+                        <LayoutGrid className="h-5 w-5" />
+                      </div>
+                      <span>Create a new collection</span>
+                    </div>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                }
+                collections={collections}
+                setValue={setValue}
+              ></CollectionListPopover>
+
               <p className="text-xs text-gray-400">
                 Not all collections are eligible.{" "}
                 <Link href="#" className="text-blue-500">

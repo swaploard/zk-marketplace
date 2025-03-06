@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     if (!file || !contractName || !tokenSymbol || !walletAddress) {
       return NextResponse.json(
         { error: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -35,7 +35,6 @@ export async function POST(request: NextRequest) {
 
     const collectionGroup = new CollectionGroup({
       User: existingUser._id,
-      walletAddress,
       contractName,
       tokenSymbol,
       groupId: group.id,
@@ -50,12 +49,41 @@ export async function POST(request: NextRequest) {
         groupId: group.id,
         mongoId: collectionGroup._id,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error creating group:", error);
     return NextResponse.json(
       { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function GET(request: Request) {
+  await connectMongo();
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const walletAddress = searchParams.get("walletAddress");
+
+    if (!walletAddress) {
+      return NextResponse.json(
+        { error: "Wallet address is required" },
+        { status: 400 }
+      );
+    }
+    const user = await User.findOne({ walletAddress });
+
+    const collections = await CollectionGroup.find({ User: user._id })
+    .sort({ createdAt: -1 })
+    .lean();
+    return NextResponse.json(collections, { status: 200 });
+
+  } catch (error) {
+    console.error("Error fetching collections:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch collections" },
       { status: 500 }
     );
   }

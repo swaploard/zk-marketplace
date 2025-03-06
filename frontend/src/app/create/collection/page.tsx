@@ -1,10 +1,11 @@
 "use client";
 import { useState, useRef } from "react";
+import Image from "next/image";
+
 import {
   ArrowLeft,
   HelpCircle,
   ImageIcon,
-  MoreHorizontal,
   Edit,
 } from "lucide-react";
 import Link from "next/link";
@@ -41,20 +42,22 @@ const formSchema = z.object({
           "image/svg+xml",
           "video/mp4",
         ].includes(file.type),
-      "Invalid file type. Allowed: JPG, PNG, GIF, SVG, MP4"
+      "Invalid file type. Allowed: JPG, PNG, GIF, SVG, MP4",
     ),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 export default function CreateNFTCollection() {
-  const {createCollection} = useCollectionStore((state: ICollectionStore) => state);
+
+  const { createCollection } = useCollectionStore(
+    (state: ICollectionStore) => state,
+  );
 
   const {
     register,
     handleSubmit,
     setValue,
-    watch,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -99,8 +102,11 @@ export default function CreateNFTCollection() {
     formData.append("contractName", data.contractName);
     formData.append("tokenSymbol", data.tokenSymbol);
     formData.append("file", data.logoImage);
-    formData.append("walletAddress", "0x704cA993Cb734408E7A2affa39e1EEaE78213340");
-    createCollection(formData); 
+    formData.append(
+      "walletAddress",
+      "0x704cA993Cb734408E7A2affa39e1EEaE78213340",
+    );
+    createCollection(formData);
   };
 
   return (
@@ -144,12 +150,6 @@ export default function CreateNFTCollection() {
               <h1 className="text-4xl font-bold">
                 First, you&apos;ll need to create a collection for your NFT
               </h1>
-              {/* <p className="text-gray-400">
-              You&apos;ll need to deploy an ERC-1155 contract on the blockchain to create a collection for your NFT.{" "}
-              <Link href="#" className="text-blue-500 hover:underline">
-                What is a contract?
-              </Link>
-            </p> */}
             </div>
 
             <div className="space-y-6">
@@ -181,10 +181,12 @@ export default function CreateNFTCollection() {
                   >
                     {previewUrl ? (
                       <div className="relative">
-                        <img
+                        <Image
                           src={previewUrl}
                           alt="Preview"
                           className="w-24 h-24 rounded-lg object-cover"
+                          width={240}
+                          height={240}
                         />
                         {isHovering && (
                           <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
