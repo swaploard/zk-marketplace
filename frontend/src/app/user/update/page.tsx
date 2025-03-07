@@ -32,14 +32,16 @@ export const profileFormSchema = z.object({
 export type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export default function ProfileUpdate() {
-  const { user, error, loading, updateUser } = useUserStore((state: IUserStore) => state);
+  const { user, error, updateUser } = useUserStore(
+    (state: IUserStore) => state,
+  );
   const [isHoveringProfile, setIsHoveringProfile] = useState(false);
   const [isHoveringBanner, setIsHoveringBanner] = useState(false);
   const [profileImage, setProfileImage] = useState<string>(
-    user?.profileImage || ""
+    user?.profileImage || "",
   );
   const [bannerImage, setBannerImage] = useState<string>(
-    user?.profileBanner || ""
+    user?.profileBanner || "",
   );
 
   const profileImageInputRef = useRef<HTMLInputElement>(null);
@@ -49,7 +51,7 @@ export default function ProfileUpdate() {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting, isValid, isDirty, isSubmitted },
+    formState: { errors, isSubmitting, isValid, isDirty },
     setValue,
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -113,11 +115,16 @@ export default function ProfileUpdate() {
     } else if (user?.profileBanner) {
       formData.append("profileBanner", user.profileBanner);
     }
-    handlePromiseToaster(updateUser(formData), error, "Updating...", "Updated Successfully");
+    handlePromiseToaster(
+      updateUser(formData),
+      error,
+      "Updating...",
+      "Updated Successfully",
+    );
 
     reset(data, {
-      keepValues: true, 
-      keepDirty: false, 
+      keepValues: true,
+      keepDirty: false,
     });
   };
   return (

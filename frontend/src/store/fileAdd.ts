@@ -1,10 +1,17 @@
 import { create } from "zustand";
-import { useAxios } from "@/axios/index";
+import { axiosInstance } from "@/axios/index";
 import { PIN_FILE_TO_IPFS_URL } from "../ApiEndpoints/pinataEndpoints";
+import { File } from "@/types";
 
-const { axiosInstance } = useAxios();
+export interface IFileStore {
+  file: File;
+  previewUrl: string | null;
+  loading: boolean;
+  error: string | null;
+  addFile: (formData: FormData) => Promise<void>;
+}
 
-const useAddFile = create((set, get) => ({
+const useAddFile = create((set) => ({
   file: null,
   previewUrl: null,
   loading: false,
@@ -27,11 +34,3 @@ const useAddFile = create((set, get) => ({
 }));
 
 export default useAddFile;
-
-export interface FileStoreState {
-  file: any;
-  previewUrl: string | null;
-  loading: boolean;
-  error: string | null;
-  addFile: (formData: FormData) => Promise<void>;
-}

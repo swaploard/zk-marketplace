@@ -1,8 +1,7 @@
-import mongoose, { Document, Schema, Types } from "mongoose";
+import mongoose, { Document, Schema } from "mongoose";
 
 interface ICollectionGroup extends Document {
   User: Schema.Types.ObjectId;
-  walletAddress: string;
   contractName: string;
   tokenSymbol: string;
   groupId: string;
@@ -11,7 +10,6 @@ interface ICollectionGroup extends Document {
 }
 
 const CollectionGroupSchema = new Schema<ICollectionGroup>({
-  walletAddress: { type: String, required: true },
   contractName: { type: String, required: true },
   tokenSymbol: { type: String, required: true },
   groupId: { type: String, required: true },
@@ -25,5 +23,5 @@ const CollectionGroupSchema = new Schema<ICollectionGroup>({
 });
 
 export const CollectionGroup =
-  mongoose.models.CollectionGroup ||
+  (mongoose.models.CollectionGroup as mongoose.Model<ICollectionGroup>) ||
   mongoose.model<ICollectionGroup>("CollectionGroup", CollectionGroupSchema);

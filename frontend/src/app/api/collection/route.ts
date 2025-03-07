@@ -70,21 +70,20 @@ export async function GET(request: Request) {
     if (!walletAddress) {
       return NextResponse.json(
         { error: "Wallet address is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const user = await User.findOne({ walletAddress });
 
     const collections = await CollectionGroup.find({ User: user._id })
-    .sort({ createdAt: -1 })
-    .lean();
+      .sort({ createdAt: -1 })
+      .lean();
     return NextResponse.json(collections, { status: 200 });
-
   } catch (error) {
     console.error("Error fetching collections:", error);
     return NextResponse.json(
       { error: "Failed to fetch collections" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

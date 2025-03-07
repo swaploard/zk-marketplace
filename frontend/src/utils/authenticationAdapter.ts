@@ -87,4 +87,3 @@ export const authenticationAdapter = createAuthenticationAdapter({
     await signOut();
   },
 });
-

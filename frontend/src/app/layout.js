@@ -15,14 +15,14 @@ export const metadata = {
 
 export default async function RootLayout({ children }) {
   const session = await getServerSession(authConfig);
-  const headersList = await  headers();
+  const headersList = await headers();
   const cookie = headersList.get("cookie");
 
   return (
     <html lang="en">
       <body className={inter.className}>
         <Providers session={session} cookie={cookie}>
-        <Toaster position="top-right" />
+          <Toaster position="top-right" />
           {children}
         </Providers>
       </body>

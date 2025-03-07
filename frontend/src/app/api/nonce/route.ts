@@ -10,7 +10,7 @@ export async function POST() {
   } catch (error: unknown) {
     return NextResponse.json(
       { message: (error as Error).message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

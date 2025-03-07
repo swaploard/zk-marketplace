@@ -11,11 +11,15 @@ export async function POST(request: NextRequest) {
 
     const metadata = JSON.parse(metadataString);
 
-    const uploadData = await pinata.upload.file(file).addMetadata({
-      keyValues: metadata,
-    }).group(groupId);
-    return NextResponse.json(uploadData, { status: 200 });  
+    const uploadData = await pinata.upload
+      .file(file)
+      .addMetadata({
+        keyValues: metadata,
+      })
+      .group(groupId);
+    return NextResponse.json(uploadData, { status: 200 });
   } catch (e) {
+    console.error(e);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 },
@@ -28,7 +32,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const hash = searchParams.get("hash");
     const list = searchParams.get("list");
-    
+
     if (hash) {
       const url = await pinata.gateways.convert(hash);
       return NextResponse.json({ url }, { status: 200 });

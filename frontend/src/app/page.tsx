@@ -5,24 +5,21 @@ import Image from "next/image";
 import Navbar from "@/components/ui/navbar";
 
 import { Badge } from "@/components/ui/badge";
-import useFilesList from "../store/filesList"
-import toast from 'react-hot-toast';
+import useFilesList from "../store/filesList";
 import { handlePromiseToaster } from "@/components/toaster/promise";
 
 interface filesState {
   reset: () => void;
   getFiles: () => Promise<void>;
+  error: string | null;
 }
 
 export default function Home() {
-
-  const getFiles = useFilesList((state: filesState) => state.getFiles);
-  const { files, error, loading } = useFilesList((state: any) => state);
+  const { error, getFiles } = useFilesList((state: filesState) => state);
 
   useEffect(() => {
     handlePromiseToaster(getFiles, error, "hand On", "Done");
-  }, [])
-
+  }, [error, getFiles]);
 
   return (
     <div className="min-h-screen bg-black  text-white">
@@ -32,8 +29,7 @@ export default function Home() {
       {/* Main Content */}
       <main className="px-6 py-8">
         <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">Notable collections
-          </h2>
+          <h2 className="text-2xl font-bold mb-6">Notable collections</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
               {
@@ -99,7 +95,9 @@ export default function Home() {
                 </div>
                 <div className="p-4">
                   <div className="flex items-center gap-2 mb-4">
-                    <h3 className="font-semibold text-xs truncate">{collection.name}</h3>
+                    <h3 className="font-semibold text-xs truncate">
+                      {collection.name}
+                    </h3>
                     {collection.verified && (
                       <Badge
                         variant="secondary"

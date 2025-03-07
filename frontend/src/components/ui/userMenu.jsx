@@ -18,12 +18,11 @@ import Link from "next/link";
 import { useTheme } from "next-themes";
 import { Switch } from "./switch";
 
-
 export default function UserMenu() {
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
 
-  const { systemTheme, theme, setTheme } = useTheme();
+  const { setTheme } = useTheme();
 
   const handleSetTheme = () => {
     if (!mounted) {
@@ -31,30 +30,31 @@ export default function UserMenu() {
     } else {
       setTheme("light");
     }
-    setMounted(!mounted)
-  }
+    setMounted(!mounted);
+  };
 
   return (
-    <DropdownMenu open={open} className="border border-gray-600" >
-      <DropdownMenuTrigger asChild 
-       onMouseEnter={() => setOpen(true)}
-      >
+    <DropdownMenu open={open} className="border border-gray-600">
+      <DropdownMenuTrigger asChild onMouseEnter={() => setOpen(true)}>
         <User className="h-5 w-5 text-blue-500 dark:text-gray-400" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56 bg-white dark:bg-black border border-gray-600" onMouseLeave={() => setOpen(false)}>
+      <DropdownMenuContent
+        className="w-56 bg-white dark:bg-black border border-gray-600"
+        onMouseLeave={() => setOpen(false)}
+      >
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem className=" ">
-          <Link href="/user/profile">Profile </Link>
-          <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+            <Link href="/user/profile">Profile </Link>
+            <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
           </DropdownMenuItem>
           <DropdownMenuItem>
             Billing
             <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
           </DropdownMenuItem>
           <DropdownMenuItem>
-          <Link href="/user/update">Settings</Link>
+            <Link href="/user/update">Settings</Link>
             <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
           </DropdownMenuItem>
           <DropdownMenuItem>
@@ -86,8 +86,9 @@ export default function UserMenu() {
         <DropdownMenuItem>Support</DropdownMenuItem>
         <DropdownMenuItem onSelect={(event) => event.preventDefault()}>
           Night mode
-          <DropdownMenuShortcut><Switch checked={mounted} onCheckedChange={handleSetTheme}/></DropdownMenuShortcut>
-
+          <DropdownMenuShortcut>
+            <Switch checked={mounted} onCheckedChange={handleSetTheme} />
+          </DropdownMenuShortcut>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem>

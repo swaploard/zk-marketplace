@@ -1,10 +1,8 @@
 import { create } from "zustand";
-import { useAxios } from "@/axios/index";
+import { axiosInstance } from "@/axios/index";
 import { PIN_FILE_TO_IPFS_URL } from "../ApiEndpoints/pinataEndpoints";
 
-const { axiosInstance } = useAxios();
-
-const useFilesList = create((set, get) => ({
+const useFilesList = create((set) => ({
   files: [],
   error: null,
   loading: false,
@@ -13,7 +11,9 @@ const useFilesList = create((set, get) => ({
     set({ loading: true, error: null });
 
     try {
-      const response = await axiosInstance.get(`${PIN_FILE_TO_IPFS_URL}?list=true`);
+      const response = await axiosInstance.get(
+        `${PIN_FILE_TO_IPFS_URL}?list=true`,
+      );
       if (response.status === 200) {
         set({ files: response.data, loading: false });
       } else {
@@ -26,11 +26,11 @@ const useFilesList = create((set, get) => ({
 
   reset: () => {
     set({
-        files: [],
-        error: null,
-        loading: false,
+      files: [],
+      error: null,
+      loading: false,
     });
-},
+  },
 }));
 
 export default useFilesList;

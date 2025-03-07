@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+dist/
+out/
+build/
+
+# Config files
+*.config.js
+*.config.ts
+
+# Environment
+.env*
+!.env.example
+
+# Blockchain
+artifacts/
+typechain-types/
+proofs/
+circuits/
+
+# System
+.DS_Store
+Thumbs.db
+
+# Special Cases
+/public/large-data.json
+/src/experimental/

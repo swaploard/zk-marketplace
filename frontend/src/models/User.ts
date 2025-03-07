@@ -1,11 +1,11 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
 interface Socials {
   twitter: string;
   instagram: string;
 }
 
-interface IUser {
+export interface IUser {
   walletAddress: string;
   username: string;
   email: string;
@@ -58,9 +58,11 @@ const userSchema = new Schema<IUser>(
       default: [],
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-const User = mongoose.models.User as mongoose.Model<IUser> || mongoose.model<IUser>("User", userSchema);
+const User =
+  (mongoose.models.User as mongoose.Model<IUser>) ||
+  mongoose.model<IUser>("User", userSchema);
 
 export default User;

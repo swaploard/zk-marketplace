@@ -1,28 +1,37 @@
 "use client";
-import { Search, ShoppingCart, User } from "lucide-react";
+import { Search, ShoppingCart } from "lucide-react";
 import { Button } from "./button";
 import { Input } from "./input";
 import Link from "next/link";
-import Image from "next/image";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import UserMenu from "./userMenu"
-import { Switch } from "./switch";
+import UserMenu from "./userMenu";
 
-function Navbar(props) {
+function Navbar() {
   return (
     <nav className="flex items-center justify-between px-6 h-20 border-b border-gray-800 bg-white dark:bg-black">
       <div className="flex items-center gap-8">
         <Link href="/" className="flex items-center gap-2">
-          <span className="text-blue-500 dark:text-gray-400 text-xl font-semibold">OpenSea</span>
+          <span className="text-blue-500 dark:text-gray-400 text-xl font-semibold">
+            OpenSea
+          </span>
         </Link>
         <div className="flex items-center gap-6">
-          <Link href="/drops" className="text-blue-500 dark:text-gray-400 hover:text-gray-300">
+          <Link
+            href="/drops"
+            className="text-blue-500 dark:text-gray-400 hover:text-gray-300"
+          >
             Drops
           </Link>
-          <Link href="/stats" className="text-blue-500 dark:text-gray-400 hover:text-gray-300">
+          <Link
+            href="/stats"
+            className="text-blue-500 dark:text-gray-400 hover:text-gray-300"
+          >
             Stats
           </Link>
-          <Link href="/create" className="text-blue-500 dark:text-gray-400 hover:text-gray-300">
+          <Link
+            href="/create"
+            className="text-blue-500 dark:text-gray-400 hover:text-gray-300"
+          >
             Create
           </Link>
         </div>
@@ -49,7 +58,7 @@ function Navbar(props) {
             showBalance={true}
           />
         </div>
-        <UserMenu/>
+        <UserMenu />
         <Button
           variant="ghost"
           size="icon"

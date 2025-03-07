@@ -18,12 +18,16 @@ import { handlePromiseToaster } from "@/components/toaster/promise";
 import userSlice, { IUserStore } from "../../../store/userSlice";
 
 export default function Profile() {
-  const { user, loading, error, updateUser } = userSlice((state: IUserStore) => state);
-  const [bannerImage, setBannerImage] = useState<string | null>(user?.profileBanner);
+  const { user, error, updateUser } = userSlice((state: IUserStore) => state);
+  const [bannerImage, setBannerImage] = useState<string | null>(
+    user?.profileBanner,
+  );
   const [showEditButton, setShowEditButton] = useState(false);
   const bannerFileInputRef = useRef<HTMLInputElement>(null);
 
-  const [profileImage, setProfileImage] = useState<string | null>(user?.profileImage);
+  const [profileImage, setProfileImage] = useState<string | null>(
+    user?.profileImage,
+  );
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const profileFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -40,10 +44,11 @@ export default function Profile() {
     return new Intl.DateTimeFormat("en-US", {
       month: "long",
       year: "numeric",
-      timeZone: "UTC"
+      timeZone: "UTC",
     }).format(new Date(isoString));
   }
-  const handleFileSelect = (type: 'profile' | 'banner') => 
+  const handleFileSelect =
+    (type: "profile" | "banner") =>
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       if (!file) return;
@@ -52,24 +57,33 @@ export default function Profile() {
       const reader = new FileReader();
       reader.onload = (e) => {
         if (e.target?.result) {
-          type === 'profile' 
-            ? setProfileImage(e.target.result as string)
-            : setBannerImage(e.target.result as string);
+          if (type === "profile") {
+            setProfileImage(e.target.result as string);
+          } else {
+            setBannerImage(e.target.result as string);
+          }
         }
       };
       reader.readAsDataURL(file);
       await handleImageUpload(file, type);
-  };
+    };
 
-  const handleImageUpload = async (file: File, type: 'profile' | 'banner') => {
+  const handleImageUpload = async (file: File, type: "profile" | "banner") => {
     if (!file || !user?.walletAddress) return;
-    
+     console.log("handleImageUpload", file)
     const formData = new FormData();
-    formData.append('walletAddress', user.walletAddress);
-    formData.append(type === 'profile' ? 'profileImage' : 'profileBanner', file);
-    handlePromiseToaster(updateUser(formData), error, "Uploading", "Uploaded successfully");
+    formData.append("walletAddress", user.walletAddress);
+    formData.append(
+      type === "profile" ? "profileImage" : "profileBanner",
+      file,
+    );
+    handlePromiseToaster(
+      updateUser(formData),
+      error,
+      "Uploading",
+      "Uploaded successfully",
+    );
   };
-  
 
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
@@ -110,7 +124,7 @@ export default function Profile() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" // Corrected the d attribute
               />
               <path
                 strokeLinecap="round"
@@ -127,7 +141,7 @@ export default function Profile() {
           ref={bannerFileInputRef}
           accept="image/*"
           className="hidden"
-          onChange={handleFileSelect('banner')}
+          onChange={handleFileSelect("banner")}
         />
       </div>
 
@@ -147,10 +161,12 @@ export default function Profile() {
                     onClick={handleProfileClick}
                   >
                     {profileImage ? (
-                      <img
+                      <Image
                         src={profileImage}
                         alt="Profile"
                         className="h-full w-full object-cover"
+                        width={200}
+                        height={200}
                       />
                     ) : (
                       <div className="h-full w-full flex items-center justify-center">
@@ -191,8 +207,8 @@ export default function Profile() {
                     ref={profileFileInputRef}
                     accept="image/*"
                     className="hidden"
-                    onChange={handleFileSelect('profile')}
-                    />
+                    onChange={handleFileSelect("profile")}
+                  />
 
                   {/* Rest of profile info remains same */}
                 </div>

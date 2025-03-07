@@ -2,12 +2,7 @@
 import { useState, useRef } from "react";
 import Image from "next/image";
 
-import {
-  ArrowLeft,
-  HelpCircle,
-  ImageIcon,
-  Edit,
-} from "lucide-react";
+import { ArrowLeft, HelpCircle, ImageIcon, Edit } from "lucide-react";
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -49,7 +44,6 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function CreateNFTCollection() {
-
   const { createCollection } = useCollectionStore(
     (state: ICollectionStore) => state,
   );

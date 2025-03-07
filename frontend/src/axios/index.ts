@@ -1,32 +1,30 @@
+// axios/config.ts
 import axios from "axios";
-import toast from 'react-hot-toast';
+import toast from "react-hot-toast";
 
-export const useAxios = () => {
+// Create a configured axios instance
+export const axiosInstance = axios.create({
+  timeout: 10000,
+  withCredentials: true,
+  headers: {
+    "Content-Type": "multipart/form-data",
+  },
+});
 
-  const axiosInstance = axios.create({
-    timeout: 10000,
-    withCredentials: true
-  });
+// Response interceptor
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (axios.isAxiosError(error)) {
+      console.error("API Error:", error.response?.data || error.message);
 
-  
-  axiosInstance.defaults.headers.common['Content-Type'] = 'multipart/form-data';
-
-  axiosInstance.interceptors.response.use(
-    (response) => response,
-    (error) => {
-      if (axios.isAxiosError(error)) {
-        console.error("API Error:", error.response?.data || error.message);
-  
-        if (error.response?.status === 401) {
-          toast.error("Unauthorized! Please log in again.");
-        }
-      } else {
-        console.error("Unexpected Error:", error);
+      if (error.response?.status === 401) {
+        toast.error("Unauthorized! Please log in again.");
       }
-  
-      return Promise.reject(error); 
+    } else {
+      console.error("Unexpected Error:", error);
     }
-  );
 
-  return { axiosInstance };
-};
+    return Promise.reject(error);
+  },
+);

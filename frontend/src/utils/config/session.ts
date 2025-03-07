@@ -15,7 +15,7 @@
  * is used to store a nonce value in the session. This is used by the
  * `siwe-next` package to store a nonce value in the session.
  *
- * 
+ *
  */
 import {
   IronSessionOptions,
@@ -30,7 +30,7 @@ export const sessionOptions: IronSessionOptions = {
    * The password to use for encrypting the session data.
    *
    * **This should be changed to a secure password in production!**
-   * 
+   *
    * Must be at least 32 characters long.
    */
   password: process.env.NEXT_SESSION_PASSWORD,
@@ -81,10 +81,9 @@ const getSession = async (req: Request, res: Response) => {
 const getServerActionSession = async () => {
   const session = await getServerActionIronSession<IronSessionData>(
     sessionOptions,
-    await cookies()
+    await cookies(),
   );
   return session;
 };
 
 export { getSession, getServerActionSession };
-

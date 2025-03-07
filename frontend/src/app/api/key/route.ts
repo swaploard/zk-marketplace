@@ -16,10 +16,13 @@ export async function GET() {
         },
       },
       maxUses: 1,
-    })
+    });
     return NextResponse.json(keyData, { status: 200 });
   } catch (error) {
-    console.log(error);
-    return NextResponse.json({ text: "Error creating API Key:" }, { status: 500 });
+    console.error(error);
+    return NextResponse.json(
+      { text: "Error creating API Key:" },
+      { status: 500 },
+    );
   }
 }

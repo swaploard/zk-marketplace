@@ -18,7 +18,7 @@ export const authConfig: NextAuthOptions = {
       },
 
       authorize: async (
-        credentials: Record<"message" | "signature", string> | undefined
+        credentials: Record<"message" | "signature", string> | undefined,
       ): Promise<User | null> => {
         // Handle case where credentials might be undefined
         if (!credentials) {

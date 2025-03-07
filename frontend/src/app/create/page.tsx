@@ -20,7 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { handlePromiseToaster } from "@/components/toaster/promise";
 import CollectionListPopover from "@/components/CollectionListPopover";
 
-import useAddFile, { FileStoreState } from "../../store/fileAdd";
+import useAddFile, { IFileStore } from "../../store/fileAdd";
 import useCollectionStore, {
   ICollectionStore,
 } from "../../store/collectionSlice";
@@ -53,7 +53,7 @@ const nftSchema = z.object({
 type NFTFormData = z.infer<typeof nftSchema>;
 
 export default function NFTForm() {
-  const { error, addFile } = useAddFile((state: FileStoreState) => state);
+  const { error, addFile } = useAddFile((state: IFileStore) => state);
   const { collections, getCollections } = useCollectionStore(
     (state: ICollectionStore) => state,
   );
@@ -72,7 +72,8 @@ export default function NFTForm() {
 
   useEffect(() => {
     getCollections(address);
-  }, []);
+  }, [address, getCollections]);
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
@@ -88,7 +89,7 @@ export default function NFTForm() {
       event.preventDefault();
       const droppedFile = event.dataTransfer.files?.[0];
       if (droppedFile) {
-        setFile(droppedFile); 
+        setFile(droppedFile);
         setValue("media", droppedFile);
         // Generate a preview URL for the file
         const url = URL.createObjectURL(droppedFile);
@@ -122,7 +123,7 @@ export default function NFTForm() {
     try {
       const formData = new FormData();
       formData.append("file", media);
-      formData.append("collection", collection)
+      formData.append("collection", collection);
       const pinataMetadata = JSON.stringify(rest);
       formData.append("pinataMetadata", pinataMetadata);
 

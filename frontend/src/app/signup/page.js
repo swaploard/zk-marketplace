@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { useAccount } from "wagmi"; 
-import { useRouter, useSearchParams  } from 'next/navigation';
-import Loader from '@/components/loader';
+import { useAccount } from "wagmi";
+import { useRouter, useSearchParams } from "next/navigation";
+import Loader from "@/components/loader";
 export default function SignUp() {
   const router = useRouter();
   const { isConnected } = useAccount();
@@ -15,26 +15,24 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setMounted(true); 
+    setMounted(true);
   }, []);
 
   useEffect(() => {
     if (!isConnected) {
       openConnectModal?.();
     }
-    if(isConnected){
+    if (isConnected) {
       setLoading(true);
-      router.replace(callbackUrl); 
+      router.replace(callbackUrl);
     }
   }, [mounted, isConnected, router, callbackUrl, openConnectModal]);
 
-  if (!mounted) return null; 
+  if (!mounted) return null;
 
   return (
     <div className="flex items-center justify-center h-screen">
-      {loading ? (
-        <Loader />
-      ) : null}
+      {loading ? <Loader /> : null}
     </div>
   );
 }

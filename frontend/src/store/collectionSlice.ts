@@ -1,17 +1,14 @@
-// stores/collectionStore.ts
 import { create } from "zustand";
-import { useAxios } from "@/axios/index";
+import { axiosInstance } from "@/axios/index";
 import { COLLECTION_PROFILE_URL } from "../ApiEndpoints/pinataEndpoints";
-
-const { axiosInstance } = useAxios();
+import { File } from "@/types";
 
 export interface ICollectionStore {
-  collections: any[];
+  collections: File[];
   error: string | null;
   loading: boolean;
-  getCollections: () => void;
-  createCollection: (collection: any) => void;
-  updateCollection: (id: string, collection: any) => void;
+  getCollections: (walletAddress: string) => void;
+  createCollection: (collection: File) => void;
 }
 
 const useCollectionStore = create<ICollectionStore>((set) => ({
@@ -19,10 +16,13 @@ const useCollectionStore = create<ICollectionStore>((set) => ({
   error: null,
   loading: false,
 
-  getCollections: async () => {
+  getCollections: async (walletAddress) => {
     set({ loading: true, error: null });
     try {
-      const response = await axiosInstance.get(COLLECTION_PROFILE_URL);
+      const response = await axiosInstance.get(
+        `${COLLECTION_PROFILE_URL}?walletAddress=${encodeURIComponent(walletAddress)}`,
+      );
+
       if (response.status === 200) {
         set({ collections: response.data, loading: false });
       } else {
@@ -40,42 +40,16 @@ const useCollectionStore = create<ICollectionStore>((set) => ({
         COLLECTION_PROFILE_URL,
         collection,
         {
-          responseType: 'json',
-        }
+          responseType: "json",
+        },
       );
       if (response.status === 201) {
         set((state) => ({
           collections: [...state.collections, response.data],
-          loading: false
+          loading: false,
         }));
       } else {
         set({ error: "Failed to create collection", loading: false });
-      }
-    } catch (error) {
-      set({ error: error.message || "An error occurred", loading: false });
-    }
-  },
-
-  updateCollection: async (id, collection) => {
-    set({ loading: true, error: null });
-    try {
-      const response = await axiosInstance.put(
-        `${COLLECTION_PROFILE_URL}/${id}`,
-        collection,
-        {
-          headers: { 'Content-Type': 'application/json' },
-          responseType: 'json',
-        }
-      );
-      if (response.status === 200) {
-        set((state) => ({
-          collections: state.collections.map((c) =>
-            c.id === id ? response.data : c
-          ),
-          loading: false
-        }));
-      } else {
-        set({ error: "Failed to update collection", loading: false });
       }
     } catch (error) {
       set({ error: error.message || "An error occurred", loading: false });
