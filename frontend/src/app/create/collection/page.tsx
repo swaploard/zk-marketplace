@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 
 import { ArrowLeft, HelpCircle, ImageIcon, Edit } from "lucide-react";
@@ -11,6 +11,7 @@ import { z } from "zod";
 import useCollectionStore, {
   ICollectionStore,
 } from "../../../store/collectionSlice";
+import { useAccount } from "wagmi";
 
 const formSchema = z.object({
   contractName: z
@@ -44,9 +45,10 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function CreateNFTCollection() {
-  const { createCollection } = useCollectionStore(
+  const { collections, createCollection } = useCollectionStore(
     (state: ICollectionStore) => state,
   );
+  const { address } = useAccount();
 
   const {
     register,
@@ -96,13 +98,10 @@ export default function CreateNFTCollection() {
     formData.append("contractName", data.contractName);
     formData.append("tokenSymbol", data.tokenSymbol);
     formData.append("file", data.logoImage);
-    formData.append(
-      "walletAddress",
-      "0x704cA993Cb734408E7A2affa39e1EEaE78213340",
-    );
+    formData.append("walletAddress", address);
     createCollection(formData);
   };
-
+  useEffect(() => {}, [collections]);
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
@@ -167,6 +166,7 @@ export default function CreateNFTCollection() {
                     className="hidden"
                     accept="image/*"
                     onChange={handleFileInput}
+                    cy-input="collection-logo"
                   />
 
                   <div
@@ -230,6 +230,7 @@ export default function CreateNFTCollection() {
                     id="contract-name"
                     className="w-full bg-gray-900 border border-gray-800 rounded-lg p-3"
                     placeholder="Enter contract name"
+                    cy-input="collection-name"
                   />
                   {errors.contractName && (
                     <p className="text-red-500 text-sm">
@@ -251,6 +252,7 @@ export default function CreateNFTCollection() {
                     id="token-symbol"
                     className="w-full bg-gray-900 border border-gray-800 rounded-lg p-3"
                     placeholder="Enter token symbol"
+                    cy-input="collection-symbol"
                   />
                   {errors.tokenSymbol && (
                     <p className="text-red-500 text-sm">
@@ -268,6 +270,7 @@ export default function CreateNFTCollection() {
           <button
             type="submit"
             className="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded transition-colors"
+            cy-button="create-collection"
           >
             Continue
           </button>

@@ -255,6 +255,8 @@ export default function NFTForm() {
               <CollectionListPopover
                 PopoverTriggerElement={
                   <Button
+                    cy-test="popover-trigger-collection-list"
+                    type="button"
                     variant="outline"
                     className="w-full justify-between h-auto py-3 bg-zinc-900 border-zinc-800"
                   >

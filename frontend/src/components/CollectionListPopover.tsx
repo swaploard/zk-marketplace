@@ -28,6 +28,7 @@ export default function CollectionListPopover({
           href="create/collection"
           className="flex items-center gap-2 py-3 px-3 hover:bg-zinc-950"
           onClick={() => setOpen(false)}
+          cy-link="create-collection"
         >
           <div className="h-7 w-7 bg-zinc-800 flex items-center justify-center">
             <Plus className="h-4 w-4" />
@@ -41,7 +42,13 @@ export default function CollectionListPopover({
             onClick={() => handleCollectionClick(collection.groupId)}
           >
             <div className="h-14 w-14 flex items-center justify-center">
-              <Image src={collection.logoUrl} alt="" className="rounded-xl" />
+              <Image
+                src={collection.logoUrl}
+                alt=""
+                className="rounded-xl"
+                width={100}
+                height={100}
+              />
             </div>
             <span>{collection.contractName}</span>
           </div>

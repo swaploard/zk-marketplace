@@ -22,7 +22,7 @@ export default async function RootLayout({ children }) {
     <html lang="en">
       <body className={inter.className}>
         <Providers session={session} cookie={cookie}>
-          <Toaster position="top-right" />
+          <Toaster position="top-right" cy-toaster="global-toaster" />
           {children}
         </Providers>
       </body>

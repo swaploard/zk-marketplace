@@ -1,8 +1,12 @@
-// axios/config.ts
 import axios from "axios";
 import toast from "react-hot-toast";
 
-// Create a configured axios instance
+export type ApiResponse<T = unknown> = {
+  data: T;
+  message?: string;
+  error?: string;
+};
+
 export const axiosInstance = axios.create({
   timeout: 10000,
   withCredentials: true,
@@ -11,20 +15,35 @@ export const axiosInstance = axios.create({
   },
 });
 
-// Response interceptor
+interface ApiError {
+  message: string;
+  status?: number;
+  data?: unknown;
+}
+
 axiosInstance.interceptors.response.use(
   (response) => response,
-  (error) => {
+  (error: unknown) => {
+    const apiError: ApiError = {
+      message: "An unexpected error occurred",
+      status: 500,
+    };
+
     if (axios.isAxiosError(error)) {
-      console.error("API Error:", error.response?.data || error.message);
+      apiError.message = error.response?.data?.message || error.message;
+      apiError.status = error.response?.status;
+      apiError.data = error.response?.data;
 
       if (error.response?.status === 401) {
-        toast.error("Unauthorized! Please log in again.");
+        toast.error("Session expired - Please log in again");
+        // Consider adding redirect logic here
       }
-    } else {
-      console.error("Unexpected Error:", error);
+    } else if (error instanceof Error) {
+      apiError.message = error.message;
     }
 
-    return Promise.reject(error);
+    console.error("API Error:", apiError);
+    toast.error(apiError.message);
+    return Promise.reject(apiError);
   },
 );

@@ -13,12 +13,11 @@ import {
   LayoutPanelTop,
   Columns,
 } from "lucide-react";
-import { handlePromiseToaster } from "@/components/toaster/promise";
 
 import userSlice, { IUserStore } from "../../../store/userSlice";
 
 export default function Profile() {
-  const { user, error, updateUser } = userSlice((state: IUserStore) => state);
+  const { user, updateUser } = userSlice((state: IUserStore) => state);
   const [bannerImage, setBannerImage] = useState<string | null>(
     user?.profileBanner,
   );
@@ -70,19 +69,13 @@ export default function Profile() {
 
   const handleImageUpload = async (file: File, type: "profile" | "banner") => {
     if (!file || !user?.walletAddress) return;
-     console.log("handleImageUpload", file)
     const formData = new FormData();
     formData.append("walletAddress", user.walletAddress);
     formData.append(
       type === "profile" ? "profileImage" : "profileBanner",
       file,
     );
-    handlePromiseToaster(
-      updateUser(formData),
-      error,
-      "Uploading",
-      "Uploaded successfully",
-    );
+    updateUser(formData);
   };
 
   return (
