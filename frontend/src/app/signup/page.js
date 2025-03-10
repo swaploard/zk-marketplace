@@ -6,8 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Loader from "@/components/loader";
 export default function SignUp() {
   const router = useRouter();
-  const { isConnected } = useAccount();
-  const { openConnectModal } = useConnectModal();
+  const { isConnected, address } = useAccount();
+  const { openConnectModal, connectModalOpen } = useConnectModal();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
 
@@ -22,11 +22,20 @@ export default function SignUp() {
     if (!isConnected) {
       openConnectModal?.();
     }
-    if (isConnected) {
+    if (isConnected && address) {
       setLoading(true);
+      document.cookie = `walletAddress=${address}; path=/; SameSite=Lax`;
       router.replace(callbackUrl);
     }
-  }, [mounted, isConnected, router, callbackUrl, openConnectModal]);
+  }, [
+    address,
+    mounted,
+    isConnected,
+    router,
+    callbackUrl,
+    openConnectModal,
+    connectModalOpen,
+  ]);
 
   if (!mounted) return null;
 

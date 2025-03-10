@@ -62,22 +62,20 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: Request) {
   await connectMongo();
-
+  let collections;
   try {
     const { searchParams } = new URL(request.url);
     const walletAddress = searchParams.get("walletAddress");
 
-    if (!walletAddress) {
-      return NextResponse.json(
-        { error: "Wallet address is required" },
-        { status: 400 },
-      );
+    if (walletAddress) {
+      const user = await User.findOne({ walletAddress });
+      collections = await CollectionGroup.find({ User: user._id })
+        .sort({ createdAt: -1 })
+        .lean();
+    } else {
+      collections = await CollectionGroup.find().sort({ createdAt: -1 }).lean();
     }
-    const user = await User.findOne({ walletAddress });
 
-    const collections = await CollectionGroup.find({ User: user._id })
-      .sort({ createdAt: -1 })
-      .lean();
     return NextResponse.json(collections, { status: 200 });
   } catch (error) {
     console.error("Error fetching collections:", error);

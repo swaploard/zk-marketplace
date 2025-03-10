@@ -109,7 +109,7 @@ export default function CreateNFTCollection() {
     >
       <header className="fixed top-0 left-0 right-0 bg-black z-10 border-b border-gray-800 p-4">
         <div className="flex items-center justify-between p-4 ">
-          <Link href="#" className="flex items-center gap-2 text-white">
+          <Link href="/create" className="flex items-center gap-2 text-white">
             <ArrowLeft className="w-5 h-5" />
             <span className="text-lg font-medium">Create an NFT</span>
           </Link>

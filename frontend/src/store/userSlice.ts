@@ -8,7 +8,7 @@ export interface IUserStore {
   error: string | null;
   loading: boolean;
   getUser: () => void;
-  createUser: (user: FormData) => void;
+  createUser: (user: { walletAddress: string }) => void;
   updateUser: (user: FormData) => void;
 }
 

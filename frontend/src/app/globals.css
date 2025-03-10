@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+button.iekbcc0[data-testid="rk-account-button"] {
+  background: rgb(63, 63, 63) !important;
+  border-radius: 10px !important;
+  color: white !important;
+  opacity: 0.5 !important;
+}
+button.iekbcc0[data-testid="rk-connect-button"] {
+  background: rgb(63, 63, 63) !important;
+  opacity: 0.5 !important;
+}
+
 @layer base {
   body {
     @apply dark:bg-slate-800 bg-gray-50;

@@ -1,10 +1,10 @@
 "use client";
 import { Search, ShoppingCart } from "lucide-react";
-import { Button } from "./button";
-import { Input } from "./input";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
 import Link from "next/link";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
-import UserMenu from "./userMenu";
+import CustomConnectButton from "@/components/walletConnectButton";
+import UserMenu from "./ui/userMenu";
 
 function Navbar() {
   return (
@@ -49,20 +49,13 @@ function Navbar() {
 
       <div className="flex items-center gap-4">
         <div>
-          <ConnectButton
-            accountStatus={{
-              smallScreen: "avatar",
-              largeScreen: "full",
-            }}
-            chainStatus="icon"
-            showBalance={true}
-          />
+          <CustomConnectButton />
         </div>
         <UserMenu />
         <Button
           variant="ghost"
           size="icon"
-          className="text-blue-500 dark:text-gray-400 hover:text-white"
+          className="text-blue-500 dark:text-gray-400 hover:text-white opacity-50 p-5 bg-bgNav rounded-xl"
         >
           <ShoppingCart className="h-5 w-5" />
         </Button>

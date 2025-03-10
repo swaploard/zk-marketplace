@@ -1,5 +1,4 @@
 describe("Create NFT Collection Form", () => {
-  
   it("Visit create nft page and click choose collection and select create a new collection", () => {
     cy.setCookie("siwe-session", "true");
 

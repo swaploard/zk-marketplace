@@ -13,6 +13,7 @@ import { authenticationAdapter } from "@/utils/authenticationAdapter";
 import ReactQueryProvider from "./ReactQueryProvider";
 import { config } from "@/config";
 import useUserStore, { IUserStore } from "../../store/userSlice";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 type RainbowKitProviderProps = {
   children: ReactNode;
@@ -23,6 +24,7 @@ export default function RainbowKitProvider({
   children,
   cookie,
 }: RainbowKitProviderProps) {
+  const { openConnectModal } = useConnectModal();
   const { createUser } = useUserStore((state: IUserStore) => state);
   const { status, data } = useSession();
   const initialState = cookieToInitialState(config, cookie);
@@ -33,8 +35,10 @@ export default function RainbowKitProvider({
         walletAddress: data.user.walletAddress,
       };
       createUser(wallet);
+    } else {
+      openConnectModal?.();
     }
-  }, [data, status, createUser]);
+  }, [data, status, createUser, openConnectModal]);
 
   return (
     <WagmiProvider config={config} initialState={initialState}>

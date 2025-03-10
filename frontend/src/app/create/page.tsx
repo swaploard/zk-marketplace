@@ -17,7 +17,6 @@ import { useAccount } from "wagmi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { handlePromiseToaster } from "@/components/toaster/promise";
 import CollectionListPopover from "@/components/CollectionListPopover";
 
 import useAddFile, { IFileStore } from "../../store/fileAdd";
@@ -53,7 +52,7 @@ const nftSchema = z.object({
 type NFTFormData = z.infer<typeof nftSchema>;
 
 export default function NFTForm() {
-  const { error, addFile } = useAddFile((state: IFileStore) => state);
+  const { addFile } = useAddFile((state: IFileStore) => state);
   const { collections, getCollections } = useCollectionStore(
     (state: ICollectionStore) => state,
   );
@@ -129,7 +128,7 @@ export default function NFTForm() {
 
       const pinataOptions = JSON.stringify({ cidVersion: 1 });
       formData.append("pinataOptions", pinataOptions);
-      handlePromiseToaster(addFile(formData), error, "Adding New NFT", "Done");
+      addFile(formData);
     } catch (err) {
       console.error("Error uploading file:", err);
     }
@@ -141,7 +140,7 @@ export default function NFTForm() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="#">
+            <Link href="/">
               <ArrowLeft className="h-6 w-6" />
             </Link>
             <div className="space-y-1">

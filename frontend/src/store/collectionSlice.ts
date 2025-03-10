@@ -8,7 +8,7 @@ export interface ICollectionStore {
   collections: File[];
   error: string | null;
   loading: boolean;
-  getCollections: (walletAddress: string) => void;
+  getCollections: (walletAddress: string | null) => void;
   createCollection: (collection: FormData) => void;
 }
 

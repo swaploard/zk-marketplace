@@ -2,11 +2,10 @@
 import { useEffect } from "react";
 
 import Image from "next/image";
-import Navbar from "@/components/ui/navbar";
+import Navbar from "@/components/navbar";
 
 import { Badge } from "@/components/ui/badge";
 import useFilesList from "../store/filesList";
-import { handlePromiseToaster } from "@/components/toaster/promise";
 
 interface filesState {
   reset: () => void;
@@ -18,7 +17,7 @@ export default function Home() {
   const { error, getFiles } = useFilesList((state: filesState) => state);
 
   useEffect(() => {
-    handlePromiseToaster(getFiles, error, "hand On", "Done");
+    // getFiles()
   }, [error, getFiles]);
 
   return (
