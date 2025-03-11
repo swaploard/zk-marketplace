@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import CollectionListPopover from "@/components/CollectionListPopover";
 
-import useAddFile, { IFileStore } from "../../store/fileAdd";
+import useHandleFiles, { IFileStore } from "../../store/fileSlice";
 import useCollectionStore, {
   ICollectionStore,
 } from "../../store/collectionSlice";
@@ -52,7 +52,7 @@ const nftSchema = z.object({
 type NFTFormData = z.infer<typeof nftSchema>;
 
 export default function NFTForm() {
-  const { addFile } = useAddFile((state: IFileStore) => state);
+  const { addFile } = useHandleFiles((state: IFileStore) => state);
   const { collections, getCollections } = useCollectionStore(
     (state: ICollectionStore) => state,
   );

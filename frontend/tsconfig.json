@@ -29,7 +29,8 @@
     ".next/types/**/*.ts",
     "**/*.ts",
     "**/*.tsx",
-    "src/components/loader.jsx"
+    "src/components/loader.jsx",
+    "src/app/collection/list/[collectionId]"
   ],
   "exclude": ["node_modules"]
 }

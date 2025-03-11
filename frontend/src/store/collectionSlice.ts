@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { axiosInstance } from "@/axios/index";
-import { COLLECTION_PROFILE_URL } from "../ApiEndpoints/pinataEndpoints";
+import { COLLECTION_URL } from "../ApiEndpoints/pinataEndpoints";
 import { handlePromiseToaster } from "@/components/toaster/promise";
 import { collection } from "@/types";
 
@@ -21,7 +21,7 @@ const useCollectionStore = create<ICollectionStore>((set) => ({
     set({ loading: true, error: null });
     try {
       const response = await axiosInstance.get(
-        `${COLLECTION_PROFILE_URL}?walletAddress=${encodeURIComponent(walletAddress)}`,
+        `${COLLECTION_URL}?walletAddress=${encodeURIComponent(walletAddress)}`,
       );
 
       if (response.status === 200) {
@@ -38,7 +38,7 @@ const useCollectionStore = create<ICollectionStore>((set) => ({
     set({ loading: true, error: null });
     try {
       const promise = await axiosInstance
-        .post(COLLECTION_PROFILE_URL, collection, {
+        .post(COLLECTION_URL, collection, {
           responseType: "json",
         })
         .then((response) => {

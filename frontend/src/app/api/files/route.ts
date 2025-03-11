@@ -30,19 +30,22 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const hash = searchParams.get("hash");
-    const list = searchParams.get("list");
+    const collectionId = searchParams.get("collection");
 
-    if (hash) {
-      const url = await pinata.gateways.convert(hash);
-      return NextResponse.json({ url }, { status: 200 });
-    } else if (list) {
-      const files = await pinata.listFiles();
-
-      return NextResponse.json({ files: files }, { status: 200 });
+    try {
+      const collection = await pinata.listFiles().group(collectionId);
+      return NextResponse.json({ collection }, { status: 200 });
+    } catch (pinataError) {
+      console.error("Pinata API Error:", pinataError);
+      return NextResponse.json(
+        {
+          error: "Failed to fetch collection",
+          details:
+            pinataError.response?.data?.error?.message || pinataError.message,
+        },
+        { status: pinataError.response?.status || 500 },
+      );
     }
-
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   } catch (e) {
     console.error(e);
     return NextResponse.json(
