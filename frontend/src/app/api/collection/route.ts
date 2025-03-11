@@ -73,7 +73,7 @@ export async function GET(request: Request) {
         .sort({ createdAt: -1 })
         .lean();
     } else {
-      collections = await CollectionGroup.find().sort({ createdAt: -1 }).lean();
+      collections = await CollectionGroup.find().sort({ createdAt: -1 });
     }
 
     return NextResponse.json(collections, { status: 200 });

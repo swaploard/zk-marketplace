@@ -2,13 +2,13 @@ import { create } from "zustand";
 import { axiosInstance } from "@/axios/index";
 import { COLLECTION_PROFILE_URL } from "../ApiEndpoints/pinataEndpoints";
 import { handlePromiseToaster } from "@/components/toaster/promise";
-import { File } from "@/types";
+import { collection } from "@/types";
 
 export interface ICollectionStore {
-  collections: File[];
+  collections: collection[];
   error: string | null;
   loading: boolean;
-  getCollections: (walletAddress: string | null) => void;
+  getCollections: (walletAddress: string) => void;
   createCollection: (collection: FormData) => void;
 }
 
