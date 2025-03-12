@@ -6,7 +6,7 @@ interface IPriceCardNft {
   image: string;
 }
 
-export default function PriceCardNft({ image }: IPriceCardNft) {
+export default function ListingCard({ image }: IPriceCardNft) {
   return (
     <div className="flex items-center justify-center p-2 bg-black">
       <div className="max-w-md w-full bg-white rounded-lg overflow-hidden shadow-xl">
@@ -20,7 +20,6 @@ export default function PriceCardNft({ image }: IPriceCardNft) {
             />
           )}
         </div>
-
         <div className="p-2">
           <h1 className="text-base text-black font-bold mb-2">
             Human Unreadable #262

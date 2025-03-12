@@ -31,7 +31,26 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const collectionId = searchParams.get("collection");
+    const walletAddress = searchParams.get("walletAddress");
 
+    if (walletAddress) {
+      try {
+        const relatedNfts = await pinata
+          .listFiles()
+          .keyValue("walletAddress", walletAddress);
+        return NextResponse.json({ relatedNfts }, { status: 200 });
+      } catch (pinataError) {
+        console.error("Pinata API Error:", pinataError);
+        return NextResponse.json(
+          {
+            error: "Failed to fetch collection",
+            details:
+              pinataError.response?.data?.error?.message || pinataError.message,
+          },
+          { status: pinataError.response?.status || 500 },
+        );
+      }
+    }
     try {
       const collection = await pinata.listFiles().group(collectionId);
       return NextResponse.json({ collection }, { status: 200 });

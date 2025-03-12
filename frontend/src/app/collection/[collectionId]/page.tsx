@@ -22,7 +22,7 @@ export default function CollectionPage({ params }) {
   const profileFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    getFiles(unwrappedParams?.collectionId);
+    getFiles(unwrappedParams?.collectionId, null);
   }, [unwrappedParams.collectionId, getFiles]);
 
   const handleBannerClick = () => {

@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import {
   HeartHandshake,
@@ -14,10 +14,13 @@ import {
   Columns,
 } from "lucide-react";
 
-import userSlice, { IUserStore } from "../../../store/userSlice";
+import userSlice, { IUserStore } from "@/store/userSlice";
+import useHandleFiles, { IFileStore } from "@/store/fileSlice";
 
 export default function Profile() {
   const { user, updateUser } = userSlice((state: IUserStore) => state);
+  const { getFiles } = useHandleFiles((state: IFileStore) => state);
+
   const [bannerImage, setBannerImage] = useState<string | null>(
     user?.profileBanner,
   );
@@ -30,6 +33,9 @@ export default function Profile() {
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const profileFileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    getFiles(undefined, user.walletAddress);
+  }, [getFiles, user.walletAddress]);
   const handleBannerClick = () => {
     bannerFileInputRef.current?.click();
   };

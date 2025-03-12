@@ -41,6 +41,7 @@ const nftSchema = z.object({
     ),
   collection: z.string().min(1, "Collection is required"),
   name: z.string().min(1, "NFT name is required"),
+  walletAddress: z.string().min(1, "walletAddress is required"),
   supply: z.preprocess(
     (val) => Number(val),
     z.number().int().positive("Supply must be at least 1"),
@@ -67,6 +68,9 @@ export default function NFTForm() {
     formState: { errors },
   } = useForm<NFTFormData>({
     resolver: zodResolver(nftSchema),
+    defaultValues: {
+      walletAddress: address,
+    },
   });
 
   useEffect(() => {

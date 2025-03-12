@@ -34,7 +34,10 @@ export interface IFileStore {
   loading: boolean;
   error: string | null;
   addFile: (formData: FormData) => Promise<void>;
-  getFiles: (collection: string) => Promise<void>;
+  getFiles: (
+    collection?: string,
+    walletAddress?: string | null,
+  ) => Promise<void>;
   clearError: () => void;
 }
 
@@ -45,12 +48,12 @@ const useHandleFiles = create<IFileStore>((set) => ({
   loading: false,
   error: null,
 
-  getFiles: async (collection) => {
+  getFiles: async (collection, walletAddress) => {
     set({ loading: true, error: null });
 
     try {
       const response = await axiosInstance.get(
-        `${PIN_FILE_TO_IPFS_URL}?collection=${encodeURIComponent(collection)}`,
+        `${PIN_FILE_TO_IPFS_URL}?collection=${encodeURIComponent(collection)}&walletAddress=${encodeURIComponent(walletAddress)}`,
       );
 
       if (response.status >= 200 && response.status < 300) {
@@ -58,11 +61,8 @@ const useHandleFiles = create<IFileStore>((set) => ({
       } else {
         set({ error: "Failed to fetch files", loading: false });
       }
-    } catch (error: unknown) {
-      const errorMessage =
-        error.response?.data?.error?.message ||
-        error.message ||
-        "Failed to fetch files";
+    } catch (error) {
+      const errorMessage = error.message || "Failed to fetch files";
       set({ error: errorMessage, loading: false });
     }
   },
@@ -84,17 +84,14 @@ const useHandleFiles = create<IFileStore>((set) => ({
       if (response.status >= 200 && response.status < 300) {
         set((state) => ({
           file: response.data,
-          files: [...state.files, response.data], // Add new file to the list
+          files: [...state.files, response.data],
           loading: false,
         }));
       } else {
         set({ error: "Failed to upload file", loading: false });
       }
-    } catch (error: unknown) {
-      const errorMessage =
-        error.response?.data?.error?.message ||
-        error.message ||
-        "Failed to upload file";
+    } catch (error) {
+      const errorMessage = error.message || "Failed to upload file";
       set({ error: errorMessage, loading: false });
     }
   },
