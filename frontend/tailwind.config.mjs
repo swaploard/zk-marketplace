@@ -57,6 +57,21 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      keyframes: {
+        "fade-in-up": {
+              "0%": {
+                  opacity: 0,
+                  transform: "translate3d(0, 100%, 0)",
+              },
+              "100%": {
+                  opacity: 1,
+                  transform: "translate3d(0, 0, 0)",
+              },
+          },
+      },
+      animation:{
+        fadeInUp: 'fade-in-up 1s ease-in-out 0.25s 1',
+      }
     },
   },
   plugins: [require("tailwindcss-animate")],

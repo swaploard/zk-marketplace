@@ -3,8 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 const protectedRoutes = [
   "/create",
   "/create/collection",
+  "/collection/",
+  "/user/profile",
   "/api/files",
-  "user/profile",
+  "/api/profile",
 ];
 const publicRoutes = ["/login", "/signup"];
 
@@ -26,13 +28,12 @@ export default async function middleware(req: NextRequest) {
   if (!cookie && apiPath()) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (isProtectedRoute && !cookie) {
+  if (isProtectedRoute && !cookie.value) {
     const redirectUrl = new URL("/signup", req.url);
     redirectUrl.searchParams.set("callbackUrl", req.nextUrl.pathname);
 
     return NextResponse.redirect(redirectUrl);
   }
-
   if (isPublicRoute && cookie) {
     return NextResponse.redirect(new URL("/", req.url));
   }
@@ -41,5 +42,5 @@ export default async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/create", "/api/:path*"],
+  matcher: ["/", "/create/:path", "/user/:path", "/api/:path*", ],
 };

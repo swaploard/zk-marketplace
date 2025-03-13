@@ -4,8 +4,13 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useAccount } from "wagmi";
 import { useRouter, useSearchParams } from "next/navigation";
 import Loader from "@/components/loader";
+import userSlice, { IUserStore } from "../../store/userSlice";
+
 export default function SignUp() {
   const router = useRouter();
+
+  const { user, getUser } = userSlice((state: IUserStore) => state);
+
   const { isConnected, address } = useAccount();
   const { openConnectModal, connectModalOpen } = useConnectModal();
   const searchParams = useSearchParams();
@@ -19,14 +24,29 @@ export default function SignUp() {
   }, []);
 
   useEffect(() => {
-    if (!isConnected) {
-      openConnectModal?.();
-    }
-    if (isConnected && address) {
-      setLoading(true);
-      document.cookie = `walletAddress=${address}; path=/; SameSite=Lax`;
-      router.replace(callbackUrl);
-    }
+    if (!mounted) return;
+
+    const handleAuth = async () => {
+      if (!isConnected) {
+        openConnectModal?.();
+        return;
+      }
+
+      if (isConnected && address) {
+        try {
+          setLoading(true);
+          await getUser(address);
+          document.cookie = `walletAddress=${address}; path=/; SameSite=Lax`;
+          router.replace(callbackUrl);
+        } catch (error) {
+          console.error("Error fetching user:", error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    handleAuth();
   }, [
     address,
     mounted,
@@ -34,11 +54,16 @@ export default function SignUp() {
     router,
     callbackUrl,
     openConnectModal,
+    getUser,
     connectModalOpen,
+    user
   ]);
 
   if (!mounted) return null;
 
+  const handleDisconnect = () => {
+    console.log('Wallet disconnected via event listener');
+  };
   return (
     <div className="flex items-center justify-center h-screen">
       {loading ? <Loader /> : null}

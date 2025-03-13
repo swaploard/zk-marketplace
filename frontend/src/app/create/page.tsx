@@ -53,7 +53,7 @@ const nftSchema = z.object({
 type NFTFormData = z.infer<typeof nftSchema>;
 
 export default function NFTForm() {
-  const { addFile } = useHandleFiles((state: IFileStore) => state);
+  const { success, addFile } = useHandleFiles((state: IFileStore) => state);
   const { collections, getCollections } = useCollectionStore(
     (state: ICollectionStore) => state,
   );
@@ -65,6 +65,7 @@ export default function NFTForm() {
     register,
     handleSubmit,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<NFTFormData>({
     resolver: zodResolver(nftSchema),
@@ -132,7 +133,11 @@ export default function NFTForm() {
 
       const pinataOptions = JSON.stringify({ cidVersion: 1 });
       formData.append("pinataOptions", pinataOptions);
-      addFile(formData);
+      await addFile(formData);
+      if(success){
+        reset();
+        handleRemoveImage();
+      }
     } catch (err) {
       console.error("Error uploading file:", err);
     }
@@ -205,7 +210,7 @@ export default function NFTForm() {
                     <button
                       type="button"
                       onClick={(e) => {
-                        e.stopPropagation(); // Prevent triggering the file input
+                        e.stopPropagation();
                         handleRemoveImage();
                       }}
                       className="absolute top-2 right-2 bg-transparent rounded-full p-1 bg-slate-100 hover:bg-gray-600 transition-colors"

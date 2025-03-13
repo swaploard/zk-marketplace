@@ -5,6 +5,29 @@ import User from "@/models/User";
 import { saveFile } from "@/utils/routeHelper/saveImage";
 import { user } from "@/types";
 
+export async function GET(req: NextRequest) {
+  await connectMongo();
+  const { searchParams } = new URL(req.url);
+  try {
+    const walletAddress = searchParams.get("walletAddress");
+    if (!walletAddress) {
+      return NextResponse.json({ error: "walletAddress is required" }, { status: 400 });
+    }
+
+    const user = await User.findOne({ walletAddress });
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ user }, { status: 200 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
+  }
+}
+
 export async function PUT(req: NextRequest) {
   await connectMongo();
 

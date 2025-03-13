@@ -17,10 +17,13 @@ import { User } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useTheme } from "next-themes";
+import { useDisconnect } from "wagmi";
+
 import { Switch } from "./switch";
 import useUserStore, { IUserStore } from "@/store/userSlice";
 
 export default function UserMenu() {
+  const { disconnect } = useDisconnect();
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -36,6 +39,11 @@ export default function UserMenu() {
     setMounted(!mounted);
   };
 
+  const handleLogout = () => {
+    document.cookie = `walletAddress=;`;
+    disconnect();
+
+  }
   return (
     <DropdownMenu open={open} className="border border-gray-600">
       <DropdownMenuTrigger asChild onMouseEnter={() => setOpen(true)}>
@@ -106,7 +114,7 @@ export default function UserMenu() {
           </DropdownMenuShortcut>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={handleLogout}>
           Log out
           <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
         </DropdownMenuItem>

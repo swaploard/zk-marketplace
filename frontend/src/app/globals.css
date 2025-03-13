@@ -13,6 +13,9 @@ button.iekbcc0[data-testid="rk-connect-button"] {
   opacity: 0.5 !important;
 }
 
+/* div.ju367v8u{
+  display: none !important;
+} */
 @layer base {
   body {
     @apply dark:bg-slate-800 bg-gray-50;

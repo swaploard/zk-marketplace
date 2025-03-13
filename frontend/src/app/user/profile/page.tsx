@@ -16,11 +16,10 @@ import {
 
 import userSlice, { IUserStore } from "@/store/userSlice";
 import useHandleFiles, { IFileStore } from "@/store/fileSlice";
-
+import ListingCard from "@/components/listingCard";
 export default function Profile() {
   const { user, updateUser } = userSlice((state: IUserStore) => state);
-  const { getFiles } = useHandleFiles((state: IFileStore) => state);
-
+  const { files, getFiles } = useHandleFiles((state: IFileStore) => state);
   const [bannerImage, setBannerImage] = useState<string | null>(
     user?.profileBanner,
   );
@@ -36,6 +35,7 @@ export default function Profile() {
   useEffect(() => {
     getFiles(undefined, user.walletAddress);
   }, [getFiles, user.walletAddress]);
+
   const handleBannerClick = () => {
     bannerFileInputRef.current?.click();
   };
@@ -239,7 +239,7 @@ export default function Profile() {
                     : "0xCF00...A283"}
                 </span>
                 <span className="text-gray-600">•</span>
-                <span>{formatDateToMonthYear(user?.createdAt)}</span>
+                <span>{user?.createdAt && formatDateToMonthYear(user?.createdAt)}</span>
               </div>
             </div>
           </div>
@@ -339,63 +339,12 @@ export default function Profile() {
       </div>
 
       {/* Collection count */}
-      <div className="px-4 pb-2 text-sm">18 items</div>
-
-      {/* Grid of items */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 p-4">
-        {/* Item 1 */}
-        <div className="rounded-lg overflow-hidden bg-gray-900 hover:shadow-lg transition-shadow">
-          <div className="aspect-square relative">
-            <Image
-              src="/placeholder.svg?height=300&width=300"
-              alt="Sci-Fi Churches"
-              width={300}
-              height={300}
-              className="object-cover"
-            />
-          </div>
-          <div className="p-3">
-            <div className="text-xs text-gray-400">120</div>
-            <div className="font-medium truncate">Sci-Fi Churches</div>
-          </div>
+      <div className="px-4 pb-2 text-sm">{files.length} Items</div>
+      <section className="mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {files && files.map(file => <ListingCard image={file.ipfs_pin_hash} />)}
         </div>
-
-        {/* Item 2 */}
-        <div className="rounded-lg overflow-hidden bg-gray-900 hover:shadow-lg transition-shadow">
-          <div className="aspect-square relative bg-red-500">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-20 h-20 bg-black">
-                <div className="w-full h-2/3 flex">
-                  <div className="w-1/3 h-full bg-black"></div>
-                  <div className="w-1/3 h-full bg-black"></div>
-                  <div className="w-1/3 h-full bg-black"></div>
-                </div>
-                <div className="w-full h-1/3 bg-green-700"></div>
-              </div>
-            </div>
-          </div>
-          <div className="p-3">
-            <div className="text-xs text-gray-400">Somafm</div>
-            <div className="font-medium truncate">Oppanism</div>
-          </div>
-        </div>
-
-        {/* Items 3-6 (PLANET QU items) */}
-        {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className="rounded-lg overflow-hidden bg-gray-900 hover:shadow-lg transition-shadow"
-          >
-            <div className="aspect-square relative bg-gradient-to-br from-purple-500 via-pink-500 to-green-500">
-              {/* Placeholder for the art */}
-            </div>
-            <div className="p-3">
-              <div className="text-xs text-gray-400">44px44</div>
-              <div className="font-medium truncate">PLANET QU</div>
-            </div>
-          </div>
-        ))}
-      </div>
+      </section>
     </div>
   );
 }

@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  let files;
   try {
     const { searchParams } = new URL(request.url);
     const collectionId = searchParams.get("collection");
@@ -35,10 +36,10 @@ export async function GET(request: NextRequest) {
 
     if (walletAddress) {
       try {
-        const relatedNfts = await pinata
+        files = await pinata
           .listFiles()
           .keyValue("walletAddress", walletAddress);
-        return NextResponse.json({ relatedNfts }, { status: 200 });
+        return NextResponse.json({ files }, { status: 200 });
       } catch (pinataError) {
         console.error("Pinata API Error:", pinataError);
         return NextResponse.json(
@@ -52,8 +53,8 @@ export async function GET(request: NextRequest) {
       }
     }
     try {
-      const collection = await pinata.listFiles().group(collectionId);
-      return NextResponse.json({ collection }, { status: 200 });
+      files = await pinata.listFiles().group(collectionId);
+      return NextResponse.json({ files }, { status: 200 });
     } catch (pinataError) {
       console.error("Pinata API Error:", pinataError);
       return NextResponse.json(

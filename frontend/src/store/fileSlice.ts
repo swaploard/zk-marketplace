@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { axiosInstance } from "@/axios/index";
 import { PIN_FILE_TO_IPFS_URL } from "../ApiEndpoints/pinataEndpoints";
+import { handlePromiseToaster } from "@/components/toaster/promise";
 
 export interface PinataFile {
   id: string;
@@ -28,11 +29,11 @@ export interface PinataFile {
 }
 
 export interface IFileStore {
-  file: PinataFile | null;
   files: PinataFile[];
   previewUrl: string | null;
   loading: boolean;
   error: string | null;
+  success: boolean;
   addFile: (formData: FormData) => Promise<void>;
   getFiles: (
     collection?: string,
@@ -46,6 +47,7 @@ const useHandleFiles = create<IFileStore>((set) => ({
   files: [],
   previewUrl: null,
   loading: false,
+  success: false,
   error: null,
 
   getFiles: async (collection, walletAddress) => {
@@ -57,7 +59,7 @@ const useHandleFiles = create<IFileStore>((set) => ({
       );
 
       if (response.status >= 200 && response.status < 300) {
-        set({ files: response.data.collection || [], loading: false });
+        set({ files: response.data.files || [], loading: false, success: true });
       } else {
         set({ error: "Failed to fetch files", loading: false });
       }
@@ -67,29 +69,45 @@ const useHandleFiles = create<IFileStore>((set) => ({
     }
   },
 
-  addFile: async (formData: FormData) => {
+  addFile: async (formData) => {
     set({ loading: true, error: null });
-
     try {
-      const response = await axiosInstance.post(
-        PIN_FILE_TO_IPFS_URL,
-        formData,
-        {
+      const promise = await axiosInstance
+        .post(PIN_FILE_TO_IPFS_URL, formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        },
-      );
+          responseType: "json"
+        })
+        .then((response) => {
+          if (response.status === 200) {
+            set((state) => ({
+              files: [...state.files, response.data.files],
+              loading: false,
+              success: true
+            }));
+          } else {
+            set({ error: "Failed to upload file", loading: false });
+          }
+          return response;
+        });
 
-      if (response.status >= 200 && response.status < 300) {
-        set((state) => ({
-          file: response.data,
-          files: [...state.files, response.data],
-          loading: false,
-        }));
-      } else {
-        set({ error: "Failed to upload file", loading: false });
-      }
+        handlePromiseToaster(
+          promise,
+          {
+            title: "Creation Error",
+            message: "Failed to create collection",
+          },
+          {
+            title: "Creating Collection",
+            message: "Your collection is being created",
+          },
+          {
+            title: "Success!",
+            message: "Collection created successfully",
+          },
+        );
+
     } catch (error) {
       const errorMessage = error.message || "Failed to upload file";
       set({ error: errorMessage, loading: false });
