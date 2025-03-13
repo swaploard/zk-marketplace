@@ -20,7 +20,9 @@ const useUserStore = create((set) => ({
   getUser: async (walletAddress) => {
     set({ loading: true, error: null });
     try {
-      const response = await axiosInstance.get(`${USER_PROFILE_URL}?walletAddress=${encodeURIComponent(walletAddress)}`);
+      const response = await axiosInstance.get(
+        `${USER_PROFILE_URL}?walletAddress=${encodeURIComponent(walletAddress)}`,
+      );
       if (response.status === 200) {
         set({ user: response.data, loading: false });
       } else {
@@ -29,7 +31,7 @@ const useUserStore = create((set) => ({
     } catch (error) {
       set({ error: error.message || "An error occurred", loading: false });
     }
-    return
+    return;
   },
 
   createUser: async (user) => {

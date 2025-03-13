@@ -42,8 +42,7 @@ export default function UserMenu() {
   const handleLogout = () => {
     document.cookie = `walletAddress=;`;
     disconnect();
-
-  }
+  };
   return (
     <DropdownMenu open={open} className="border border-gray-600">
       <DropdownMenuTrigger asChild onMouseEnter={() => setOpen(true)}>

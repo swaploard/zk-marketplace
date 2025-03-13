@@ -239,7 +239,9 @@ export default function Profile() {
                     : "0xCF00...A283"}
                 </span>
                 <span className="text-gray-600">•</span>
-                <span>{user?.createdAt && formatDateToMonthYear(user?.createdAt)}</span>
+                <span>
+                  {user?.createdAt && formatDateToMonthYear(user?.createdAt)}
+                </span>
               </div>
             </div>
           </div>
@@ -342,7 +344,10 @@ export default function Profile() {
       <div className="px-4 pb-2 text-sm">{files.length} Items</div>
       <section className="mb-12">
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {files && files.map(file => <ListingCard image={file.ipfs_pin_hash} />)}
+          {files &&
+            files.map((file) => (
+              <ListingCard key={file.id} image={file.ipfs_pin_hash} />
+            ))}
         </div>
       </section>
     </div>

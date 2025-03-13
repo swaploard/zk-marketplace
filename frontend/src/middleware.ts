@@ -12,8 +12,8 @@ const publicRoutes = ["/login", "/signup"];
 
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
-  const cookie = req.cookies.get("walletAddress");
-
+  const walletAddress = req.cookies.get("walletAddress")?.value;
+  const session = req.cookies.get("next-auth.session-token")?.value;
   const isProtectedRoute = protectedRoutes.includes(path);
   const isPublicRoute = publicRoutes.includes(path);
 
@@ -25,16 +25,16 @@ export default async function middleware(req: NextRequest) {
     }
   };
 
-  if (!cookie && apiPath()) {
+  if (!walletAddress && apiPath()) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (isProtectedRoute && !cookie.value) {
+  if (isProtectedRoute && !walletAddress && !session) {
     const redirectUrl = new URL("/signup", req.url);
     redirectUrl.searchParams.set("callbackUrl", req.nextUrl.pathname);
 
     return NextResponse.redirect(redirectUrl);
   }
-  if (isPublicRoute && cookie) {
+  if (isPublicRoute && walletAddress) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
@@ -42,5 +42,5 @@ export default async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/create/:path", "/user/:path", "/api/:path*", ],
+  matcher: ["/", "/create/:path", "/user/:path", "/api/:path*"],
 };

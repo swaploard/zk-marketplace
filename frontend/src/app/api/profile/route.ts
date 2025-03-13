@@ -11,7 +11,10 @@ export async function GET(req: NextRequest) {
   try {
     const walletAddress = searchParams.get("walletAddress");
     if (!walletAddress) {
-      return NextResponse.json({ error: "walletAddress is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "walletAddress is required" },
+        { status: 400 },
+      );
     }
 
     const user = await User.findOne({ walletAddress });
@@ -21,6 +24,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ user }, { status: 200 });
   } catch (error) {
+    console.error("Error fetching user:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 },

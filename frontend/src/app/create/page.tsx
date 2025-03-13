@@ -134,7 +134,7 @@ export default function NFTForm() {
       const pinataOptions = JSON.stringify({ cidVersion: 1 });
       formData.append("pinataOptions", pinataOptions);
       await addFile(formData);
-      if(success){
+      if (success) {
         reset();
         handleRemoveImage();
       }

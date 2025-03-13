@@ -59,7 +59,11 @@ const useHandleFiles = create<IFileStore>((set) => ({
       );
 
       if (response.status >= 200 && response.status < 300) {
-        set({ files: response.data.files || [], loading: false, success: true });
+        set({
+          files: response.data.files || [],
+          loading: false,
+          success: true,
+        });
       } else {
         set({ error: "Failed to fetch files", loading: false });
       }
@@ -77,14 +81,14 @@ const useHandleFiles = create<IFileStore>((set) => ({
           headers: {
             "Content-Type": "multipart/form-data",
           },
-          responseType: "json"
+          responseType: "json",
         })
         .then((response) => {
           if (response.status === 200) {
             set((state) => ({
               files: [...state.files, response.data.files],
               loading: false,
-              success: true
+              success: true,
             }));
           } else {
             set({ error: "Failed to upload file", loading: false });
@@ -92,22 +96,21 @@ const useHandleFiles = create<IFileStore>((set) => ({
           return response;
         });
 
-        handlePromiseToaster(
-          promise,
-          {
-            title: "Creation Error",
-            message: "Failed to create collection",
-          },
-          {
-            title: "Creating Collection",
-            message: "Your collection is being created",
-          },
-          {
-            title: "Success!",
-            message: "Collection created successfully",
-          },
-        );
-
+      handlePromiseToaster(
+        promise,
+        {
+          title: "Creation Error",
+          message: "Failed to create collection",
+        },
+        {
+          title: "Creating Collection",
+          message: "Your collection is being created",
+        },
+        {
+          title: "Success!",
+          message: "Collection created successfully",
+        },
+      );
     } catch (error) {
       const errorMessage = error.message || "Failed to upload file";
       set({ error: errorMessage, loading: false });

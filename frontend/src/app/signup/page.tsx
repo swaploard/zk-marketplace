@@ -12,7 +12,7 @@ export default function SignUp() {
   const { user, getUser } = userSlice((state: IUserStore) => state);
 
   const { isConnected, address } = useAccount();
-  const { openConnectModal, connectModalOpen } = useConnectModal();
+  const { openConnectModal } = useConnectModal();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
 
@@ -55,15 +55,11 @@ export default function SignUp() {
     callbackUrl,
     openConnectModal,
     getUser,
-    connectModalOpen,
-    user
+    user,
   ]);
 
   if (!mounted) return null;
 
-  const handleDisconnect = () => {
-    console.log('Wallet disconnected via event listener');
-  };
   return (
     <div className="flex items-center justify-center h-screen">
       {loading ? <Loader /> : null}
