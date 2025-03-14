@@ -8,9 +8,9 @@ interface IPriceCardNft {
 
 export default function ListingCard({ file, handleQuickList }: IPriceCardNft) {
   return (
-    <div className="flex items-center justify-center p-2 bg-red">
-      <div className="max-w-md w-full bg-white rounded-lg overflow-hidden shadow-xl group relative">
-        <div className="relative aspect-square w-full">
+    <div className="flex items-center justify-center p-2">
+      <div className="max-w-md w-full bg-white rounded overflow-hidden shadow-xl group relative">
+        <div className="relative aspect-square w-full flex-shrink-0">
           {file.ipfs_pin_hash && (
             <Image
               src={`https://silver-rainy-chipmunk-430.mypinata.cloud/ipfs/${file.ipfs_pin_hash}`}
@@ -21,12 +21,11 @@ export default function ListingCard({ file, handleQuickList }: IPriceCardNft) {
           )}
         </div>
 
-        <div className="p-2 relative">
-          <h1 className="text-base text-black font-bold mb-2">
-            Human Unreadable #262
+        <div className="p-2 flex-grow relative min-h-[60px]">
+          <h1 className="text-base text-black font-bold mb-1 line-clamp-2 min-h-[40px]">
+          {file.metadata.keyvalues.name && file.metadata.keyvalues.name}
           </h1>
-          <p className="text-base text-black font-semibold">3.9 ETH</p>
-
+         <p className="text-sm text-black font-normal min-h-[20px]">{file.metadata.keyvalues.amount && `${file.metadata.keyvalues.amount} ETH`}</p>
           {/* Animated Button Container */}
           <div
             className="absolute bottom-0 left-0 right-0 h-0 overflow-hidden 

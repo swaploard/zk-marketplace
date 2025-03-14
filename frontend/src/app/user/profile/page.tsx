@@ -19,12 +19,14 @@ import userSlice, { IUserStore } from "@/store/userSlice";
 import useHandleFiles from "@/store/fileSlice";
 import ListingCard from "@/components/listingCard";
 import QuickListingModal from "@/components/quickListModal/index";
+import ethPriceConvertor from "@/components/ethPriceConvertor";
 export default function Profile() {
   const { user, updateUser } = userSlice((state: IUserStore) => state);
   const { files, getFiles, updateFiles } = useHandleFiles((state: IFileStore) => state);
   const [bannerImage, setBannerImage] = useState<string | null>(
     user?.profileBanner,
   );
+  const { handleEthToUsd } = ethPriceConvertor();
   const [showEditButton, setShowEditButton] = useState(false);
   const bannerFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -349,7 +351,7 @@ export default function Profile() {
         </div>
       </div>
         {qListingModal && (
-          <QuickListingModal setClose={setQListingModal} updateFiles={updateFiles} fileForListing={fileForListing} />
+          <QuickListingModal setClose={setQListingModal} updateFiles={updateFiles} fileForListing={fileForListing} handleEthToUsd={handleEthToUsd} />
         )}
       {/* Collection count */}
       <div className="px-4 pb-2 text-sm">{files.length} Items</div>

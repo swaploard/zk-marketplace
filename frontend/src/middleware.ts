@@ -13,7 +13,6 @@ const publicRoutes = ["/login", "/signup"];
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
   const walletAddress = req.cookies.get("walletAddress")?.value;
-  const session = req.cookies.get("next-auth.session-token")?.value;
   const isProtectedRoute = protectedRoutes.includes(path);
   const isPublicRoute = publicRoutes.includes(path);
 
@@ -28,7 +27,8 @@ export default async function middleware(req: NextRequest) {
   if (!walletAddress && apiPath()) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (isProtectedRoute && !walletAddress && !session) {
+
+  if (isProtectedRoute && !walletAddress) {
     const redirectUrl = new URL("/signup", req.url);
     redirectUrl.searchParams.set("callbackUrl", req.nextUrl.pathname);
 

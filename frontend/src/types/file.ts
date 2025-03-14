@@ -31,6 +31,11 @@ export interface PinataFile {
       supply: number;
       description: string;
       externalLink: string;
+      amount: number;
+      duration: string;
+      endDate: string;
+      endTime: string;
+      walletAddress: string;
     };
   };
   regions: {

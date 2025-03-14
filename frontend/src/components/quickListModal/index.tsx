@@ -28,13 +28,15 @@ const formSchema = z.object({
 
 interface QuickListingModalProps {
   setClose: (value: boolean) => void;
-  updateFiles: (body: Metadata) => void
+  updateFiles: (body: Metadata) => void;
+  handleEthToUsd: (value: number) => number;
   fileForListing: PinataFile;
 }
 
 export default function QuickListingModal({
   setClose,
   updateFiles,
+  handleEthToUsd,
   fileForListing,
 }: QuickListingModalProps) {
   const [endDate, setEndDate] = useState("");
@@ -83,7 +85,6 @@ export default function QuickListingModal({
   };
 
   useEffect(() => {
-    // Calculate initial date/time when component mounts
     calculateEndDateTime(form.getValues("duration"));
     
     const subscription = form.watch((value, { name }) => {
@@ -185,6 +186,7 @@ export default function QuickListingModal({
                         ETH
                       </div>
                     </div>
+                    {form.watch("amount") && <span className="text-sm text-gray-400">{handleEthToUsd(Number(form.watch("amount")))} USD</span>}
                     {form.formState.errors.amount && (
                       <p className="text-red-500 text-sm mt-1">
                         {form.formState.errors.amount.message}
