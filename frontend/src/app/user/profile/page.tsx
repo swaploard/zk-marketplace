@@ -13,13 +13,15 @@ import {
   LayoutPanelTop,
   Columns,
 } from "lucide-react";
+import {IFileStore, PinataFile} from "@/types"
 
 import userSlice, { IUserStore } from "@/store/userSlice";
-import useHandleFiles, { IFileStore } from "@/store/fileSlice";
+import useHandleFiles from "@/store/fileSlice";
 import ListingCard from "@/components/listingCard";
+import QuickListingModal from "@/components/quickListModal/index";
 export default function Profile() {
   const { user, updateUser } = userSlice((state: IUserStore) => state);
-  const { files, getFiles } = useHandleFiles((state: IFileStore) => state);
+  const { files, getFiles, updateFiles } = useHandleFiles((state: IFileStore) => state);
   const [bannerImage, setBannerImage] = useState<string | null>(
     user?.profileBanner,
   );
@@ -31,6 +33,9 @@ export default function Profile() {
   );
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const profileFileInputRef = useRef<HTMLInputElement>(null);
+
+  const [qListingModal, setQListingModal] = useState(false);
+  const [fileForListing, setFileForListing] = useState<PinataFile>();
 
   useEffect(() => {
     getFiles(undefined, user.walletAddress);
@@ -84,6 +89,10 @@ export default function Profile() {
     updateUser(formData);
   };
 
+  const handleQuickListing = (file) => {
+    setQListingModal(!qListingModal)
+    setFileForListing(file)
+  };
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
       {/* Banner */}
@@ -339,14 +348,16 @@ export default function Profile() {
           </div>
         </div>
       </div>
-
+        {qListingModal && (
+          <QuickListingModal setClose={setQListingModal} updateFiles={updateFiles} fileForListing={fileForListing} />
+        )}
       {/* Collection count */}
       <div className="px-4 pb-2 text-sm">{files.length} Items</div>
       <section className="mb-12">
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {files &&
             files.map((file) => (
-              <ListingCard key={file.id} image={file.ipfs_pin_hash} />
+              <ListingCard key={file.id} file={file} handleQuickList={handleQuickListing} />
             ))}
         </div>
       </section>

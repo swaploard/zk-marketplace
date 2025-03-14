@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { pinata } from "../../../utils/config/pinata";
+import connectMongo from "@/lib/mongodb";
 
-// Upload a new file
+connectMongo();
 export async function POST(request: NextRequest) {
   try {
     const data = await request.formData();
@@ -75,7 +76,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Delete a file by IPFS hash
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -93,6 +93,32 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 },
+    );
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const { cid, name, keyValues } = await request.json();
+    if (!cid || !name) {
+      return NextResponse.json(
+        { error: "Missing required parameters (CID or name)" },
+        { status: 400 }
+      );
+    }
+
+    const updateData = await pinata.updateMetadata({
+      cid,
+      keyValues: keyValues || {},
+      name
+    });
+
+    return NextResponse.json(updateData, { status: 200 });
+  } catch (error) {
+    console.error("Error updating metadata:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
     );
   }
 }

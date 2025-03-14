@@ -2,45 +2,8 @@ import { create } from "zustand";
 import { axiosInstance } from "@/axios/index";
 import { PIN_FILE_TO_IPFS_URL } from "../ApiEndpoints/pinataEndpoints";
 import { handlePromiseToaster } from "@/components/toaster/promise";
+import {IFileStore} from "@/types"
 
-export interface PinataFile {
-  id: string;
-  ipfs_pin_hash: string;
-  size: number;
-  user_id: string;
-  date_pinned: string;
-  date_unpinned: string | null;
-  metadata: {
-    name: string;
-    keyvalues: {
-      name: string;
-      supply: number;
-      description: string;
-      externalLink: string;
-    };
-  };
-  regions: {
-    regionId: string;
-    currentReplicationCount: number;
-    desiredReplicationCount: number;
-  }[];
-  mime_type: string;
-  number_of_files: number;
-}
-
-export interface IFileStore {
-  files: PinataFile[];
-  previewUrl: string | null;
-  loading: boolean;
-  error: string | null;
-  success: boolean;
-  addFile: (formData: FormData) => Promise<void>;
-  getFiles: (
-    collection?: string,
-    walletAddress?: string | null,
-  ) => Promise<void>;
-  clearError: () => void;
-}
 
 const useHandleFiles = create<IFileStore>((set) => ({
   file: null,
@@ -114,6 +77,41 @@ const useHandleFiles = create<IFileStore>((set) => ({
     } catch (error) {
       const errorMessage = error.message || "Failed to upload file";
       set({ error: errorMessage, loading: false });
+    }
+  },
+
+  updateFiles: async (body) => {
+    set({ loading: true, error: null });
+    try {
+      const promise = axiosInstance.put(PIN_FILE_TO_IPFS_URL,  JSON.stringify(body));
+      const response = await promise;
+      
+      if (response.status === 200) {
+        set({ loading: false, success: true });
+      } else {
+        set({ error: "Failed to update metadata", loading: false });
+      }
+  
+      // Consider moving this to a separate utility function
+      handlePromiseToaster(
+        promise,
+        {
+          title: "Update Error",
+          message: "Failed to update collection metadata",
+        },
+        {
+          title: "Updating Metadata",
+          message: "Your collection metadata is being updated",
+        },
+        {
+          title: "Success!",
+          message: "Metadata updated successfully",
+        },
+      );
+      } catch (error) {
+      const errorMessage = error.response?.data?.error || error.message || "Failed to update metadata";
+      set({ error: errorMessage, loading: false });
+      throw error;
     }
   },
 
