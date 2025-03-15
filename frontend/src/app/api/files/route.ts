@@ -53,19 +53,22 @@ export async function GET(request: NextRequest) {
         );
       }
     }
-    try {
-      files = await pinata.listFiles().group(collectionId);
-      return NextResponse.json({ files }, { status: 200 });
-    } catch (pinataError) {
-      console.error("Pinata API Error:", pinataError);
-      return NextResponse.json(
-        {
-          error: "Failed to fetch collection",
-          details:
-            pinataError.response?.data?.error?.message || pinataError.message,
-        },
-        { status: pinataError.response?.status || 500 },
-      );
+
+    if(collectionId){
+      try {
+        files = await pinata.listFiles().group(collectionId);
+        return NextResponse.json({ files }, { status: 200 });
+      } catch (pinataError) {
+        console.error("Pinata API Error:", pinataError);
+        return NextResponse.json(
+          {
+            error: "Failed to fetch collection",
+            details:
+              pinataError.response?.data?.error?.message || pinataError.message,
+          },
+          { status: pinataError.response?.status || 500 },
+        );
+      }
     }
   } catch (e) {
     console.error(e);

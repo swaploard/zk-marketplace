@@ -14,15 +14,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { X, ExternalLink, HelpCircle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { X, HelpCircle, ChevronUp } from "lucide-react";
 import Image from "next/image";
 import { PinataFile, Metadata } from "@/types";
+import { Switch } from "@radix-ui/react-switch";
 
 const formSchema = z.object({
-  amount: z.string().refine(
-    (val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0,
-    { message: "Amount must be a positive number" }
-  ),
+  amount: z
+    .string()
+    .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
+      message: "Amount must be a positive number",
+    }),
   duration: z.enum(["1 day", "3 days", "1 week", "1 month", "3 months"]),
 });
 
@@ -86,7 +89,7 @@ export default function QuickListingModal({
 
   useEffect(() => {
     calculateEndDateTime(form.getValues("duration"));
-    
+
     const subscription = form.watch((value, { name }) => {
       if (name === "duration" || !name) {
         calculateEndDateTime(value.duration || "1 day");
@@ -96,7 +99,6 @@ export default function QuickListingModal({
   }, [form.watch]);
 
   const onSubmit = (data: z.infer<typeof formSchema>) => {
-
     const metadata = {
       cid: fileForListing.ipfs_pin_hash,
       keyValues: {
@@ -104,96 +106,164 @@ export default function QuickListingModal({
         duration: data.duration,
         endDate: endDate,
         endTime: endTime,
-        ...fileForListing.metadata.keyvalues
+        ...fileForListing.metadata.keyvalues,
       },
-      name: fileForListing.metadata.name
-    }
-    updateFiles(metadata)
-    console.log("metadata", metadata)
+      name: fileForListing.metadata.name,
+    };
+    updateFiles(metadata);
+    console.log("metadata", metadata);
   };
 
   return (
     <div className="flex items-center justify-center bg-black/80 z-50 min-w-full min-h-full fixed inset-0">
-      <Card className="w-full max-w-md bg-[#1a1a1a] text-white border-none shadow-xl">
-        <div className="flex items-center justify-between p-4 border-b border-gray-800">
-          <h2 className="text-xl font-semibold">Quick list</h2>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-gray-400 hover:text-white"
-            >
-              <ExternalLink className="w-5 h-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-gray-400 hover:text-white"
-              onClick={() => setClose(false)}
-            >
-              <X className="w-5 h-5" />
-            </Button>
+      <Tabs defaultValue="listing">
+        <Card className="w-full max-w-md bg-[#1a1a1a] text-white border-none shadow-xl">
+          <div className="flex items-center justify-between p-4 border-b border-gray-800">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="listing">Quick list</TabsTrigger>
+              <TabsTrigger value="auction">Auction</TabsTrigger>
+            </TabsList>
+            <div className="flex items-center">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-gray-400 hover:text-white"
+                onClick={() => setClose(false)}
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
           </div>
-        </div>
+          <div className="flex items-center gap-4 p-4">
+            <div className="relative w-16 h-16 overflow-hidden rounded-lg">
+              {fileForListing.ipfs_pin_hash && (
+                <Image
+                  src={`https://silver-rainy-chipmunk-430.mypinata.cloud/ipfs/${fileForListing.ipfs_pin_hash}`}
+                  alt="NFT Image"
+                  width={64}
+                  height={64}
+                  className="object-cover bg-blue-600"
+                />
+              )}
+            </div>
+            <div>
+              <h3 className="text-lg font-medium">
+                {fileForListing.metadata.keyvalues.name}
+              </h3>
+              <p className="text-sm text-gray-400">based editions</p>
+            </div>
+            <div className="ml-auto text-right">
+              <p className="text-sm text-gray-400">Listing price per item</p>
+              <p className="font-medium">-- ETH</p>
+            </div>
+          </div>
+          <TabsContent value="listing">
+            <CardContent className="p-0">
+              <form onSubmit={form.handleSubmit(onSubmit)}>
+                <div className="p-4 space-y-6">
+                  {/* NFT Item */}
 
-        <CardContent className="p-0">
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <div className="p-4 space-y-6">
-              {/* NFT Item */}
-              <div className="flex items-center gap-4">
-                <div className="relative w-16 h-16 overflow-hidden rounded-lg">
-                  {fileForListing.ipfs_pin_hash && (
-                    <Image
-                      src={`https://silver-rainy-chipmunk-430.mypinata.cloud/ipfs/${fileForListing.ipfs_pin_hash}`}
-                      alt="NFT Image"
-                      width={64}
-                      height={64}
-                      className="object-cover bg-blue-600"
-                    />
-                  )}
-                </div>
-                <div>
-                  <h3 className="text-lg font-medium">
-                    {fileForListing.metadata.keyvalues.name}
-                  </h3>
-                  <p className="text-sm text-gray-400">based editions</p>
-                </div>
-                <div className="ml-auto text-right">
-                  <p className="text-sm text-gray-400">Listing price per item</p>
-                  <p className="font-medium">-- ETH</p>
-                </div>
-              </div>
-
-              {/* Price Setting */}
-              <div>
-                <div className="flex items-center gap-1 mb-2">
-                  <h3 className="text-base font-medium">Set a price per item</h3>
-                  <Button variant="ghost" size="icon" className="w-5 h-5 p-0">
-                    <HelpCircle className="w-4 h-4 text-gray-400" />
-                  </Button>
-                </div>
-
-                <div className="space-y-4">
+                  {/* Price Setting */}
                   <div>
-                    <p className="mb-2 text-base font-medium">Starting price</p>
-                    <div className="flex">
-                      <Input
-                        placeholder="Amount"
-                        className="rounded-r-none bg-[#2a2a2a] border-gray-700 focus-visible:ring-0 focus-visible:border-gray-500"
-                        {...form.register("amount")}
-                      />
-                      <div className="flex items-center justify-center px-4 font-medium bg-[#2a2a2a] border border-l-0 border-gray-700 rounded-r-md">
-                        ETH
+                    <div className="flex items-center gap-1 mb-2">
+                      <h3 className="text-base font-medium">
+                        Set a price per item
+                      </h3>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="w-5 h-5 p-0"
+                      >
+                        <HelpCircle className="w-4 h-4 text-gray-400" />
+                      </Button>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <p className="mb-2 text-base font-medium">
+                          Starting price
+                        </p>
+                        <div className="flex">
+                          <Input
+                            placeholder="Amount"
+                            className="rounded-r-none bg-[#2a2a2a] border-gray-700 focus-visible:ring-0 focus-visible:border-gray-500"
+                            {...form.register("amount")}
+                          />
+                          <div className="flex items-center justify-center px-4 font-medium bg-[#2a2a2a] border border-l-0 border-gray-700 rounded-r-md">
+                            ETH
+                          </div>
+                        </div>
+                        {form.watch("amount") && (
+                          <span className="text-sm text-gray-400">
+                            {handleEthToUsd(Number(form.watch("amount")))} USD
+                          </span>
+                        )}
+                        {form.formState.errors.amount && (
+                          <p className="text-red-500 text-sm mt-1">
+                            {form.formState.errors.amount.message}
+                          </p>
+                        )}
                       </div>
                     </div>
-                    {form.watch("amount") && <span className="text-sm text-gray-400">{handleEthToUsd(Number(form.watch("amount")))} USD</span>}
-                    {form.formState.errors.amount && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {form.formState.errors.amount.message}
-                      </p>
-                    )}
+                  </div>
+                </div>
+
+                {/* Complete Button */}
+                <div className="p-4 pt-2">
+                  <Button
+                    type="submit"
+                    className="w-full py-6 text-base font-medium bg-blue-600 hover:bg-blue-700"
+                  >
+                    Complete listing
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </TabsContent>
+          <TabsContent value="auction" className="">
+            <CardContent className="p-0 max-h-96 overflow-y-auto">
+              <div className="max-w-md mx-auto p-6 space-y-6">
+                <div className="space-y-4">
+                  {/* Method Selection */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium">Method</label>
+                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <Select defaultValue="highest-bidder">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select method" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-black">
+                        <SelectItem value="top-bidder">
+                          Sell to highest bidder
+                        </SelectItem>
+                        <SelectItem value="highest-bidder">
+                          Sell with declining price
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
+                  {/* Starting Price */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium">
+                        Starting price
+                      </label>
+                    </div>
+                    <div className="relative">
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center text-sm text-muted-foreground">
+                        WETH
+                      </div>
+                      <Input className="pl-16" defaultValue="0.04" />
+                    </div>
+                    <div className="text-xs text-right text-muted-foreground">
+                      $17.58 Total
+                    </div>
+                  </div>
+
+                  {/* Duration */}
                   <div>
                     <p className="mb-2 text-base font-medium">Duration</p>
                     <div className="flex">
@@ -230,22 +300,46 @@ export default function QuickListingModal({
                       />
                     </div>
                   </div>
-                </div>
-              </div>
-            </div>
 
-            {/* Complete Button */}
-            <div className="p-4 pt-2">
-              <Button
-                type="submit"
-                className="w-full py-6 text-base font-medium bg-blue-600 hover:bg-blue-700"
-              >
-                Complete listing
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+                  {/* Include Reserve Price */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">
+                        Include reserve price
+                      </span>
+                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <Switch className="bg-white cursor-pointer"/>
+                  </div>
+
+                  {/* Fewer Options */}
+                  <button className="flex items-center text-sm text-primary">
+                    Fewer options
+                    <ChevronUp className="ml-1 h-4 w-4" />
+                  </button>
+
+                  {/* Fees */}
+                  <div className="space-y-2 pt-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Fees</span>
+                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Service Fee</span>
+                      <span>2.5%</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Complete Listing Button */}
+                <Button className="w-full bg-slate-700 hover:bg-slate-600z text-primary-foreground">
+                  Complete listing
+                </Button>
+              </div>
+            </CardContent>
+          </TabsContent>
+        </Card>
+      </Tabs>
     </div>
   );
 }
