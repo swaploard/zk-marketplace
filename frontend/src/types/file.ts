@@ -5,6 +5,7 @@ export interface collection {
   groupId: string;
   logoUrl: string;
   User: string;
+  contractAddress: string;
   createdAt: string;
   __v: number;
 }

@@ -1,17 +1,33 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-
-import { ArrowLeft, HelpCircle, ImageIcon, Edit } from "lucide-react";
+import {
+  ArrowLeft,
+  HelpCircle,
+  ImageIcon,
+  Edit,
+  Info,
+  Ellipsis,
+} from "lucide-react";
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import AdvancedERC1155 from "@/utils/contracts/AdvancedERC1155.json";
+import { sepolia, amoy } from "@/utils/constants/chainID";
 import useCollectionStore, {
   ICollectionStore,
 } from "../../../store/collectionSlice";
-import { useAccount } from "wagmi";
+import {
+  useSendTransaction,
+  useAccount,
+  useSwitchChain,
+  usePublicClient,
+} from "wagmi";
+import { encodeDeployData, Abi, ContractConstructorArgs } from "viem";
 
 const formSchema = z.object({
   contractName: z
@@ -45,11 +61,22 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function CreateNFTCollection() {
-  const { collections, createCollection } = useCollectionStore(
-    (state: ICollectionStore) => state,
-  );
-  const { address } = useAccount();
-
+  const { deleteCollection, updateCollection, createCollection, getLatestCollection } =
+    useCollectionStore((state: ICollectionStore) => state);
+  const publicClient = usePublicClient();
+  const { address, chain } = useAccount();
+  const { sendTransaction } = useSendTransaction();
+  // const {
+  //   isLoading: isConfirming,
+  //   isSuccess: isConfirmed,
+  //   data,
+  // } = useWaitForTransactionReceipt({ hash });
+  const {
+    switchChain,
+    isPending: isSwitching,
+    error,
+    reset: resetError,
+  } = useSwitchChain();
   const {
     register,
     handleSubmit,
@@ -99,9 +126,52 @@ export default function CreateNFTCollection() {
     formData.append("tokenSymbol", data.tokenSymbol);
     formData.append("file", data.logoImage);
     formData.append("walletAddress", address);
-    createCollection(formData);
+    await createCollection(formData);
+    const collection = getLatestCollection();
+
+    if (
+      collection[0].contractName === data.contractName &&
+      collection[0].tokenSymbol === data.tokenSymbol
+    ) {
+      const deployData = await encodeDeployData({
+        abi: AdvancedERC1155.abi as Abi,
+        bytecode: AdvancedERC1155.bytecode as `0x${string}`,
+        args: [
+          data.contractName,
+          data.tokenSymbol,
+          "https://silver-rainy-chipmunk-430.mypinata.cloud/ipfs/",
+          collection[0].groupId,
+          address,
+          500,
+        ] as unknown as ContractConstructorArgs<typeof AdvancedERC1155.abi>,
+      });
+      await sendTransaction(
+        {
+          to: null,
+          data: deployData,
+        },
+        {
+          onSuccess: async (transactionHash) => {
+            const receipt = await publicClient.waitForTransactionReceipt({
+              hash: transactionHash,
+            });
+            if (receipt.contractAddress) {
+              const formData = new FormData();
+              formData.append("collectionId", collection[0]._id);
+              formData.append("contractAddress", receipt.contractAddress);
+              updateCollection(formData);
+            }
+          },
+          onError: (error) => {
+            deleteCollection(collection[0]._id, collection[0].groupId);
+          },
+        },
+      );
+    }
   };
-  useEffect(() => {}, [collections]);
+  const handleNetworkChange = async (targetChainId: number) => {
+    switchChain?.({ chainId: targetChainId });
+  };
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
@@ -259,6 +329,63 @@ export default function CreateNFTCollection() {
                       {errors.tokenSymbol.message}
                     </p>
                   )}
+                </div>
+              </div>
+
+              {/* Blockchain Selection Section */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Label>Blockchain</Label>
+                  <Info className="w-4 h-4 text-gray-400" />
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <Card
+                    className={`bg-zinc-900 border-gray-700 p-4 cursor-pointer ${chain.id === sepolia ? "ring-2 ring-blue-500" : ""}`}
+                    onClick={() => handleNetworkChange(sepolia)}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <Image
+                        src="https://upload.wikimedia.org/wikipedia/commons/0/05/Ethereum_logo_2014.svg"
+                        alt="Ethereum"
+                        width={24}
+                        height={24}
+                        className="rounded-full"
+                      />
+                      <span>Ethereum</span>
+                    </div>
+                    <div className="text-xs text-gray-400">Most popular</div>
+                    <div className="mt-4 text-xs text-gray-400">
+                      Estimated cost to deploy contract:
+                    </div>
+                  </Card>
+                  <Card
+                    className={`bg-zinc-900 border-gray-700 p-4 cursor-pointer ${chain.id === amoy ? "ring-2 ring-blue-500" : ""}`}
+                    onClick={() => handleNetworkChange(amoy)}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <Image
+                        src="https://altcoinsbox.com/wp-content/uploads/2023/03/matic-logo-300x300.webp"
+                        alt="Base"
+                        width={24}
+                        height={24}
+                        className="rounded-full"
+                      />
+                      <span>Matic</span>
+                    </div>
+                    <div className="text-xs text-gray-400">Cheaper</div>
+                    <div className="mt-4 text-xs text-gray-400">
+                      Estimated cost to deploy contract: $0.00
+                    </div>
+                  </Card>
+                  <Card className="bg-zinc-900 border-gray-700 p-4 relative">
+                    <div className="flex items-center gap-2 mb-2 bg-gray-800 p-2 w-10 rounded-full">
+                      <Ellipsis />
+                    </div>
+                    <div className="text-xs text-blue-400">Change</div>
+                    <div className="mt-4 text-xs text-gray-400">
+                      Estimated cost to deploy contract:
+                    </div>
+                  </Card>
                 </div>
               </div>
             </div>

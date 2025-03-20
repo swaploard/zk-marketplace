@@ -5,14 +5,20 @@ import { handlePromiseToaster } from "@/components/toaster/promise";
 import { collection } from "@/types";
 
 export interface ICollectionStore {
+  collection: collection[] | null;
   collections: collection[];
   error: string | null;
   loading: boolean;
   getCollections: (walletAddress: string) => void;
   createCollection: (collection: FormData) => void;
+  getLatestCollection: () => collection[] | null;
+  updateCollection: (collection: FormData) => void;
+  deleteCollection: (id: string, groupId: string) => void;
 }
 
-const useCollectionStore = create<ICollectionStore>((set) => ({
+
+const useCollectionStore = create<ICollectionStore>((set, get) => ({
+  collection: null,
   collections: [],
   error: null,
   loading: false,
@@ -42,15 +48,17 @@ const useCollectionStore = create<ICollectionStore>((set) => ({
           responseType: "json",
         })
         .then((response) => {
-          if (response.status === 201) {
-            set((state) => ({
-              collections: [...state.collections, response.data],
-              loading: false,
-            }));
+          if (response.status === 200) {
+            set((state) => {
+              return {
+                collection: [...response.data],
+                loading: false,
+              };
+            });
+
           } else {
             set({ error: "Failed to create collection", loading: false });
           }
-          return response;
         });
 
       handlePromiseToaster(
@@ -72,6 +80,35 @@ const useCollectionStore = create<ICollectionStore>((set) => ({
       set({ error: error.message || "An error occurred", loading: false });
     }
   },
+  
+  updateCollection: (body) => {
+    set({ loading: true, error: null });
+    try{
+       const promise = axiosInstance.put(COLLECTION_URL, body, {
+         responseType: "json",
+       })
+       console.log("addWalletAddress", promise)
+    }catch(error){
+      set({ error: error.message || "An error occurred", loading: false });
+    }
+  },
+
+  deleteCollection: (id, groupId) => {
+    set({ loading: true, error: null });
+    try{
+       const promise = axiosInstance.delete(`${COLLECTION_URL}?id=${encodeURIComponent(id)}&groupId=${encodeURIComponent(groupId)}`, {
+         responseType: "json",
+       })
+       console.log("addWalletAddress", promise)
+    }catch(error){
+      set({ error: error.message || "An error occurred", loading: false });
+    }
+  },
+
+  getLatestCollection: () =>{
+    const collection = get().collection;
+     return collection;
+  }
 }));
 
 export default useCollectionStore;

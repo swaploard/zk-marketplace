@@ -7,10 +7,11 @@ interface ICollectionGroup extends Document {
   groupId: string;
   logoUrl: string;
   createdAt: Date;
+  contractAddress: string;
 }
 
 const CollectionGroupSchema = new Schema<ICollectionGroup>({
-  contractName: { type: String, required: true },
+  contractName: { type: String, unique: true, required: true },
   tokenSymbol: { type: String, required: true },
   groupId: { type: String, required: true },
   logoUrl: { type: String, required: true },
@@ -19,6 +20,7 @@ const CollectionGroupSchema = new Schema<ICollectionGroup>({
     ref: "User",
     required: true,
   },
+  contractAddress: { type: String },
   createdAt: { type: Date, default: Date.now },
 });
 

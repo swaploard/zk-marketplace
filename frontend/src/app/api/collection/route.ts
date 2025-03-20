@@ -4,7 +4,7 @@ import connectMongo from "@/lib/mongodb";
 import { CollectionGroup } from "@/models/collection";
 import User from "@/models/User";
 import { saveFile } from "@/utils/routeHelper/saveImage";
-
+import { collection } from "@/types";
 export async function POST(request: NextRequest) {
   await connectMongo();
 
@@ -29,9 +29,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const group = await pinata.groups.create({
-      name: `${contractName} (${tokenSymbol})`,
+    const existingCollection = await CollectionGroup.findOne({
+      contractName,
+      tokenSymbol,
     });
+
+    if (existingCollection) {
+      return NextResponse.json(
+        { error: "Collection already exists" },
+        { status: 400 },
+      );
+    }
+    let group;
+    try {
+      group = await pinata.groups.create({
+        name: `${contractName} (${tokenSymbol})`,
+      });
+
+      if (!group.id) {
+        return NextResponse.json(
+          { error: "No group ID returned" },
+          { status: 400 },
+        );
+      }
+    } catch (error) {
+      console.error("Error creating group:", error);
+      return NextResponse.json(
+        { error: "Internal server error" },
+        { status: 500 },
+      );
+    }
 
     const collectionGroup = new CollectionGroup({
       User: existingUser._id,
@@ -43,14 +70,9 @@ export async function POST(request: NextRequest) {
 
     await collectionGroup.save();
 
-    return NextResponse.json(
-      {
-        success: true,
-        groupId: group.id,
-        mongoId: collectionGroup._id,
-      },
-      { status: 200 },
-    );
+    const collection = await CollectionGroup.find({ groupId: group.id });
+
+    return NextResponse.json(collection, { status: 200 });
   } catch (error) {
     console.error("Error creating group:", error);
     return NextResponse.json(
@@ -83,5 +105,66 @@ export async function GET(request: Request) {
       { error: "Failed to fetch collections" },
       { status: 500 },
     );
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  await connectMongo();
+
+  const formData = await request.formData();
+
+  const collectionId = formData.get("collectionId");
+  const updateData: collection = {};
+  const files: Record<string, File> = {};
+
+  try {
+    for (const [key, value] of formData.entries()) {
+      if (value instanceof File) {
+        if (value.size > 0) {
+          files[key] = value;
+        }
+      } else {
+        updateData[key] = value;
+      }
+    }
+
+    if (files.logoUrl) {
+      updateData.logoUrl = await saveFile(files.logoUrl);
+    }
+
+    const updateCollection = await CollectionGroup.findOneAndUpdate(
+      { _id: collectionId },
+      {
+        $set: {
+          contractName: updateData.contractName,
+          tokenSymbol: updateData.tokenSymbol,
+          logoUrl: updateData.logoUrl,
+          contractAddress: updateData.contractAddress,
+        },
+      },
+      { new: true },
+    );
+    return NextResponse.json(updateCollection, { status: 200 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to update collection" },
+      { status: 500 },
+    )
+  }
+}
+
+
+
+export async function DELETE(request: NextRequest) {
+  await connectMongo();
+  const { searchParams } = new URL(request.url);
+  const collectionId = searchParams.get("id");
+  const groupId = searchParams.get("groupId");
+  try{
+    await pinata.groups.delete({ groupId: groupId });  
+    await CollectionGroup.deleteOne({ _id: collectionId });
+    return NextResponse.json({ message: "Collection deleted successfully" }, { status: 200 });
+  }catch(error){
+    return NextResponse.json({ error: "Failed to delete collection" }, { status: 500 });
   }
 }
