@@ -12,14 +12,15 @@ export default function CollectionListPopover({
   PopoverTriggerElement,
   collections,
   setValue,
+  setContractAddress,
 }) {
   const [open, setOpen] = useState(false);
 
-  const handleCollectionClick = (collectionId) => {
+  const handleCollectionClick = (collectionId, contractAddress) => {
     setValue("collection", collectionId);
     setOpen(false);
+    setContractAddress(contractAddress)
   };
-
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{PopoverTriggerElement}</PopoverTrigger>
@@ -39,7 +40,7 @@ export default function CollectionListPopover({
           <div
             key={collection._id}
             className="flex items-center gap-4 hover:bg-zinc-950 min-w-full py-3 px-3 cursor-pointer"
-            onClick={() => handleCollectionClick(collection.groupId)}
+            onClick={() => handleCollectionClick(collection.groupId, collection.contractAddress)}
           >
             <div className="h-14 w-14 flex items-center justify-center">
               <Image

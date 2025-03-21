@@ -19,8 +19,8 @@ export interface File {
 }
 
 export interface PinataFile {
-  id: string;
-  ipfs_pin_hash: string;
+  ID: string;
+  IpfsHash: string;
   size: number;
   user_id: string;
   date_pinned: string;
@@ -59,6 +59,7 @@ export interface Metadata {
   name: string;
 }
 export interface IFileStore {
+  file: PinataFile | null;
   files: PinataFile[];
   previewUrl: string | null;
   loading: boolean;
@@ -70,5 +71,6 @@ export interface IFileStore {
     walletAddress?: string | null,
   ) => Promise<void>;
   updateFiles: (body: Metadata) => Promise<void>;
+  getLatestFile: () => PinataFile;
   clearError: () => void;
 }

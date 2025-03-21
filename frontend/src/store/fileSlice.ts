@@ -5,7 +5,7 @@ import { handlePromiseToaster } from "@/components/toaster/promise";
 import {IFileStore} from "@/types"
 
 
-const useHandleFiles = create<IFileStore>((set) => ({
+const useHandleFiles = create<IFileStore>((set, get) => ({
   file: null,
   files: [],
   previewUrl: null,
@@ -49,7 +49,7 @@ const useHandleFiles = create<IFileStore>((set) => ({
         .then((response) => {
           if (response.status === 200) {
             set((state) => ({
-              files: [...state.files, response.data.files],
+              file: response.data,
               loading: false,
               success: true,
             }));
@@ -113,6 +113,11 @@ const useHandleFiles = create<IFileStore>((set) => ({
       set({ error: errorMessage, loading: false });
       throw error;
     }
+  },
+
+  getLatestFile: () => {
+    const latestFile = get().file;
+    return latestFile;
   },
 
   clearError: () => set({ error: null }),

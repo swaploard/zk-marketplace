@@ -12,17 +12,19 @@ import {
   LayoutGrid,
 } from "lucide-react";
 import Link from "next/link";
-import { useAccount } from "wagmi";
+import { useAccount, useWriteContract, usePublicClient } from "wagmi";
+import { getAddress, isAddress, stringToHex} from "viem";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import CollectionListPopover from "@/components/CollectionListPopover";
-
-import useHandleFiles, { IFileStore } from "../../store/fileSlice";
+import {IFileStore} from "@/types"
+import AdvancedERC1155 from "@/utils/contracts/AdvancedERC1155.json";
+import useHandleFiles from "@/store/fileSlice";
 import useCollectionStore, {
   ICollectionStore,
-} from "../../store/collectionSlice";
+} from "@/store/collectionSlice";
 
 const nftSchema = z.object({
   media: z
@@ -53,14 +55,18 @@ const nftSchema = z.object({
 type NFTFormData = z.infer<typeof nftSchema>;
 
 export default function NFTForm() {
-  const { success, addFile } = useHandleFiles((state: IFileStore) => state);
+  const publicClient = usePublicClient();
+
+  const { success, addFile, getLatestFile } = useHandleFiles((state: IFileStore) => state);
   const { collections, getCollections } = useCollectionStore(
     (state: ICollectionStore) => state,
   );
   const { address } = useAccount();
-
+  const { 
+    writeContract, isPending, isSuccess, data: txHash, error } = useWriteContract();
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [contractAddress, setContractAddress] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -134,6 +140,29 @@ export default function NFTForm() {
       const pinataOptions = JSON.stringify({ cidVersion: 1 });
       formData.append("pinataOptions", pinataOptions);
       await addFile(formData);
+      const currentFile = await getLatestFile();
+      const normalizedContractAddress = getAddress(contractAddress);
+      const normalizedAccount = getAddress(address);
+      if (!isAddress(normalizedContractAddress)) {
+        throw new Error("Invalid contract address");
+      }
+      
+      if (!isAddress(normalizedAccount)) {
+        throw new Error("Invalid user address");
+      }
+
+      const encodedData = stringToHex(currentFile.IpfsHash);
+      publicClient.getBalance({address: address}).then(res => console.log("balance", res))
+
+        writeContract({
+          address: contractAddress,
+          abi: AdvancedERC1155.abi,
+          functionName: 'mint',
+          account: normalizedAccount,
+          args:[address, BigInt(12), BigInt(data.supply), encodedData]
+        },);
+
+
       if (success) {
         reset();
         handleRemoveImage();
@@ -279,6 +308,7 @@ export default function NFTForm() {
                 }
                 collections={collections}
                 setValue={setValue}
+                setContractAddress={setContractAddress}
               ></CollectionListPopover>
 
               <p className="text-xs text-gray-400">
