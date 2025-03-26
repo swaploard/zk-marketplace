@@ -147,16 +147,16 @@ const useHandleFiles = create<IFileStore>((set, get) => ({
     }
   },
 
-  deleteFile: async (hash) => {
+  deleteFile: async (cid) => {
     set({ loading: true, error: null });
     try {
       const promise = await axiosInstance.delete(
-        `${PIN_FILE_TO_IPFS_URL}?hash=${encodeURIComponent(hash)}}`,
+        `${PIN_FILE_TO_IPFS_URL}?cid=${encodeURIComponent(cid)}`,
         {
           responseType: "json",
         },
       );
-      console.log("promise", promise);
+      
     } catch (error) {
       set({ error: error.message || "An error occurred", loading: false });
     }

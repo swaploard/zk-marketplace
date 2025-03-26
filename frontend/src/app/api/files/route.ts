@@ -138,11 +138,14 @@ export async function GET(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const hash = searchParams.get("hash");
-    if (!hash)
+    const cid = searchParams.get("cid");
+    if (!cid)
       return NextResponse.json({ error: "Missing hash" }, { status: 400 });
 
-    await pinata.unpin([hash]);
+     const deleteResponse = await pinata.unpin([cid]);
+     if(deleteResponse[0].status.includes("OK")){
+        const deleteFile = await UploadDataModel.findOneAndDelete({ IpfsHash: cid }, { new: true });
+     }
     return NextResponse.json(
       { message: "File deleted successfully" },
       { status: 200 },
