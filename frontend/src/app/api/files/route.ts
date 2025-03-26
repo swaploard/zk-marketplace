@@ -1,28 +1,84 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { pinata } from "../../../utils/config/pinata";
 import connectMongo from "@/lib/mongodb";
+import { UploadDataModel } from "@/models/nftFile";
+import { Types } from "mongoose";
 
-connectMongo();
 export async function POST(request: NextRequest) {
+  await connectMongo();
+
   try {
     const data = await request.formData();
-    const file: File | null = data.get("file") as unknown as File;
-    const metadataString: string = data.get("pinataMetadata") as string;
-    const groupId: string = data.get("collection") as string;
 
+    // Validate required fields
+    const requiredFields = ["file", "pinataMetadata", "collection"];
+    for (const field of requiredFields) {
+      if (!data.get(field)) {
+        return NextResponse.json(
+          { error: `Missing required field: ${field}` },
+          { status: 400 },
+        );
+      }
+    }
+
+    const file = data.get("file") as File;
+    const metadataString = data.get("pinataMetadata") as string;
+    const groupId = data.get("collection") as string;
+
+    // Parse and validate metadata
     const metadata = JSON.parse(metadataString);
+    const requiredMetadata = [
+      "name",
+      "supply",
+      "description",
+      "externalLink",
+      "walletAddress",
+    ];
+    for (const field of requiredMetadata) {
+      if (!metadata[field]) {
+        return NextResponse.json(
+          { error: `Missing required metadata field: ${field}` },
+          { status: 400 },
+        );
+      }
+    }
 
-    const uploadData = await pinata.upload
+    // Upload to Pinata
+    const pinataResponse = await pinata.upload
       .file(file)
-      .addMetadata({
-        keyValues: metadata,
-      })
+      .addMetadata({ keyValues: metadata })
       .group(groupId);
-    return NextResponse.json(uploadData, { status: 200 });
+
+    // Create database entry
+    const uploadData = {
+      IpfsHash: pinataResponse.IpfsHash,
+      PinSize: pinataResponse.PinSize,
+      Timestamp: new Date(pinataResponse.Timestamp),
+      ID: pinataResponse.ID,
+      Name: file.name,
+      NumberOfFiles: 1,
+      MimeType: file.type,
+      GroupId: groupId,
+      KeyValues: {
+        name: metadata.name,
+        supply: Number(metadata.supply),
+        description: metadata.description,
+        externalLink: metadata.externalLink,
+        walletAddress: metadata.walletAddress,
+      },
+      tokenId: "",
+      tokenAddress: "",
+      transactionHash: "",
+    };
+
+    const newFile = new UploadDataModel(uploadData);
+    await newFile.save();
+
+    return NextResponse.json(newFile, { status: 200 });
   } catch (e) {
-    console.error(e);
+    console.error("API Error:", e);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Internal Server Error", details: e.message },
       { status: 500 },
     );
   }
@@ -54,7 +110,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    if(collectionId){
+    if (collectionId) {
       try {
         files = await pinata.listFiles().group(collectionId);
         return NextResponse.json({ files }, { status: 200 });
@@ -101,19 +157,47 @@ export async function DELETE(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get("id");
+
+    if (id) {
+      try {
+        const { tokenId, tokenAddress, transactionHash } = await request.json();
+        
+        if (!tokenId || !tokenAddress || !transactionHash) {
+          return NextResponse.json(
+            { error: "Missing required fields: tokenId, tokenAddress, transactionHash" },
+            { status: 400 }
+          );
+        }
+  
+        const updatedDocument = await updateTokenIdAndAddress(
+          id,
+          tokenId,
+          tokenAddress,
+          transactionHash
+        );
+        
+        return NextResponse.json(updatedDocument, { status: 200 });
+      } catch (error) {
+        console.error("Error updating token details:", error);
+        return handleUpdateError(error);
+      }
+    }
+
   try {
     const { cid, name, keyValues } = await request.json();
     if (!cid || !name) {
       return NextResponse.json(
         { error: "Missing required parameters (CID or name)" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const updateData = await pinata.updateMetadata({
       cid,
       keyValues: keyValues || {},
-      name
+      name,
     });
 
     return NextResponse.json(updateData, { status: 200 });
@@ -121,7 +205,45 @@ export async function PUT(request: NextRequest) {
     console.error("Error updating metadata:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
+ const updateTokenIdAndAddress = async (
+  id: string,
+  tokenId: string,
+  tokenAddress: string,
+  transactionHash: string,
+) => {
+  try {
+    const updateToken = await UploadDataModel.findOneAndUpdate(
+      { ID: id },
+      {
+        $set: { tokenId, tokenAddress, transactionHash },
+      },
+      { new: true },
+    ).exec();
+
+    return NextResponse.json(updateToken, { status: 200 });
+  } catch (error) {
+    console.error("Error updating metadata:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
+  }
+};
+
+const handleUpdateError = (error: Error) => {
+  if (error.message === "DOCUMENT_NOT_FOUND") {
+    return NextResponse.json(
+      { error: "Document not found" },
+      { status: 404 }
+    );
+  }
+  
+  return NextResponse.json(
+    { error: "Internal Server Error" },
+    { status: 500 }
+  );
+};

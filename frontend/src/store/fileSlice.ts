@@ -2,8 +2,7 @@ import { create } from "zustand";
 import { axiosInstance } from "@/axios/index";
 import { PIN_FILE_TO_IPFS_URL } from "../ApiEndpoints/pinataEndpoints";
 import { handlePromiseToaster } from "@/components/toaster/promise";
-import {IFileStore} from "@/types"
-
+import { IFileStore } from "@/types";
 
 const useHandleFiles = create<IFileStore>((set, get) => ({
   file: null,
@@ -83,15 +82,18 @@ const useHandleFiles = create<IFileStore>((set, get) => ({
   updateFiles: async (body) => {
     set({ loading: true, error: null });
     try {
-      const promise = axiosInstance.put(PIN_FILE_TO_IPFS_URL,  JSON.stringify(body));
+      const promise = axiosInstance.put(
+        PIN_FILE_TO_IPFS_URL,
+        JSON.stringify(body),
+      );
       const response = await promise;
-      
+
       if (response.status === 200) {
         set({ loading: false, success: true });
       } else {
         set({ error: "Failed to update metadata", loading: false });
       }
-  
+
       // Consider moving this to a separate utility function
       handlePromiseToaster(
         promise,
@@ -108,10 +110,55 @@ const useHandleFiles = create<IFileStore>((set, get) => ({
           message: "Metadata updated successfully",
         },
       );
-      } catch (error) {
-      const errorMessage = error.response?.data?.error || error.message || "Failed to update metadata";
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.error ||
+        error.message ||
+        "Failed to update metadata";
       set({ error: errorMessage, loading: false });
       throw error;
+    }
+  },
+
+  addTokenData: async (body, id) => {
+    set({ loading: true, error: null });
+    try {
+      const promise = await axiosInstance.put(
+        `${PIN_FILE_TO_IPFS_URL}?id=${encodeURIComponent(id)}`,
+        body,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
+      if (promise.status === 200) {
+        set({ loading: false, success: true });
+      } else {
+        set({ error: "Failed to update metadata", loading: false });
+      }
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.error ||
+        error.message ||
+        "Failed to update metadata";
+      set({ error: errorMessage, loading: false });
+      throw error;
+    }
+  },
+
+  deleteFile: async (hash) => {
+    set({ loading: true, error: null });
+    try {
+      const promise = await axiosInstance.delete(
+        `${PIN_FILE_TO_IPFS_URL}?hash=${encodeURIComponent(hash)}}`,
+        {
+          responseType: "json",
+        },
+      );
+      console.log("promise", promise);
+    } catch (error) {
+      set({ error: error.message || "An error occurred", loading: false });
     }
   },
 

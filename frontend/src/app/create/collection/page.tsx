@@ -26,8 +26,10 @@ import {
   useAccount,
   useSwitchChain,
   usePublicClient,
+  useWaitForTransactionReceipt
 } from "wagmi";
 import { encodeDeployData, Abi, ContractConstructorArgs } from "viem";
+import { localhost } from "viem/chains";
 
 const formSchema = z.object({
   contractName: z
@@ -66,6 +68,7 @@ export default function CreateNFTCollection() {
   const publicClient = usePublicClient();
   const { address, chain } = useAccount();
   const { sendTransaction } = useSendTransaction();
+  const transactionReceipt = useWaitForTransactionReceipt();
   // const {
   //   isLoading: isConfirming,
   //   isSuccess: isConfirmed,
@@ -81,6 +84,7 @@ export default function CreateNFTCollection() {
     register,
     handleSubmit,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -168,6 +172,8 @@ export default function CreateNFTCollection() {
         },
       );
     }
+    reset();
+    setPreviewUrl("");
   };
   const handleNetworkChange = async (targetChainId: number) => {
     switchChain?.({ chainId: targetChainId });
@@ -377,7 +383,7 @@ export default function CreateNFTCollection() {
                       Estimated cost to deploy contract: $0.00
                     </div>
                   </Card>
-                  <Card className="bg-zinc-900 border-gray-700 p-4 relative">
+                  <Card className="bg-zinc-900 border-gray-700 p-4 relative" onClick={() => switchChain({ chainId: localhost.id })}>
                     <div className="flex items-center gap-2 mb-2 bg-gray-800 p-2 w-10 rounded-full">
                       <Ellipsis />
                     </div>

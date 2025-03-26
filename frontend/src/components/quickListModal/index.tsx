@@ -31,14 +31,12 @@ const formSchema = z.object({
 
 interface QuickListingModalProps {
   setClose: (value: boolean) => void;
-  updateFiles: (body: Metadata) => void;
   handleEthToUsd: (value: number) => number;
   fileForListing: PinataFile;
 }
 
 export default function QuickListingModal({
   setClose,
-  updateFiles,
   handleEthToUsd,
   fileForListing,
 }: QuickListingModalProps) {
@@ -100,7 +98,7 @@ export default function QuickListingModal({
 
   const onSubmit = (data: z.infer<typeof formSchema>) => {
     const metadata = {
-      cid: fileForListing.ipfs_pin_hash,
+      cid: fileForListing.IpfsHash,
       keyValues: {
         amount: parseFloat(data.amount),
         duration: data.duration,
@@ -110,7 +108,6 @@ export default function QuickListingModal({
       },
       name: fileForListing.metadata.name,
     };
-    updateFiles(metadata);
     console.log("metadata", metadata);
   };
 
@@ -136,7 +133,7 @@ export default function QuickListingModal({
           </div>
           <div className="flex items-center gap-4 p-4">
             <div className="relative w-16 h-16 overflow-hidden rounded-lg">
-              {fileForListing.ipfs_pin_hash && (
+              {fileForListing.IpfsHash && (
                 <Image
                   src={`https://silver-rainy-chipmunk-430.mypinata.cloud/ipfs/${fileForListing.ipfs_pin_hash}`}
                   alt="NFT Image"

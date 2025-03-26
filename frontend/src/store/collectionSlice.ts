@@ -93,13 +93,12 @@ const useCollectionStore = create<ICollectionStore>((set, get) => ({
     }
   },
 
-  deleteCollection: (id, groupId) => {
+  deleteCollection: async(id, groupId) => {
     set({ loading: true, error: null });
     try{
-       const promise = axiosInstance.delete(`${COLLECTION_URL}?id=${encodeURIComponent(id)}&groupId=${encodeURIComponent(groupId)}`, {
+       const promise = await axiosInstance.delete(`${COLLECTION_URL}?id=${encodeURIComponent(id)}&groupId=${encodeURIComponent(groupId)}`, {
          responseType: "json",
        })
-       console.log("addWalletAddress", promise)
     }catch(error){
       set({ error: error.message || "An error occurred", loading: false });
     }

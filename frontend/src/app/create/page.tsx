@@ -12,20 +12,31 @@ import {
   LayoutGrid,
 } from "lucide-react";
 import Link from "next/link";
-import { useAccount, useWriteContract, usePublicClient } from "wagmi";
-import { getAddress, isAddress, stringToHex} from "viem";
+import {
+  useAccount,
+  useWriteContract,
+  usePublicClient,
+  useWaitForTransactionReceipt,
+  useWatchContractEvent,
+} from "wagmi";
+import {
+  Abi,
+  BaseError,
+  ContractFunctionRevertedError,
+  getAddress,
+  isAddress,
+  stringToHex,
+} from "viem";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import CollectionListPopover from "@/components/CollectionListPopover";
-import {IFileStore} from "@/types"
+import { IFileStore } from "@/types";
 import AdvancedERC1155 from "@/utils/contracts/AdvancedERC1155.json";
 import useHandleFiles from "@/store/fileSlice";
-import useCollectionStore, {
-  ICollectionStore,
-} from "@/store/collectionSlice";
-
+import useCollectionStore, { ICollectionStore } from "@/store/collectionSlice";
+import getRandomUint256 from "@/utils/getRandomNumber";
 const nftSchema = z.object({
   media: z
     .instanceof(File, { message: "File is required" })
@@ -57,16 +68,33 @@ type NFTFormData = z.infer<typeof nftSchema>;
 export default function NFTForm() {
   const publicClient = usePublicClient();
 
-  const { success, addFile, getLatestFile } = useHandleFiles((state: IFileStore) => state);
+  const { success, addFile, getLatestFile, deleteFile, addTokenData } =
+    useHandleFiles((state: IFileStore) => state);
   const { collections, getCollections } = useCollectionStore(
     (state: ICollectionStore) => state,
   );
-  const { address } = useAccount();
-  const { 
-    writeContract, isPending, isSuccess, data: txHash, error } = useWriteContract();
+  const { address, chainId, chain } = useAccount();
+  const {
+    writeContract,
+    data: txHash,
+    error: writeError,
+    isPending: isWriting,
+  } = useWriteContract();
+
+  const {
+    data: receipt,
+    error: receiptError,
+    status: receiptStatus,
+  } = useWaitForTransactionReceipt({
+    hash: txHash,
+  });
+
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [contractAddress, setContractAddress] = useState<string | null>(null);
+  const [contractAddress, setContractAddress] = useState<string | null>(
+    collections[1]?.contractAddress,
+  );
+
   const {
     register,
     handleSubmit,
@@ -83,6 +111,39 @@ export default function NFTForm() {
   useEffect(() => {
     getCollections(address);
   }, [address, getCollections]);
+
+  useEffect(() => {
+    publicClient.watchContractEvent({
+      abi: AdvancedERC1155.abi as Abi,
+      address: contractAddress as `0x${string}`,
+      poll: true,
+      pollingInterval: 500,
+      eventName: "TokenMinted",
+      fromBlock: BigInt(19637210),
+      onLogs(logs) {
+        console.log("watchContractEvent", logs);
+      },
+      onError(error) {
+        console.log("watchContractEvent", error);
+      },
+    });
+  }, []);
+
+  useWatchContractEvent({
+    address: contractAddress as `0x${string}`,
+    eventName: "TokenMinted",
+    chainId: chainId,
+    fromBlock: 19637210n,
+    abi: AdvancedERC1155.abi as Abi,
+    onLogs: (logs) => {
+      console.log("logs useWatchContractEvent", logs);
+    },
+    onError: (error) => {
+      console.log("error useWatchContractEvent", error);
+    },
+    poll: true,
+    pollingInterval: 5000,
+  });
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -146,22 +207,44 @@ export default function NFTForm() {
       if (!isAddress(normalizedContractAddress)) {
         throw new Error("Invalid contract address");
       }
-      
+
       if (!isAddress(normalizedAccount)) {
         throw new Error("Invalid user address");
       }
 
       const encodedData = stringToHex(currentFile.IpfsHash);
-      publicClient.getBalance({address: address}).then(res => console.log("balance", res))
-
-        writeContract({
+      const tokenId = getRandomUint256();
+      writeContract(
+        {
           address: contractAddress,
           abi: AdvancedERC1155.abi,
-          functionName: 'mint',
+          functionName: "mint",
           account: normalizedAccount,
-          args:[address, BigInt(12), BigInt(data.supply), encodedData]
-        },);
-
+          chainId: chainId,
+          chain: chain,
+          args: [address, BigInt(tokenId), BigInt(data.supply), encodedData],
+          gas: 1000000n,
+        },
+        {
+          onSuccess: async (txHash) => {
+            console.log("Transaction Hash:", txHash);
+            const receipt = await publicClient.waitForTransactionReceipt({
+              hash: txHash,
+            });
+            const body = {
+              id: currentFile.ID,
+              tokenId,
+              tokenAddress: contractAddress,
+              transactionHash: txHash,
+            };
+            addTokenData(body, currentFile.ID);
+          },
+          onError: (error) => {
+            console.error("Full Error:", error);
+            deleteFile(currentFile.IpfsHash);
+          },
+        },
+      );
 
       if (success) {
         reset();

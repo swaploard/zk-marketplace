@@ -72,5 +72,6 @@ export interface IFileStore {
   ) => Promise<void>;
   updateFiles: (body: Metadata) => Promise<void>;
   getLatestFile: () => PinataFile;
+  deleteFile: (id: string) => void;
   clearError: () => void;
 }

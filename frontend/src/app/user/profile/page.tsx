@@ -22,7 +22,7 @@ import QuickListingModal from "@/components/quickListModal/index";
 import ethPriceConvertor from "@/components/ethPriceConvertor";
 export default function Profile() {
   const { user, updateUser } = userSlice((state: IUserStore) => state);
-  const { files, getFiles, updateFiles } = useHandleFiles((state: IFileStore) => state);
+  const { files, getFiles } = useHandleFiles((state: IFileStore) => state);
   const [bannerImage, setBannerImage] = useState<string | null>(
     user?.profileBanner,
   );
@@ -351,7 +351,7 @@ export default function Profile() {
         </div>
       </div>
         {qListingModal && (
-          <QuickListingModal setClose={setQListingModal} updateFiles={updateFiles} fileForListing={fileForListing} handleEthToUsd={handleEthToUsd} />
+          <QuickListingModal setClose={setQListingModal} fileForListing={fileForListing} handleEthToUsd={handleEthToUsd} />
         )}
       {/* Collection count */}
       <div className="px-4 pb-2 text-sm">{files.length} Items</div>
@@ -359,7 +359,7 @@ export default function Profile() {
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {files &&
             files.map((file) => (
-              <ListingCard key={file.id} file={file} handleQuickList={handleQuickListing} />
+              <ListingCard key={file.ID} file={file} handleQuickList={handleQuickListing} />
             ))}
         </div>
       </section>
