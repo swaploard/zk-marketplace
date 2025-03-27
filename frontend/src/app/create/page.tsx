@@ -18,6 +18,7 @@ import {
   usePublicClient,
   useWaitForTransactionReceipt,
   useWatchContractEvent,
+  useReadContract
 } from "wagmi";
 import {
   Abi,
@@ -37,6 +38,8 @@ import AdvancedERC1155 from "@/utils/contracts/AdvancedERC1155.json";
 import useHandleFiles from "@/store/fileSlice";
 import useCollectionStore, { ICollectionStore } from "@/store/collectionSlice";
 import getRandomUint256 from "@/utils/getRandomNumber";
+import { pinata } from "@/utils/config/pinata";
+
 const nftSchema = z.object({
   media: z
     .instanceof(File, { message: "File is required" })
@@ -212,8 +215,9 @@ export default function NFTForm() {
         throw new Error("Invalid user address");
       }
 
-      const encodedData = stringToHex(currentFile.IpfsHash);
-      const tokenId = getRandomUint256();
+      const cid = currentFile.IpfsHash;
+      const tokenId = 5;
+      
       writeContract(
         {
           address: contractAddress,
@@ -222,12 +226,11 @@ export default function NFTForm() {
           account: normalizedAccount,
           chainId: chainId,
           chain: chain,
-          args: [address, BigInt(tokenId), BigInt(data.supply), encodedData],
+          args: [address, BigInt(tokenId), BigInt(data.supply), cid, "0x"],
           gas: 1000000n,
         },
         {
           onSuccess: async (txHash) => {
-            console.log("Transaction Hash:", txHash);
             const receipt = await publicClient.waitForTransactionReceipt({
               hash: txHash,
             });
@@ -245,7 +248,30 @@ export default function NFTForm() {
           },
         },
       );
-
+      writeContract(
+        {
+          address: contractAddress,
+          abi: AdvancedERC1155.abi,
+          functionName: "configureToken",
+          account: normalizedAccount,
+          chainId: chainId,
+          chain: chain,
+          args: [BigInt(tokenId), 5, 5, true],
+          gas: 1000000n,
+        },
+        {
+          onSuccess: async (txHash) => {
+            console.log("Transaction Hash:", txHash);
+            const receipt = await publicClient.waitForTransactionReceipt({
+              hash: txHash,
+            });
+           console.log("receipt", receipt);
+          },
+          onError: (error) => {
+            console.error("Full Error:", error);
+          },
+        },
+      );
       if (success) {
         reset();
         handleRemoveImage();

@@ -1,8 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { pinata } from "../../../utils/config/pinata";
+import { pinata } from "@/utils/config/pinata";
 import connectMongo from "@/lib/mongodb";
 import { UploadDataModel } from "@/models/nftFile";
-import { Types } from "mongoose";
 
 export async function POST(request: NextRequest) {
   await connectMongo();
@@ -10,7 +9,6 @@ export async function POST(request: NextRequest) {
   try {
     const data = await request.formData();
 
-    // Validate required fields
     const requiredFields = ["file", "pinataMetadata", "collection"];
     for (const field of requiredFields) {
       if (!data.get(field)) {
@@ -25,7 +23,6 @@ export async function POST(request: NextRequest) {
     const metadataString = data.get("pinataMetadata") as string;
     const groupId = data.get("collection") as string;
 
-    // Parse and validate metadata
     const metadata = JSON.parse(metadataString);
     const requiredMetadata = [
       "name",
@@ -43,21 +40,49 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Upload to Pinata
-    const pinataResponse = await pinata.upload
+    const fileUploadResponse = await pinata.upload
       .file(file)
-      .addMetadata({ keyValues: metadata })
       .group(groupId);
+    const fileCid = fileUploadResponse.IpfsHash;
 
-    // Create database entry
+    const metadataJSON = {
+      name: metadata.name,
+      description: metadata.description,
+      image: `https://ipfs.io/ipfs/${fileCid}`,
+      external_url: metadata.externalLink,
+      attributes: [
+        {
+          trait_type: "Supply",
+          value: metadata.supply,
+        },
+        {
+          trait_type: "Wallet Address",
+          value: metadata.walletAddress,
+        },
+      ],
+    };
+
+    const metadataBlob = new Blob([JSON.stringify(metadataJSON)], {
+      type: "application/json",
+    });
+    const metadataFile = new File([metadataBlob], "metadata.json", {
+      type: "application/json",
+    });
+
+    const metadataUploadResponse = await pinata.upload
+      .file(metadataFile)
+      .group(groupId);
+    const metadataCid = metadataUploadResponse.IpfsHash;
+
     const uploadData = {
-      IpfsHash: pinataResponse.IpfsHash,
-      PinSize: pinataResponse.PinSize,
-      Timestamp: new Date(pinataResponse.Timestamp),
-      ID: pinataResponse.ID,
-      Name: file.name,
+      IpfsHash: metadataCid,
+      AssetIpfsHash: fileCid,
+      PinSize: metadataUploadResponse.PinSize,
+      Timestamp: new Date(metadataUploadResponse.Timestamp),
+      ID: metadataUploadResponse.ID,
+      Name: metadataFile.name,
       NumberOfFiles: 1,
-      MimeType: file.type,
+      MimeType: metadataFile.type,
       GroupId: groupId,
       KeyValues: {
         name: metadata.name,
