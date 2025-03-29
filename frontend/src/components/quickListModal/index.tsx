@@ -17,17 +17,11 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { X, HelpCircle, ChevronUp } from "lucide-react";
 import Image from "next/image";
+import _ from "lodash";
 import { PinataFile, Metadata } from "@/types";
 import { Switch } from "@radix-ui/react-switch";
-
-const formSchema = z.object({
-  amount: z
-    .string()
-    .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
-      message: "Amount must be a positive number",
-    }),
-  duration: z.enum(["1 day", "3 days", "1 week", "1 month", "3 months"]),
-});
+import { useQuickListingModal } from "./hook";
+import { reduceEth } from "@/utils/ethUtils";
 
 interface QuickListingModalProps {
   setClose: (value: boolean) => void;
@@ -40,14 +34,37 @@ export default function QuickListingModal({
   handleEthToUsd,
   fileForListing,
 }: QuickListingModalProps) {
+  const { royaltyPercentage, maxTokenForListing, handleSetQuickListing } = useQuickListingModal({
+    file: fileForListing,
+  });
+
   const [endDate, setEndDate] = useState("");
   const [endTime, setEndTime] = useState("");
+  const [earnings, setEarnings] = useState(0);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const formSchema = z.object({
+    amount: z.coerce
+      .number()
+      .min(1, { message: "Must be at least 1" })
+      .max(maxTokenForListing, {
+        message: `Must be less than ${maxTokenForListing}`,
+      })
+      .refine((val) => val > 0, {
+        message: "amount must be a positive number",
+      }),
+    price: z.coerce
+      .number()
+      .min(0.0000000001, { message: "Must be at least 1" })
+      .refine((val) => val > 0, {
+        message: "Price must be a positive number",
+      }),
+    duration: z.enum(["1 day", "3 days", "1 week", "1 month", "3 months"]),
+  });
+  const quickListingForm = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      amount: "",
-      duration: "1 day", // Changed default to 1 day
+      amount: 1,
+      duration: "1 day",
     },
   });
 
@@ -86,35 +103,44 @@ export default function QuickListingModal({
   };
 
   useEffect(() => {
-    calculateEndDateTime(form.getValues("duration"));
+    calculateEndDateTime(quickListingForm.getValues("duration"));
 
-    const subscription = form.watch((value, { name }) => {
+    const subscription = quickListingForm.watch((value, { name }) => {
       if (name === "duration" || !name) {
         calculateEndDateTime(value.duration || "1 day");
       }
     });
     return () => subscription.unsubscribe();
-  }, [form.watch]);
+  }, [quickListingForm.watch]);
+
+  useEffect(() => {
+    const calculatedEarnings = reduceEth(
+      royaltyPercentage,
+      Number(quickListingForm.watch("price")),
+    );
+    setEarnings(calculatedEarnings);
+  }, [quickListingForm.getValues("price")]);
 
   const onSubmit = (data: z.infer<typeof formSchema>) => {
     const metadata = {
       cid: fileForListing.IpfsHash,
       keyValues: {
-        amount: parseFloat(data.amount),
+        amount: parseFloat(data.price),
         duration: data.duration,
         endDate: endDate,
         endTime: endTime,
-        ...fileForListing.metadata.keyvalues,
+        ...fileForListing.KeyValues,
       },
-      name: fileForListing.metadata.name,
+      name: fileForListing.KeyValues.name,
     };
-    console.log("metadata", metadata);
+    
+    handleSetQuickListing(data.price, data.amount);
   };
 
   return (
     <div className="flex items-center justify-center bg-black/80 z-50 min-w-full min-h-full fixed inset-0">
-      <Tabs defaultValue="listing">
-        <Card className="w-full max-w-md bg-[#1a1a1a] text-white border-none shadow-xl">
+      <Tabs defaultValue="listing" className="">
+        <Card className="w-[550px] bg-[#1a1a1a]  text-white border-none shadow-xl">
           <div className="flex items-center justify-between p-4 border-b border-gray-800">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="listing">Quick list</TabsTrigger>
@@ -135,7 +161,7 @@ export default function QuickListingModal({
             <div className="relative w-16 h-16 overflow-hidden rounded-lg">
               {fileForListing.IpfsHash && (
                 <Image
-                  src={`https://silver-rainy-chipmunk-430.mypinata.cloud/ipfs/${fileForListing.ipfs_pin_hash}`}
+                  src={`https://silver-rainy-chipmunk-430.mypinata.cloud/ipfs/${fileForListing.AssetIpfsHash}`}
                   alt="NFT Image"
                   width={64}
                   height={64}
@@ -145,23 +171,57 @@ export default function QuickListingModal({
             </div>
             <div>
               <h3 className="text-lg font-medium">
-                {fileForListing.metadata.keyvalues.name}
+                {fileForListing.KeyValues.name}
               </h3>
               <p className="text-sm text-gray-400">based editions</p>
             </div>
             <div className="ml-auto text-right">
               <p className="text-sm text-gray-400">Listing price per item</p>
-              <p className="font-medium">-- ETH</p>
+              <p className="font-medium">
+                {!_.isEmpty(quickListingForm.getValues("price"))
+                  ? `${quickListingForm.getValues("price")} ETH`
+                  : "-- ETH"}
+              </p>
+              {quickListingForm.watch("price") && (
+                <span className="text-sm text-gray-400">
+                  $
+                  {handleEthToUsd(
+                    Number(quickListingForm.watch("price")),
+                  ).toFixed(2)}{" "}
+                  USD
+                </span>
+              )}
             </div>
           </div>
-          <TabsContent value="listing">
+          <TabsContent
+            value="listing"
+            className="h-[410px] w-[550px] overflow-y-auto"
+          >
             <CardContent className="p-0">
-              <form onSubmit={form.handleSubmit(onSubmit)}>
+              <form onSubmit={quickListingForm.handleSubmit(onSubmit)}>
                 <div className="p-4 space-y-6">
                   {/* NFT Item */}
 
                   {/* Price Setting */}
-                  <div>
+                  <div className="">
+                    <div className="my-4">
+                      <p className="mb-1 text-base font-medium"># of items</p>
+                      <Input
+                        type="number"
+                        placeholder="Amount"
+                        className="rounded-[15px] bg-[#2a2a2a] border-white focus-visible:ring-0 text-[150px] h-16 min-h-16 my-2"
+                        {...quickListingForm.register("amount", {
+                          valueAsNumber: true,
+                        })}
+                      />
+                      {quickListingForm.formState.errors.amount ? (
+                        <p className="text-red-500 text-sm mt-1">
+                          {quickListingForm.formState.errors.amount.message}
+                        </p>
+                      ) : <p className="text-sm text-gray-400 ml-auto w-fit">
+                        available: {maxTokenForListing}
+                      </p>}
+                    </div>
                     <div className="flex items-center gap-1 mb-2">
                       <h3 className="text-base font-medium">
                         Set a price per item
@@ -182,24 +242,68 @@ export default function QuickListingModal({
                         </p>
                         <div className="flex">
                           <Input
-                            placeholder="Amount"
-                            className="rounded-r-none bg-[#2a2a2a] border-gray-700 focus-visible:ring-0 focus-visible:border-gray-500"
-                            {...form.register("amount")}
+                            type="number"
+                            step={0.0000000001}
+                            placeholder="Price"
+                            className="rounded-l-[15px] bg-[#2a2a2a] border-white focus-visible:ring-0 text-[150px] h-16 min-h-16"
+                            {...quickListingForm.register("price")}
                           />
-                          <div className="flex items-center justify-center px-4 font-medium bg-[#2a2a2a] border border-l-0 border-gray-700 rounded-r-md">
+                          <div className="flex items-center justify-center px-4 font-medium bg-[#2a2a2a] border border-l-0 border-white rounded-r-[15px]">
                             ETH
                           </div>
                         </div>
-                        {form.watch("amount") && (
+                        {quickListingForm.watch("price") && (
                           <span className="text-sm text-gray-400">
-                            {handleEthToUsd(Number(form.watch("amount")))} USD
+                            $
+                            {handleEthToUsd(
+                              Number(quickListingForm.watch("price")),
+                            ).toFixed(2)}{" "}
+                            USD
                           </span>
                         )}
-                        {form.formState.errors.amount && (
+                        {quickListingForm.formState.errors.price && (
                           <p className="text-red-500 text-sm mt-1">
-                            {form.formState.errors.amount.message}
+                            {quickListingForm.formState.errors.price.message}
                           </p>
                         )}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between my-5 border-b-2 border-b-gray-600 pb-4">
+                      <div className="flex">
+                        <h3 className="text-base font-medium">Listing price</h3>
+                      </div>
+                      <div>
+                        {" "}
+                        {!_.isEmpty(quickListingForm.getValues("price"))
+                          ? `${quickListingForm.getValues("price")} ETH`
+                          : "--ETH"}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between my-5 border-b-2 border-b-gray-600 pb-4">
+                      <div className="flex">
+                        <h3 className="text-b.ase font-medium">
+                          Creator earnings
+                        </h3>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="w-5 h-5 p-0"
+                        >
+                          <HelpCircle className="w-4 h-4 text-gray-400" />
+                        </Button>
+                      </div>
+                      <div> {royaltyPercentage}% </div>
+                    </div>
+                    <div className="flex items-center justify-between my-5 pb-4">
+                      <div className="flex">
+                        <h3 className="text-base font-medium">
+                          Total potential earnings
+                        </h3>
+                      </div>
+                      <div className="flex flex-col">
+                        <div className="">
+                          {earnings ? `${earnings} ETH` : "--ETH"}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -208,8 +312,8 @@ export default function QuickListingModal({
                 {/* Complete Button */}
                 <div className="p-4 pt-2">
                   <Button
+                    className="w-full bg-slate-700 hover:bg-slate-600z text-primary-foreground"
                     type="submit"
-                    className="w-full py-6 text-base font-medium bg-blue-600 hover:bg-blue-700"
                   >
                     Complete listing
                   </Button>
@@ -217,12 +321,12 @@ export default function QuickListingModal({
               </form>
             </CardContent>
           </TabsContent>
-          <TabsContent value="auction" className="">
+          <TabsContent value="auction" className="h-[410px] w-[550px]">
             <CardContent className="p-0 max-h-96 overflow-y-auto">
-              <div className="max-w-md mx-auto p-6 space-y-6">
-                <div className="space-y-4">
+              <div className="mx-auto p-4 space-y-6">
+                <div className="space-y-6">
                   {/* Method Selection */}
-                  <div className="space-y-2">
+                  <div className="space-y-6">
                     <div className="flex items-center justify-between">
                       <label className="text-sm font-medium">Method</label>
                       <HelpCircle className="h-4 w-4 text-muted-foreground" />
@@ -243,7 +347,7 @@ export default function QuickListingModal({
                   </div>
 
                   {/* Starting Price */}
-                  <div className="space-y-2">
+                  <div className="space-y-6">
                     <div className="flex items-center justify-between">
                       <label className="text-sm font-medium">
                         Starting price
@@ -266,9 +370,9 @@ export default function QuickListingModal({
                     <div className="flex">
                       <div className="mr-2 flex-1">
                         <Select
-                          value={form.watch("duration")}
+                          value={quickListingForm.watch("duration")}
                           onValueChange={(value) =>
-                            form.setValue("duration", value)
+                            quickListingForm.setValue("duration", value)
                           }
                         >
                           <SelectTrigger className="bg-[#2a2a2a] border-gray-700 focus:ring-0">
@@ -306,7 +410,7 @@ export default function QuickListingModal({
                       </span>
                       <HelpCircle className="h-4 w-4 text-muted-foreground" />
                     </div>
-                    <Switch className="bg-white cursor-pointer"/>
+                    <Switch className="bg-white cursor-pointer" />
                   </div>
 
                   {/* Fewer Options */}
@@ -316,7 +420,7 @@ export default function QuickListingModal({
                   </button>
 
                   {/* Fees */}
-                  <div className="space-y-2 pt-4">
+                  <div className="space-y-6 pt-4">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Fees</span>
                       <HelpCircle className="h-4 w-4 text-muted-foreground" />

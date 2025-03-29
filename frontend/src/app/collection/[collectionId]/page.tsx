@@ -2,9 +2,10 @@
 import { use, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
-import useHandleFiles, { IFileStore } from "@/store/fileSlice";
+import useHandleFiles from "@/store/fileSlice";
 import FilterComponent from "@/components/topFilter";
 import PriceCardNft from "@/components/nftPriceCard";
+import { IFileStore } from "@/types";
 
 interface ICollectionPageParams {
   collectionId: string;

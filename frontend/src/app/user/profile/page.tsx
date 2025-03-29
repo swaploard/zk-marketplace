@@ -13,6 +13,7 @@ import {
   LayoutPanelTop,
   Columns,
 } from "lucide-react";
+import { useAccount } from "wagmi"
 import {IFileStore, PinataFile} from "@/types"
 
 import userSlice, { IUserStore } from "@/store/userSlice";
@@ -21,6 +22,7 @@ import ListingCard from "@/components/listingCard";
 import QuickListingModal from "@/components/quickListModal/index";
 import ethPriceConvertor from "@/components/ethPriceConvertor";
 export default function Profile() {
+  const { address } = useAccount();
   const { user, updateUser } = userSlice((state: IUserStore) => state);
   const { files, getFiles } = useHandleFiles((state: IFileStore) => state);
   const [bannerImage, setBannerImage] = useState<string | null>(
@@ -40,8 +42,8 @@ export default function Profile() {
   const [fileForListing, setFileForListing] = useState<PinataFile>();
 
   useEffect(() => {
-    getFiles(undefined, user.walletAddress);
-  }, [getFiles, user.walletAddress]);
+    getFiles();
+  }, [getFiles, address]);
 
   const handleBannerClick = () => {
     bannerFileInputRef.current?.click();
@@ -359,7 +361,7 @@ export default function Profile() {
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {files &&
             files.map((file) => (
-              <ListingCard key={file.ID} file={file} handleQuickList={handleQuickListing} />
+              <ListingCard key={file._id} file={file} handleQuickList={handleQuickListing} />
             ))}
         </div>
       </section>

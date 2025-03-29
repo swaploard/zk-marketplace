@@ -25,3 +25,9 @@ button.iekbcc0[data-testid="rk-connect-button"] {
 .w3a-modal__header .w3a-header__button {
   display: none !important;
 }
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}

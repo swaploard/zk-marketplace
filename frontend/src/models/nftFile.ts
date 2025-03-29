@@ -14,6 +14,7 @@ interface UploadData extends Document {
   tokenId: string;
   transactionHash: string;
   IpfsHash: string;
+  AssetIpfsHash: string;
   PinSize: number;
   Timestamp: Date;
   ID: string;
@@ -34,6 +35,7 @@ const keyValuesSchema = new Schema<KeyValues>({
 
 const uploadDataSchema = new Schema<UploadData>({
   IpfsHash: { type: String, required: true },
+  AssetIpfsHash: { type: String, required: true },
   PinSize: { type: Number, required: true },
   Timestamp: { type: Date, required: true },
   ID: { type: String, required: true },

@@ -18,7 +18,7 @@ import {
   usePublicClient,
   useWaitForTransactionReceipt,
   useWatchContractEvent,
-  useReadContract
+  useReadContract,
 } from "wagmi";
 import {
   Abi,
@@ -148,6 +148,18 @@ export default function NFTForm() {
     pollingInterval: 5000,
   });
 
+  // const { data, isLoading, isError, error } = useReadContract({
+  //   address: "0xf9f958d4e7faCfc8C17241366f3714f39b2B1bCa",
+  //   abi: AdvancedERC1155.abi as Abi,
+  //   functionName: "uri",
+  //   args: [BigInt(5)],
+  //   query: {
+  //     enabled: Boolean(5),
+  //   },
+  // });
+
+  // console.log("useReadContract", data, isLoading, isError, error);
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
@@ -216,66 +228,63 @@ export default function NFTForm() {
       }
 
       const cid = currentFile.IpfsHash;
-      const tokenId = 5;
-      
-      writeContract(
-        {
-          address: contractAddress,
-          abi: AdvancedERC1155.abi,
-          functionName: "mint",
-          account: normalizedAccount,
-          chainId: chainId,
-          chain: chain,
-          args: [address, BigInt(tokenId), BigInt(data.supply), cid, "0x"],
-          gas: 1000000n,
+      const tokenId = 17;
+
+      writeContract({
+        address: contractAddress,
+        abi: AdvancedERC1155.abi,
+        functionName: "configureToken",
+        account: normalizedAccount,
+        chainId: chainId,
+        chain: chain,
+        args: [BigInt(tokenId), 5, 5, true],
+        gas: 1000000n,
+      }, 
+      {
+        onSuccess: async (txHash) => {
+          writeContract(
+            {
+              address: contractAddress,
+              abi: AdvancedERC1155.abi,
+              functionName: "mint",
+              account: normalizedAccount,
+              chainId: chainId,
+              chain: chain,
+              args: [address, BigInt(tokenId), BigInt(data.supply), cid, "0x"],
+              gas: 1000000n,
+            },
+            {
+              onSuccess: async (txHash) => {
+                const receipt = await publicClient.waitForTransactionReceipt({
+                  hash: txHash,
+                });
+                const body = {
+                  id: currentFile.ID,
+                  tokenId,
+                  tokenAddress: contractAddress,
+                  transactionHash: txHash,
+                };
+                await addTokenData(body, currentFile.ID);
+                if (success) {
+                  reset();
+                  handleRemoveImage();
+                }
+              },
+              onError: (error) => {
+                console.error("Full Error:", error);
+                deleteFile(currentFile.IpfsHash);
+              },
+            },
+          );
         },
-        {
-          onSuccess: async (txHash) => {
-            const receipt = await publicClient.waitForTransactionReceipt({
-              hash: txHash,
-            });
-            const body = {
-              id: currentFile.ID,
-              tokenId,
-              tokenAddress: contractAddress,
-              transactionHash: txHash,
-            };
-            addTokenData(body, currentFile.ID);
-          },
-          onError: (error) => {
-            console.error("Full Error:", error);
-            deleteFile(currentFile.IpfsHash);
-          },
+        onError: (error) => {
+          console.error("Full Error:", error);
+          deleteFile(currentFile.IpfsHash);
         },
-      );
-      writeContract(
-        {
-          address: contractAddress,
-          abi: AdvancedERC1155.abi,
-          functionName: "configureToken",
-          account: normalizedAccount,
-          chainId: chainId,
-          chain: chain,
-          args: [BigInt(tokenId), 5, 5, true],
-          gas: 1000000n,
-        },
-        {
-          onSuccess: async (txHash) => {
-            console.log("Transaction Hash:", txHash);
-            const receipt = await publicClient.waitForTransactionReceipt({
-              hash: txHash,
-            });
-           console.log("receipt", receipt);
-          },
-          onError: (error) => {
-            console.error("Full Error:", error);
-          },
-        },
-      );
-      if (success) {
-        reset();
-        handleRemoveImage();
       }
+    );
+
+
     } catch (err) {
       console.error("Error uploading file:", err);
     }

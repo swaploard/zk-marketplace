@@ -11,9 +11,9 @@ export default function ListingCard({ file, handleQuickList }: IPriceCardNft) {
     <div className="flex items-center justify-center p-2">
       <div className="max-w-md w-full bg-white rounded overflow-hidden shadow-xl group relative">
         <div className="relative aspect-square w-full flex-shrink-0">
-          {file.ipfs_pin_hash && (
+          {file.AssetIpfsHash && (
             <Image
-              src={`https://silver-rainy-chipmunk-430.mypinata.cloud/ipfs/${file.ipfs_pin_hash}`}
+              src={`https://silver-rainy-chipmunk-430.mypinata.cloud/ipfs/${file.AssetIpfsHash}`}
               alt="Human Unreadable #262 - Digital Artwork"
               className="object-cover"
               fill
@@ -23,9 +23,9 @@ export default function ListingCard({ file, handleQuickList }: IPriceCardNft) {
 
         <div className="p-2 flex-grow relative min-h-[60px]">
           <h1 className="text-base text-black font-bold mb-1 line-clamp-2 min-h-[40px]">
-          {file.metadata.keyvalues.name && file.metadata.keyvalues.name}
+          {file.KeyValues.name && file?.KeyValues?.name}
           </h1>
-         <p className="text-sm text-black font-normal min-h-[20px]">{file.metadata.keyvalues.amount && `${file.metadata.keyvalues.amount} ETH`}</p>
+         <p className="text-sm text-black font-normal min-h-[20px]">{file?.KeyValues?.amount && `${file?.KeyValues?.amount} ETH`}</p>
           {/* Animated Button Container */}
           <div
             className="absolute bottom-0 left-0 right-0 h-0 overflow-hidden 

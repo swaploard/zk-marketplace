@@ -19,25 +19,28 @@ export interface File {
 }
 
 export interface PinataFile {
+  _id: string;
   ID: string;
   IpfsHash: string;
+  AssetIpfsHash: string;
   size: number;
   user_id: string;
   date_pinned: string;
   date_unpinned: string | null;
-  metadata: {
+  name: string;
+  tokenId: string;
+  tokenAddress: string;
+  transactionHash: string;
+  KeyValues: {
     name: string;
-    keyvalues: {
-      name: string;
-      supply: number;
-      description: string;
-      externalLink: string;
-      amount: number;
-      duration: string;
-      endDate: string;
-      endTime: string;
-      walletAddress: string;
-    };
+    supply: number;
+    description: string;
+    externalLink: string;
+    amount: number;
+    duration: string;
+    endDate: string;
+    endTime: string;
+    walletAddress: string;
   };
   regions: {
     regionId: string;
@@ -67,7 +70,7 @@ export interface IFileStore {
   success: boolean;
   addFile: (formData: FormData) => Promise<void>;
   getFiles: (
-    collection?: string,
+    collection?: string | null,
     walletAddress?: string | null,
   ) => Promise<void>;
   updateFiles: (body: Metadata) => Promise<void>;

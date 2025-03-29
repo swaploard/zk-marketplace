@@ -1,31 +1,36 @@
 // SPDX-License-Identifier: MIT
+pragma solidity ^0.8.28;
 
-pragma solidity ^0.8.0;
-
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "@openzeppelin/contracts/interfaces/IERC2981.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "./AdvancedERC1155.sol";
 
-contract NFTMarketplace is ReentrancyGuard {
+contract ERC1155Marketplace is ERC1155Holder, Ownable, ReentrancyGuard {
     uint256 public listingCounter;
     uint256 public auctionCounter;
+    uint256 public feePercentage = 20; // 20% marketplace fee
+    address public feeRecipient;
 
-    /// @notice Structure for a fixed-price listing.
     struct Listing {
         uint256 listingId;
         address seller;
         address tokenAddress;
         uint256 tokenId;
-        uint256 price;
+        uint256 amount;
+        uint256 remaining;
+        uint256 pricePerItem;
         bool isActive;
     }
 
-    /// @notice Structure for an auction.
     struct Auction {
         uint256 auctionId;
         address seller;
         address tokenAddress;
         uint256 tokenId;
+        uint256 amount;
         uint256 startingPrice;
         uint256 highestBid;
         address highestBidder;
@@ -35,53 +40,92 @@ contract NFTMarketplace is ReentrancyGuard {
 
     mapping(uint256 => Listing) public listings;
     mapping(uint256 => Auction) public auctions;
+    mapping(address => uint256) public pendingWithdrawals;
 
     event NFTListed(
         uint256 indexed listingId,
         address indexed seller,
         address tokenAddress,
         uint256 tokenId,
-        uint256 price
+        uint256 amount,
+        uint256 pricePerItem
     );
+
     event NFTSold(
         uint256 indexed listingId,
         address indexed buyer,
-        uint256 price
+        uint256 amount,
+        uint256 totalPrice
     );
+
     event AuctionCreated(
         uint256 indexed auctionId,
         address indexed seller,
         address tokenAddress,
         uint256 tokenId,
+        uint256 amount,
         uint256 startingPrice,
         uint256 duration
     );
+
     event NewBid(
         uint256 indexed auctionId,
         address indexed bidder,
         uint256 bidAmount
     );
+
     event AuctionFinalized(
         uint256 indexed auctionId,
         address winner,
         uint256 finalPrice
     );
 
-    // ******************
-    // Fixed-Price Sales
-    // ******************
+    constructor(address initialFeeRecipient) Ownable(msg.sender) {
+        feeRecipient = initialFeeRecipient;
+    }
 
-    /// @notice List an NFT for fixed-price sale.
-    /// @dev Seller must approve the marketplace for NFT transfer.
+    // ================== Fee Management ================== //
+
+    function setFeePercentage(uint256 newFee) external onlyOwner {
+        require(newFee <= 25, "Fee cannot exceed 25%");
+        feePercentage = newFee;
+    }
+
+    function setFeeRecipient(address newRecipient) external onlyOwner {
+        require(newRecipient != address(0), "Invalid address");
+        feeRecipient = newRecipient;
+    }
+
+    // ================== Fixed Price Functions ================== //
+
     function listItem(
         address tokenAddress,
         uint256 tokenId,
-        uint256 price
+        uint256 amount,
+        uint256 pricePerItem
     ) external nonReentrant {
-        require(price > 0, "Price must be > 0");
+        AdvancedERC1155 tokenContract = AdvancedERC1155(tokenAddress);
+        (uint256 maxSupply, uint256 mintPrice, bool isFungible) = tokenContract
+            .tokenConfigs(tokenId);
+        AdvancedERC1155.TokenConfig memory config = AdvancedERC1155.TokenConfig(
+            maxSupply,
+            mintPrice,
+            isFungible
+        );
 
-        // Transfer NFT from seller to marketplace contract.
-        IERC721(tokenAddress).transferFrom(msg.sender, address(this), tokenId);
+        require(amount > 0, "Invalid amount");
+        require(pricePerItem > 0, "Invalid price");
+        if (!config.isFungible) {
+            require(amount == 1, "NFTs must be listed singly");
+        }
+
+        tokenContract.safeTransferFrom(
+            msg.sender,
+            address(this),
+            tokenId,
+            amount,
+            ""
+        );
 
         listingCounter++;
         listings[listingCounter] = Listing({
@@ -89,7 +133,9 @@ contract NFTMarketplace is ReentrancyGuard {
             seller: msg.sender,
             tokenAddress: tokenAddress,
             tokenId: tokenId,
-            price: price,
+            amount: amount,
+            remaining: amount,
+            pricePerItem: pricePerItem,
             isActive: true
         });
 
@@ -98,130 +144,101 @@ contract NFTMarketplace is ReentrancyGuard {
             msg.sender,
             tokenAddress,
             tokenId,
-            price
+            amount,
+            pricePerItem
         );
     }
 
-    /// @notice Buy a listed NFT.
-    function buyItem(uint256 listingId) external payable nonReentrant {
+    function buyItem(uint256 listingId, uint256 amount)
+        external
+        payable
+        nonReentrant
+    {
         Listing storage listing = listings[listingId];
-        require(listing.isActive, "Listing not active");
-        require(msg.value >= listing.price, "Insufficient funds");
+        require(listing.isActive, "Listing inactive");
+        require(amount <= listing.remaining, "Insufficient quantity");
 
-        listing.isActive = false;
-        uint256 salePrice = listing.price;
+        AdvancedERC1155 tokenContract = AdvancedERC1155(listing.tokenAddress);
 
-        // Retrieve royalty information via EIP-2981 if available.
+        (, , bool isFungible) = tokenContract.tokenConfigs(listing.tokenId);
+
+        if (!isFungible) {
+            require(amount == 1, "Can only buy 1 NFT");
+        }
+
+        uint256 totalPrice = amount * listing.pricePerItem;
+        require(msg.value >= totalPrice, "Insufficient funds");
+
+        uint256 feeAmount = (totalPrice * feePercentage) / 100;
         (address royaltyReceiver, uint256 royaltyAmount) = _getRoyaltyInfo(
             listing.tokenAddress,
             listing.tokenId,
-            salePrice
+            totalPrice
         );
-        uint256 sellerAmount = salePrice - royaltyAmount;
-
-        // Transfer NFT to buyer.
-        IERC721(listing.tokenAddress).transferFrom(
-            address(this),
-            msg.sender,
-            listing.tokenId
-        );
-
-        // Payout to seller using low-level call.
-        {
-            (bool successSeller, ) = (payable(listing.seller).call{value: sellerAmount}(""));
-            require(successSeller, "Transfer to seller failed");
-        }
-
-        // Payout royalty if applicable.
-        if (royaltyAmount > 0 && royaltyReceiver != address(0)) {
-            (bool successRoyalty, ) = (payable(royaltyReceiver).call{value: royaltyAmount}(""));
-            require(successRoyalty, "Royalty transfer failed");
-        }
-
-        // Refund any excess funds.
-        if (msg.value > salePrice) {
-            (bool successRefund, ) = (payable(msg.sender).call{value: msg.value - salePrice}(""));
-            require(successRefund, "Refund failed");
-        }
-
-        emit NFTSold(listingId, msg.sender, salePrice);
-    }
-
-    /// @notice Batch buy multiple listings in one transaction.
-    function batchBuy(
-        uint256[] calldata listingIds
-    ) external payable nonReentrant {
-        uint256 totalPrice = 0;
-
-        // Calculate total cost.
-        for (uint256 i = 0; i < listingIds.length; i++) {
-            Listing storage listing = listings[listingIds[i]];
-            require(listing.isActive, "One of the listings is not active");
-            totalPrice += listing.price;
-        }
 
         require(
-            msg.value >= totalPrice,
-            "Insufficient funds for batch purchase"
+            totalPrice >= feeAmount + royaltyAmount,
+            "Invalid fee calculation"
         );
 
-        // Process each listing.
-        for (uint256 i = 0; i < listingIds.length; i++) {
-            Listing storage listing = listings[listingIds[i]];
+        listing.remaining -= amount;
+        if (listing.remaining == 0) {
             listing.isActive = false;
-            uint256 salePrice = listing.price;
-
-            (address royaltyReceiver, uint256 royaltyAmount) = _getRoyaltyInfo(
-                listing.tokenAddress,
-                listing.tokenId,
-                salePrice
-            );
-            uint256 sellerAmount = salePrice - royaltyAmount;
-
-            // Transfer NFT to buyer.
-            IERC721(listing.tokenAddress).transferFrom(
-                address(this),
-                msg.sender,
-                listing.tokenId
-            );
-
-            // Payout to seller.
-            {
-                (bool successSeller, ) = (payable(listing.seller).call{value: sellerAmount}(""));
-                require(successSeller, "Transfer to seller failed");
-            }
-
-            // Payout royalty if applicable.
-            if (royaltyAmount > 0 && royaltyReceiver != address(0)) {
-                (bool successRoyalty, ) = (payable(royaltyReceiver).call{value: royaltyAmount}(""));
-                require(successRoyalty, "Royalty transfer failed");
-            }
-
-            emit NFTSold(listingIds[i], msg.sender, salePrice);
         }
 
-        // Refund any excess funds.
+        tokenContract.safeTransferFrom(
+            address(this),
+            msg.sender,
+            listing.tokenId,
+            amount,
+            ""
+        );
+
+        pendingWithdrawals[listing.seller] +=
+            totalPrice -
+            feeAmount -
+            royaltyAmount;
+        pendingWithdrawals[royaltyReceiver] += royaltyAmount;
+        pendingWithdrawals[feeRecipient] += feeAmount;
+
         if (msg.value > totalPrice) {
-            (bool successRefund, ) = (payable(msg.sender).call{value: msg.value - totalPrice}(""));
-            require(successRefund, "Refund failed");
+            (bool sent, ) = msg.sender.call{value: msg.value - totalPrice}("");
+            require(sent, "Refund failed");
         }
+
+        emit NFTSold(listingId, msg.sender, amount, totalPrice);
     }
 
-    // ******************
-    // Auction Sales
-    // ******************
+    // ================== Auction Functions ================== //
 
-    /// @notice Create an auction for an NFT.
-    /// @param duration Duration of the auction in seconds.
     function createAuction(
         address tokenAddress,
         uint256 tokenId,
+        uint256 amount,
         uint256 startingPrice,
         uint256 duration
     ) external nonReentrant {
-        require(duration > 0, "Duration must be > 0");
-        // Transfer NFT to marketplace.
-        IERC721(tokenAddress).transferFrom(msg.sender, address(this), tokenId);
+        AdvancedERC1155 tokenContract = AdvancedERC1155(tokenAddress);
+        (uint256 maxSupply, uint256 mintPrice, bool isFungible) = tokenContract
+            .tokenConfigs(tokenId);
+        AdvancedERC1155.TokenConfig memory config = AdvancedERC1155.TokenConfig(
+            maxSupply,
+            mintPrice,
+            isFungible
+        );
+        require(duration > 0, "Invalid duration");
+        require(amount > 0, "Invalid amount");
+        if (!config.isFungible) {
+            require(amount == 1, "NFTs must be auctioned singly");
+        }
+
+        tokenContract.safeTransferFrom(
+            msg.sender,
+            address(this),
+            tokenId,
+            amount,
+            ""
+        );
 
         auctionCounter++;
         auctions[auctionCounter] = Auction({
@@ -229,6 +246,7 @@ contract NFTMarketplace is ReentrancyGuard {
             seller: msg.sender,
             tokenAddress: tokenAddress,
             tokenId: tokenId,
+            amount: amount,
             startingPrice: startingPrice,
             highestBid: 0,
             highestBidder: address(0),
@@ -241,92 +259,155 @@ contract NFTMarketplace is ReentrancyGuard {
             msg.sender,
             tokenAddress,
             tokenId,
+            amount,
             startingPrice,
             duration
         );
     }
 
-    /// @notice Place a bid on an auction.
-    function bid(uint256 auctionId) external payable nonReentrant {
-        Auction storage auction = auctions[auctionId];
-        require(block.timestamp < auction.endTime, "Auction ended");
-
-        // Determine minimum acceptable bid.
-        uint256 minBid = auction.highestBid > 0
-            ? auction.highestBid
-            : auction.startingPrice;
-        require(msg.value > minBid, "Bid not high enough");
-
-        // Refund previous highest bidder, if any.
-        if (auction.highestBidder != address(0)) {
-            (bool successRefund, ) = (payable(auction.highestBidder).call{value: auction.highestBid}(""));
-            require(successRefund, "Refund to previous bidder failed");
-        }
-
-        auction.highestBid = msg.value;
-        auction.highestBidder = msg.sender;
-
-        emit NewBid(auctionId, msg.sender, msg.value);
-    }
-
-    /// @notice Finalize an auction after it ends.
     function finalizeAuction(uint256 auctionId) external nonReentrant {
         Auction storage auction = auctions[auctionId];
-        require(block.timestamp >= auction.endTime, "Auction not ended");
-        require(!auction.finalized, "Auction already finalized");
-        auction.finalized = true;
+        require(block.timestamp >= auction.endTime, "Auction ongoing");
+        require(!auction.finalized, "Already finalized");
 
-        // If there was at least one bid...
+        auction.finalized = true;
+        AdvancedERC1155 tokenContract = AdvancedERC1155(auction.tokenAddress);
+
         if (auction.highestBidder != address(0)) {
-            uint256 salePrice = auction.highestBid;
+            uint256 totalPrice = auction.highestBid;
+            uint256 feeAmount = (totalPrice * feePercentage) / 100;
             (address royaltyReceiver, uint256 royaltyAmount) = _getRoyaltyInfo(
                 auction.tokenAddress,
                 auction.tokenId,
-                salePrice
+                totalPrice
             );
-            uint256 sellerAmount = salePrice - royaltyAmount;
 
-            // Transfer NFT to highest bidder.
-            IERC721(auction.tokenAddress).transferFrom(
+            require(
+                totalPrice >= feeAmount + royaltyAmount,
+                "Invalid fee calculation"
+            );
+            uint256 sellerAmount = totalPrice - feeAmount - royaltyAmount;
+
+            // Transfer tokens
+            tokenContract.safeTransferFrom(
                 address(this),
                 auction.highestBidder,
-                auction.tokenId
+                auction.tokenId,
+                auction.amount,
+                ""
             );
 
-            // Payout to seller.
-            {
-                (bool successSeller, ) = (payable(auction.seller).call{value: sellerAmount}(""));
-                require(successSeller, "Transfer to seller failed");
-            }
+            // Accumulate funds
+            pendingWithdrawals[auction.seller] += sellerAmount;
+            pendingWithdrawals[royaltyReceiver] += royaltyAmount;
+            pendingWithdrawals[feeRecipient] += feeAmount;
 
-            // Payout royalty if applicable.
-            if (royaltyAmount > 0 && royaltyReceiver != address(0)) {
-                (bool successRoyalty, ) = (payable(royaltyReceiver).call{value: royaltyAmount}(""));
-                require(successRoyalty, "Royalty transfer failed");
-            }
-
-            emit AuctionFinalized(auctionId, auction.highestBidder, salePrice);
+            emit AuctionFinalized(auctionId, auction.highestBidder, totalPrice);
         } else {
-            // No bids: return NFT to seller.
-            IERC721(auction.tokenAddress).transferFrom(
+            tokenContract.safeTransferFrom(
                 address(this),
                 auction.seller,
-                auction.tokenId
+                auction.tokenId,
+                auction.amount,
+                ""
             );
         }
     }
 
-    // ******************
-    // Internal Functions
-    // ******************
+    // ================== Batch Functions ================== //
 
-    /// @notice Retrieve royalty information from the NFT contract if supported.
+    function batchBuy(uint256[] calldata listingIds, uint256[] calldata amounts)
+        external
+        payable
+        nonReentrant
+    {
+        require(listingIds.length == amounts.length, "Array length mismatch");
+
+        uint256 totalPrice;
+
+        // Validation phase - explicit state reads
+        for (uint256 i = 0; i < listingIds.length; i++) {
+            Listing storage listing = listings[listingIds[i]];
+            require(listing.isActive, "Listing inactive");
+            require(amounts[i] > 0, "Zero amount");
+            require(amounts[i] <= listing.remaining, "Exceeds available");
+
+            AdvancedERC1155 tokenContract = AdvancedERC1155(
+                listing.tokenAddress
+            );
+            (
+                uint256 maxSupply,
+                uint256 mintPrice,
+                bool isFungible
+            ) = tokenContract.tokenConfigs(listing.tokenId);
+            AdvancedERC1155.TokenConfig memory config = AdvancedERC1155
+                .TokenConfig(maxSupply, mintPrice, isFungible);
+
+            if (!config.isFungible) {
+                require(amounts[i] == 1, "NFTs: amount must be 1");
+            }
+
+            totalPrice += listing.pricePerItem * amounts[i];
+        }
+
+        require(msg.value >= totalPrice, "Insufficient funds");
+
+        // Explicit state modification section
+        for (uint256 i = 0; i < listingIds.length; i++) {
+            uint256 listingId = listingIds[i];
+            Listing storage listing = listings[listingId];
+            uint256 amount = amounts[i];
+            uint256 itemPrice = listing.pricePerItem * amount;
+
+            // State modification
+            listing.remaining -= amount;
+            if (listing.remaining == 0) {
+                listing.isActive = false;
+            }
+
+            AdvancedERC1155(listing.tokenAddress).safeTransferFrom(
+                address(this),
+                msg.sender,
+                listing.tokenId,
+                amount,
+                ""
+            );
+
+            (address royaltyReceiver, uint256 royaltyAmount) = _getRoyaltyInfo(
+                listing.tokenAddress,
+                listing.tokenId,
+                itemPrice
+            );
+
+            uint256 feeAmount = (itemPrice * feePercentage) / 100;
+            uint256 sellerAmount = itemPrice - feeAmount - royaltyAmount;
+
+            pendingWithdrawals[listing.seller] += sellerAmount;
+            pendingWithdrawals[royaltyReceiver] += royaltyAmount;
+            pendingWithdrawals[feeRecipient] += feeAmount;
+        }
+
+        if (msg.value > totalPrice) {
+            (bool sent, ) = msg.sender.call{value: msg.value - totalPrice}("");
+            require(sent, "Refund failed");
+        }
+    }
+
+    // ================== Utility Functions ================== //
+
+    function withdrawFunds() external nonReentrant {
+        uint256 amount = pendingWithdrawals[msg.sender];
+        require(amount > 0, "No funds available");
+        pendingWithdrawals[msg.sender] = 0;
+        (bool success, ) = msg.sender.call{value: amount}("");
+        require(success, "Transfer failed");
+    }
+
     function _getRoyaltyInfo(
         address tokenAddress,
         uint256 tokenId,
         uint256 salePrice
-    ) internal returns (address royaltyReceiver, uint256 royaltyAmount) {
-        // Use try/catch in case the NFT does not implement EIP-2981.
+    ) internal view  returns (address, uint256) {
         try IERC2981(tokenAddress).royaltyInfo(tokenId, salePrice) returns (
             address receiver,
             uint256 amount
@@ -335,5 +416,15 @@ contract NFTMarketplace is ReentrancyGuard {
         } catch {
             return (address(0), 0);
         }
+    }
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC1155Holder)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
     }
 }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.28;
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -7,7 +7,13 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 
-contract AdvancedERC1155 is ERC1155, Ownable, ReentrancyGuard, ERC2981, ERC1155Supply {
+contract AdvancedERC1155 is
+    ERC1155,
+    Ownable,
+    ReentrancyGuard,
+    ERC2981,
+    ERC1155Supply
+{
     // Struct to define token properties
     struct TokenConfig {
         uint256 maxSupply;
@@ -16,10 +22,14 @@ contract AdvancedERC1155 is ERC1155, Ownable, ReentrancyGuard, ERC2981, ERC1155S
     }
 
     // State variables
+    mapping(uint256 => bool) private _isIdConfigured;
+    mapping(uint256 => bool) private _isIdMinted;
     mapping(uint256 => TokenConfig) public tokenConfigs;
     string public contractURI;
     string public name;
     string public symbol;
+    uint256[] private _configuredIds;
+    uint256[] private _mintedIds;
 
     // Events
     event TokenMinted(address indexed to, uint256 id, uint256 amount);
@@ -50,7 +60,13 @@ contract AdvancedERC1155 is ERC1155, Ownable, ReentrancyGuard, ERC2981, ERC1155S
         uint256 amount,
         bytes memory data
     ) external onlyOwner {
-        require(!tokenConfigs[id].isFungible || amount == 1, "NFTs must be minted 1 at a time");
+        require(
+            tokenConfigs[id].isFungible || amount == 1,
+            "NFTs must be minted 1 at a time"
+        );
+        if (!tokenConfigs[id].isFungible) {
+            require(balanceOf(to, id) == 0, "Recipient already owns this NFT");
+        }
         _mint(to, id, amount, data);
         emit TokenMinted(to, id, amount);
     }
@@ -62,9 +78,24 @@ contract AdvancedERC1155 is ERC1155, Ownable, ReentrancyGuard, ERC2981, ERC1155S
         uint256[] memory amounts,
         bytes memory data
     ) external onlyOwner {
+        for (uint256 i = 0; i < ids.length; i++) {
+            uint256 id = ids[i];
+            require(
+                tokenConfigs[id].isFungible || amounts[i] == 1,
+                "NFTs must be minted 1 at a time"
+            );
+            if (!tokenConfigs[id].isFungible) {
+                require(
+                    balanceOf(to, id) == 0,
+                    "Recipient already owns this NFT"
+                );
+            }
+        }
         _mintBatch(to, ids, amounts, data);
         for (uint256 i = 0; i < ids.length; i++) {
             emit TokenMinted(to, ids[i], amounts[i]);
+            _mintedIds.push(ids[i]);
+            _isIdMinted[ids[i]] = true;
         }
     }
 
@@ -75,7 +106,10 @@ contract AdvancedERC1155 is ERC1155, Ownable, ReentrancyGuard, ERC2981, ERC1155S
     ) external payable nonReentrant {
         TokenConfig memory config = tokenConfigs[id];
         require(msg.value >= config.mintPrice * amount, "Insufficient payment");
-        require(totalSupply(id) + amount <= config.maxSupply, "Exceeds max supply");
+        require(
+            totalSupply(id) + amount <= config.maxSupply,
+            "Exceeds max supply"
+        );
 
         if (!config.isFungible) {
             require(amount == 1, "Cannot mint multiple NFTs");
@@ -83,15 +117,13 @@ contract AdvancedERC1155 is ERC1155, Ownable, ReentrancyGuard, ERC2981, ERC1155S
         }
 
         _mint(msg.sender, id, amount, "");
+        _mintedIds.push(id);
+        _isIdMinted[id] = true;
         emit TokenMinted(msg.sender, id, amount);
     }
 
     // Burn tokens
-    function burn(
-        address from,
-        uint256 id,
-        uint256 amount
-    ) external {
+    function burn(address from, uint256 id, uint256 amount) external {
         require(
             from == msg.sender || isApprovedForAll(from, msg.sender),
             "Not authorized"
@@ -101,7 +133,7 @@ contract AdvancedERC1155 is ERC1155, Ownable, ReentrancyGuard, ERC2981, ERC1155S
     }
 
     // ================== Configuration Functions ================== //
-    
+
     // Configure token properties (owner only)
     function configureToken(
         uint256 id,
@@ -110,6 +142,9 @@ contract AdvancedERC1155 is ERC1155, Ownable, ReentrancyGuard, ERC2981, ERC1155S
         bool isFungible
     ) external onlyOwner {
         tokenConfigs[id] = TokenConfig(maxSupply, mintPrice, isFungible);
+        _isIdConfigured[id] = true;
+        _configuredIds.push(id);
+
     }
 
     // Set royalty info (owner only)
@@ -155,5 +190,13 @@ contract AdvancedERC1155 is ERC1155, Ownable, ReentrancyGuard, ERC2981, ERC1155S
         bytes4 interfaceId
     ) public view override(ERC1155, ERC2981) returns (bool) {
         return super.supportsInterface(interfaceId);
+    }
+
+    function remainingSupply(uint256 id) public view returns (uint256) {
+        return tokenConfigs[id].maxSupply - totalSupply(id);
+    }
+    
+    function tokenBalance(address owner, uint256 id) public view returns (uint256) {
+        return balanceOf(owner, id);
     }
 }

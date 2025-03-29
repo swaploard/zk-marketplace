@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { pinata } from "@/utils/config/pinata";
 import connectMongo from "@/lib/mongodb";
 import { UploadDataModel } from "@/models/nftFile";
-
+import _ from "lodash";
 export async function POST(request: NextRequest) {
   await connectMongo();
 
@@ -40,9 +40,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const fileUploadResponse = await pinata.upload
-      .file(file)
-      .group(groupId);
+    const fileUploadResponse = await pinata.upload.file(file).group(groupId);
     const fileCid = fileUploadResponse.IpfsHash;
 
     const metadataJSON = {
@@ -73,7 +71,6 @@ export async function POST(request: NextRequest) {
       .file(metadataFile)
       .group(groupId);
     const metadataCid = metadataUploadResponse.IpfsHash;
-
     const uploadData = {
       IpfsHash: metadataCid,
       AssetIpfsHash: fileCid,
@@ -110,18 +107,32 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  let files;
   try {
     const { searchParams } = new URL(request.url);
+
     const collectionId = searchParams.get("collection");
     const walletAddress = searchParams.get("walletAddress");
+  
+    let files;
 
-    if (walletAddress) {
+    if (!_.isEmpty(walletAddress)) {
       try {
-        files = await pinata
-          .listFiles()
-          .keyValue("walletAddress", walletAddress);
-        return NextResponse.json({ files }, { status: 200 });
+        files = await UploadDataModel.find({ walletAddress: walletAddress })
+          .lean()
+          .exec();
+      } catch (error) {
+        console.error("Database Error:", error);
+        return NextResponse.json(
+          {
+            error: "Failed to fetch files by wallet address",
+            details: error.message,
+          },
+          { status: 500 },
+        );
+      }
+    } else if (!_.isEmpty(collectionId)) {
+      try {
+        files = await pinata.listFiles().group(collectionId); 
       } catch (pinataError) {
         console.error("Pinata API Error:", pinataError);
         return NextResponse.json(
@@ -133,24 +144,19 @@ export async function GET(request: NextRequest) {
           { status: pinataError.response?.status || 500 },
         );
       }
-    }
-
-    if (collectionId) {
+    } else {
       try {
-        files = await pinata.listFiles().group(collectionId);
-        return NextResponse.json({ files }, { status: 200 });
-      } catch (pinataError) {
-        console.error("Pinata API Error:", pinataError);
+        files = await UploadDataModel.find({}).lean().exec();
+      } catch (error) {
+        console.error("Database Error:", error);
         return NextResponse.json(
-          {
-            error: "Failed to fetch collection",
-            details:
-              pinataError.response?.data?.error?.message || pinataError.message,
-          },
-          { status: pinataError.response?.status || 500 },
+          { error: "Failed to fetch all files", details: error.message },
+          { status: 500 },
         );
       }
     }
+
+    return NextResponse.json(files, { status: 200 });
   } catch (e) {
     console.error(e);
     return NextResponse.json(
@@ -167,10 +173,13 @@ export async function DELETE(request: NextRequest) {
     if (!cid)
       return NextResponse.json({ error: "Missing hash" }, { status: 400 });
 
-     const deleteResponse = await pinata.unpin([cid]);
-     if(deleteResponse[0].status.includes("OK")){
-        const deleteFile = await UploadDataModel.findOneAndDelete({ IpfsHash: cid }, { new: true });
-     }
+    const deleteResponse = await pinata.unpin([cid]);
+    if (deleteResponse[0].status.includes("OK")) {
+      const deleteFile = await UploadDataModel.findOneAndDelete(
+        { IpfsHash: cid },
+        { new: true },
+      );
+    }
     return NextResponse.json(
       { message: "File deleted successfully" },
       { status: 200 },
@@ -188,30 +197,33 @@ export async function PUT(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
 
-    if (id) {
-      try {
-        const { tokenId, tokenAddress, transactionHash } = await request.json();
-        
-        if (!tokenId || !tokenAddress || !transactionHash) {
-          return NextResponse.json(
-            { error: "Missing required fields: tokenId, tokenAddress, transactionHash" },
-            { status: 400 }
-          );
-        }
-  
-        const updatedDocument = await updateTokenIdAndAddress(
-          id,
-          tokenId,
-          tokenAddress,
-          transactionHash
+  if (id) {
+    try {
+      const { tokenId, tokenAddress, transactionHash } = await request.json();
+
+      if (!tokenId || !tokenAddress || !transactionHash) {
+        return NextResponse.json(
+          {
+            error:
+              "Missing required fields: tokenId, tokenAddress, transactionHash",
+          },
+          { status: 400 },
         );
-        
-        return NextResponse.json(updatedDocument, { status: 200 });
-      } catch (error) {
-        console.error("Error updating token details:", error);
-        return handleUpdateError(error);
       }
+
+      const updatedDocument = await updateTokenIdAndAddress(
+        id,
+        tokenId,
+        tokenAddress,
+        transactionHash,
+      );
+
+      return NextResponse.json(updatedDocument, { status: 200 });
+    } catch (error) {
+      console.error("Error updating token details:", error);
+      return handleUpdateError(error);
     }
+  }
 
   try {
     const { cid, name, keyValues } = await request.json();
@@ -237,7 +249,7 @@ export async function PUT(request: NextRequest) {
     );
   }
 }
- const updateTokenIdAndAddress = async (
+const updateTokenIdAndAddress = async (
   id: string,
   tokenId: string,
   tokenAddress: string,
@@ -264,14 +276,8 @@ export async function PUT(request: NextRequest) {
 
 const handleUpdateError = (error: Error) => {
   if (error.message === "DOCUMENT_NOT_FOUND") {
-    return NextResponse.json(
-      { error: "Document not found" },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: "Document not found" }, { status: 404 });
   }
-  
-  return NextResponse.json(
-    { error: "Internal Server Error" },
-    { status: 500 }
-  );
+
+  return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
 };
