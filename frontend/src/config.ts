@@ -2,12 +2,14 @@
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
 import { cookieStorage, createStorage, http, webSocket, fallback } from "wagmi";
 import { polygonAmoy, sepolia, localhost } from "viem/chains";
+import { Network } from "alchemy-sdk";
 export const projectId = process.env.NEXT_PUBLIC_PROJECT_ID as string;
 
 const SEPOLIA_WS_RPC = process.env.NEXT_PUBLIC_AMOY_WS_RPC;
 const AMOY_WS_RPC = process.env.NEXT_PUBLIC_SEPOLIA_WS_RPC;
 const SEPOLIA_HTTP_RPC = process.env.NEXT_PUBLIC_SEPOLIA_HTTP_RPC;
 const AMOY_HTTP_RPC = process.env.NEXT_PUBLIC_AMOY_HTTP_RPC;
+
 export const config = getDefaultConfig({
   appName: "zk-marketplace",
   projectId: "project id",
@@ -29,3 +31,8 @@ export const config = getDefaultConfig({
     ])
   },
 });
+
+export const AlchemyConfig = {
+  apiKey: process.env.NEXT_PUBLIC_ALCHEMY_API_KEY,
+  network: Network.ETH_SEPOLIA,
+}

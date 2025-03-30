@@ -1,28 +1,31 @@
 import { create } from "zustand";
+import { Alchemy } from "alchemy-sdk";
+
 import { axiosInstance } from "@/axios/index";
 import { PIN_FILE_TO_IPFS_URL } from "../ApiEndpoints/pinataEndpoints";
 import { handlePromiseToaster } from "@/components/toaster/promise";
 import { IFileStore } from "@/types";
+import { AlchemyConfig } from "../config";
 
 const useHandleFiles = create<IFileStore>((set, get) => ({
   file: null,
   files: [],
+  nftList: [],
   previewUrl: null,
   loading: false,
   success: false,
   error: null,
 
-  getFiles: async (collection, walletAddress) => {
+  getFiles: async (collection = "", walletAddress = "") => {
     set({ loading: true, error: null });
 
     try {
       const response = await axiosInstance.get(
         `${PIN_FILE_TO_IPFS_URL}?collection=${encodeURIComponent(collection)}&walletAddress=${encodeURIComponent(walletAddress)}`,
       );
-
-      if (response.status >= 200 && response.status < 300) {
+      if (response.status === 200) {
         set({
-          files: response.data.files || [],
+          files: response.data,
           loading: false,
           success: true,
         });
@@ -80,27 +83,16 @@ const useHandleFiles = create<IFileStore>((set, get) => ({
   },
 
   updateFiles: async (body) => {
-    set({ loading: true, error: null });
+    set({ loading: true, error: null, success: false });
     try {
-      const promise = axiosInstance.put(
-        PIN_FILE_TO_IPFS_URL,
-        JSON.stringify(body),
-      );
-      const response = await promise;
+      const promise = axiosInstance.put(PIN_FILE_TO_IPFS_URL, body, {
+        headers: {
+          "Content-Type": "application/json", 
+        },
+      });
 
-      if (response.status === 200) {
-        set({ loading: false, success: true });
-      } else {
-        set({ error: "Failed to update metadata", loading: false });
-      }
-
-      // Consider moving this to a separate utility function
       handlePromiseToaster(
         promise,
-        {
-          title: "Update Error",
-          message: "Failed to update collection metadata",
-        },
         {
           title: "Updating Metadata",
           message: "Your collection metadata is being updated",
@@ -109,14 +101,29 @@ const useHandleFiles = create<IFileStore>((set, get) => ({
           title: "Success!",
           message: "Metadata updated successfully",
         },
+        {
+          title: "Update Error",
+          message: "Failed to update collection metadata",
+        },
       );
+
+      const response = await promise;
+      if (response.status === 200) {
+        set({ loading: false, success: true });
+        return response.data;
+      }
+
+      const errorMessage = response.data?.error || "Failed to update metadata";
+      set({ error: errorMessage, loading: false });
+      throw new Error(errorMessage);
     } catch (error) {
+      console.error("Update error:", error);
       const errorMessage =
         error.response?.data?.error ||
         error.message ||
         "Failed to update metadata";
+
       set({ error: errorMessage, loading: false });
-      throw error;
     }
   },
 
@@ -156,7 +163,6 @@ const useHandleFiles = create<IFileStore>((set, get) => ({
           responseType: "json",
         },
       );
-      
     } catch (error) {
       set({ error: error.message || "An error occurred", loading: false });
     }
@@ -165,6 +171,46 @@ const useHandleFiles = create<IFileStore>((set, get) => ({
   getLatestFile: () => {
     const latestFile = get().file;
     return latestFile;
+  },
+
+  getNftsFromUserAddress: async (walletAddress) => {
+    set({ loading: true, error: null });
+    const alchemy = new Alchemy(AlchemyConfig);
+
+    try {
+      const response = await alchemy.nft.getNftsForOwner(walletAddress);
+      console.log("response", response);
+      const transfers = await alchemy.core.getAssetTransfers({
+        fromBlock: "0x0",
+        fromAddress: "0x0000000000000000000000000000000000000000", // Mint events
+        toAddress: walletAddress,
+        category: ["erc721", "erc1155"],
+        excludeZeroValue: true,
+      });
+
+      const mintedNfts = [];
+      for (const transfer of transfers.transfers) {
+        if (transfer.category === "erc721") {
+          mintedNfts.push({
+            contract: transfer.rawContract.address,
+            tokenId: transfer.erc721TokenId,
+            type: "ERC721",
+          });
+        } else if (transfer.category === "erc1155") {
+          for (const meta of transfer.erc1155Metadata) {
+            mintedNfts.push({
+              contract: transfer.rawContract.address,
+              tokenId: meta.tokenId,
+              type: "ERC1155",
+            });
+          }
+        }
+      }
+      console.log("mintedNfts", mintedNfts);
+    } catch (error) {
+      const errorMessage = error.message || "Failed to fetch files";
+      set({ error: errorMessage, loading: false });
+    }
   },
 
   clearError: () => set({ error: null }),

@@ -23,6 +23,7 @@ export interface PinataFile {
   ID: string;
   IpfsHash: string;
   AssetIpfsHash: string;
+  price: number;
   size: number;
   user_id: string;
   date_pinned: string;
@@ -51,16 +52,6 @@ export interface PinataFile {
   number_of_files: number;
 }
 
-export interface Metadata {
-  cid: string;
-  keyValues: {
-    amount: number;
-    duration: string;
-    endDate: string;
-    endTime: string;
-  };
-  name: string;
-}
 export interface IFileStore {
   file: PinataFile | null;
   files: PinataFile[];
@@ -73,8 +64,9 @@ export interface IFileStore {
     collection?: string | null,
     walletAddress?: string | null,
   ) => Promise<void>;
-  updateFiles: (body: Metadata) => Promise<void>;
+  updateFiles: <T extends keyof PinataFile>(body: Pick<PinataFile, T>) => Promise<void>;
   getLatestFile: () => PinataFile;
   deleteFile: (id: string) => void;
   clearError: () => void;
+  getNftsFromUserAddress: (walletAddress: string) => void;
 }

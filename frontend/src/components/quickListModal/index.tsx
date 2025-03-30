@@ -36,6 +36,7 @@ export default function QuickListingModal({
 }: QuickListingModalProps) {
   const { royaltyPercentage, maxTokenForListing, handleSetQuickListing } = useQuickListingModal({
     file: fileForListing,
+    setClose
   });
 
   const [endDate, setEndDate] = useState("");

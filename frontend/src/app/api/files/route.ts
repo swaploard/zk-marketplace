@@ -112,7 +112,6 @@ export async function GET(request: NextRequest) {
 
     const collectionId = searchParams.get("collection");
     const walletAddress = searchParams.get("walletAddress");
-  
     let files;
 
     if (!_.isEmpty(walletAddress)) {
@@ -155,7 +154,6 @@ export async function GET(request: NextRequest) {
         );
       }
     }
-
     return NextResponse.json(files, { status: 200 });
   } catch (e) {
     console.error(e);
@@ -226,21 +224,26 @@ export async function PUT(request: NextRequest) {
   }
 
   try {
-    const { cid, name, keyValues } = await request.json();
-    if (!cid || !name) {
+    const {tokenId, ...data } = await request.json();
+
+    if (_.isEmpty(tokenId)) {
       return NextResponse.json(
-        { error: "Missing required parameters (CID or name)" },
+        { error: "Missing required parameters tokenId" },
         { status: 400 },
       );
     }
+     
+    const updatedDocument = await UploadDataModel.findOneAndUpdate(
+      { tokenId: tokenId },
+      { $set: data},
+      { new: true },
+    ).exec();
 
-    const updateData = await pinata.updateMetadata({
-      cid,
-      keyValues: keyValues || {},
-      name,
-    });
-
-    return NextResponse.json(updateData, { status: 200 });
+    return NextResponse.json(
+      updatedDocument,
+      { status: 200 },
+    );
+    
   } catch (error) {
     console.error("Error updating metadata:", error);
     return NextResponse.json(
@@ -249,6 +252,7 @@ export async function PUT(request: NextRequest) {
     );
   }
 }
+
 const updateTokenIdAndAddress = async (
   id: string,
   tokenId: string,

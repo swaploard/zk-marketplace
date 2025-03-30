@@ -25,13 +25,13 @@ export default function ListingCard({ file, handleQuickList }: IPriceCardNft) {
           <h1 className="text-base text-black font-bold mb-1 line-clamp-2 min-h-[40px]">
           {file.KeyValues.name && file?.KeyValues?.name}
           </h1>
-         <p className="text-sm text-black font-normal min-h-[20px]">{file?.KeyValues?.amount && `${file?.KeyValues?.amount} ETH`}</p>
+         <p className="text-sm text-black font-bold min-h-[20px]">{file?.price && `${file?.price} ETH`}</p>
           {/* Animated Button Container */}
           <div
             className="absolute bottom-0 left-0 right-0 h-0 overflow-hidden 
               group-hover:h-auto border border-solid group-hover:border-white transition-all duration-300"
           >
-            <div className="">
+            {!file?.price && <div className=""> 
               <Button
                 className="w-full flex items-center bg-black text-white 
                 justify-center gap-2 hover:bg-slate-900 translate-y-4 
@@ -41,7 +41,7 @@ export default function ListingCard({ file, handleQuickList }: IPriceCardNft) {
               >
                 List for sale
               </Button>
-            </div>
+            </div>}
           </div>
         </div>
       </div>

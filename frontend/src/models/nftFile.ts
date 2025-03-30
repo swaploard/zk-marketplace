@@ -1,4 +1,3 @@
-// models/UploadData.ts
 import { Schema, model, Document, models, Model } from 'mongoose';
 
 interface KeyValues {
@@ -12,6 +11,7 @@ interface KeyValues {
 interface UploadData extends Document {
   tokenAddress: string;
   tokenId: string;
+  price: number;
   transactionHash: string;
   IpfsHash: string;
   AssetIpfsHash: string;
@@ -36,6 +36,7 @@ const keyValuesSchema = new Schema<KeyValues>({
 const uploadDataSchema = new Schema<UploadData>({
   IpfsHash: { type: String, required: true },
   AssetIpfsHash: { type: String, required: true },
+  price: { type: Number },
   PinSize: { type: Number, required: true },
   Timestamp: { type: Date, required: true },
   ID: { type: String, required: true },

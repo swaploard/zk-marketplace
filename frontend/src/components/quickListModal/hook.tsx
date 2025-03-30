@@ -1,4 +1,4 @@
-import { Abi, parseEther, parseUnits } from "viem";
+import { Abi, Hex, hexToNumber, parseEther, parseUnits } from "viem";
 import {
   useAccount,
   usePublicClient,
@@ -12,24 +12,24 @@ import AdvancedERC1155 from "@/utils/contracts/AdvancedERC1155.json";
 import { PinataFile } from "@/types";
 import { useEffect, useState } from "react";
 import { formattedPercentage } from "@/utils/ethUtils";
+import useHandleFiles from "@/store/fileSlice";
+
 interface IUseQuickListingModal {
   file: PinataFile;
+  setClose: (value: boolean) => void;
 }
 
-export const useQuickListingModal = ({ file }: IUseQuickListingModal) => {
+export const useQuickListingModal = ({ file, setClose }: IUseQuickListingModal) => {
+  const { updateFiles } = useHandleFiles();
   const { writeContract } = useWriteContract();
   const { address, chainId, chain } = useAccount();
-
+  const publicClient = usePublicClient();
   const [royaltyPercentage, setRoyaltyPercentage] = useState<number>(0);
   const [maxTokenForListing, setMaxTokenForListing] = useState<number>(0);
 
-  //   const { data: maxSupply } = useReadContract({
-  //     address: file.tokenAddress as `0x${string}`,
-  //     abi: AdvancedERC1155.abi,
-  //     functionName: "tokenConfigs",
-  //     args: [BigInt(file.tokenId)],
-  //   });
+  const contractAddress = process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS;
 
+ 
   const { data: currentSupply } = useReadContract({
     address: file.tokenAddress as `0x${string}`,
     abi: AdvancedERC1155.abi,
@@ -56,8 +56,6 @@ export const useQuickListingModal = ({ file }: IUseQuickListingModal) => {
       setMaxTokenForListing(Number(currentSupply));
     }
   }, [data, currentSupply]);
-
-
   const handleSetQuickListing = async (price, amount) => {
     if (
       _.isEmpty(file.tokenId) &&
@@ -67,23 +65,33 @@ export const useQuickListingModal = ({ file }: IUseQuickListingModal) => {
       return "Mint Token First";
     }
     const priceInWei = parseUnits(price.toString(), 18);
-    const contractAddress = process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS;
-    console.log("token", file.tokenId, file.tokenAddress, file.transactionHash);
-    console.log("contractAddress", contractAddress, address)
     writeContract(
       {
         abi: Marketplace.abi as Abi,
         account: address,
         address: contractAddress,
         functionName: "listItem",
-        args: [file.tokenAddress, file.tokenId, amount, priceInWei],
+        args: [
+          file.tokenAddress,
+          BigInt(file.tokenId),
+          BigInt(amount),
+          BigInt(priceInWei),
+        ],
         chainId: chainId,
         chain: chain,
-        value: priceInWei,
       },
       {
-        onSuccess: (data) => {
-          console.log("data", data);
+        onSuccess: async (data) => {
+          const receipt = await publicClient.waitForTransactionReceipt({
+            hash: data,
+          });
+          if (receipt.status.toLowerCase() === "success") {
+            await updateFiles({
+              tokenId: file.tokenId,
+              price: price,
+            });
+            setClose(false);
+          }
         },
         onError: (error) => {
           console.log("error", error);
