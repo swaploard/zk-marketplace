@@ -16,12 +16,12 @@ const useHandleFiles = create<IFileStore>((set, get) => ({
   success: false,
   error: null,
 
-  getFiles: async (collection = "", walletAddress = "") => {
+  getFiles: async (contractAddress, walletAddress) => {
     set({ loading: true, error: null });
 
     try {
       const response = await axiosInstance.get(
-        `${PIN_FILE_TO_IPFS_URL}?collection=${encodeURIComponent(collection)}&walletAddress=${encodeURIComponent(walletAddress)}`,
+        `${PIN_FILE_TO_IPFS_URL}?contractAddress=${encodeURIComponent(contractAddress)}&walletAddress=${encodeURIComponent(walletAddress)}`,
       );
       if (response.status === 200) {
         set({

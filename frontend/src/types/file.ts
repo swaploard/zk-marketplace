@@ -10,6 +10,19 @@ export interface collection {
   __v: number;
 }
 
+
+export interface ICollectionStore {
+  collection: collection[] | null;
+  collections: collection[];
+  error: string | null;
+  loading: boolean;
+  getCollections: (walletAddress: string|null,  contractAddress: string|null) => void;
+  createCollection: (collection: FormData) => void;
+  getLatestCollection: () => collection[] | null;
+  updateCollection: (collection: FormData) => void;
+  deleteCollection: (id: string, groupId: string) => void;
+}
+
 export interface File {
   collection: collection;
   pinataMetadata: string;
@@ -61,7 +74,7 @@ export interface IFileStore {
   success: boolean;
   addFile: (formData: FormData) => Promise<void>;
   getFiles: (
-    collection?: string | null,
+    contractAddress?: string | null,
     walletAddress?: string | null,
   ) => Promise<void>;
   updateFiles: <T extends keyof PinataFile>(body: Pick<PinataFile, T>) => Promise<void>;
@@ -69,4 +82,5 @@ export interface IFileStore {
   deleteFile: (id: string) => void;
   clearError: () => void;
   getNftsFromUserAddress: (walletAddress: string) => void;
+  addTokenData: <T extends keyof PinataFile>(body: Pick<PinataFile, T>, id: string) => Promise<void>;
 }

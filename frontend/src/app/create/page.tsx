@@ -33,10 +33,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import CollectionListPopover from "@/components/CollectionListPopover";
-import { IFileStore } from "@/types";
+import { IFileStore, ICollectionStore } from "@/types";
 import AdvancedERC1155 from "@/utils/contracts/AdvancedERC1155.json";
 import useHandleFiles from "@/store/fileSlice";
-import useCollectionStore, { ICollectionStore } from "@/store/collectionSlice";
+import useCollectionStore from "@/store/collectionSlice";
 import getRandomUint256 from "@/utils/getRandomNumber";
 import { pinata } from "@/utils/config/pinata";
 
@@ -71,7 +71,7 @@ type NFTFormData = z.infer<typeof nftSchema>;
 export default function NFTForm() {
   const publicClient = usePublicClient();
 
-  const { success, addFile, getLatestFile, deleteFile, addTokenData } =
+  const { files, success, addFile, getLatestFile, deleteFile, addTokenData, getFiles } =
     useHandleFiles((state: IFileStore) => state);
   const { collections, getCollections } = useCollectionStore(
     (state: ICollectionStore) => state,
@@ -112,7 +112,8 @@ export default function NFTForm() {
   });
 
   useEffect(() => {
-    getCollections(address);
+    getCollections(address, null);
+    getFiles();
   }, [address, getCollections]);
 
   useEffect(() => {
@@ -130,6 +131,7 @@ export default function NFTForm() {
         console.log("watchContractEvent", error);
       },
     });
+
   }, []);
 
   useWatchContractEvent({
@@ -147,18 +149,6 @@ export default function NFTForm() {
     poll: true,
     pollingInterval: 5000,
   });
-
-  // const { data, isLoading, isError, error } = useReadContract({
-  //   address: "0xf9f958d4e7faCfc8C17241366f3714f39b2B1bCa",
-  //   abi: AdvancedERC1155.abi as Abi,
-  //   functionName: "uri",
-  //   args: [BigInt(5)],
-  //   query: {
-  //     enabled: Boolean(5),
-  //   },
-  // });
-
-  // console.log("useReadContract", data, isLoading, isError, error);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -228,7 +218,7 @@ export default function NFTForm() {
       }
 
       const cid = currentFile.IpfsHash;
-      const tokenId = 17;
+      const tokenId = files.length + 1;
 
       writeContract({
         address: contractAddress,
@@ -237,7 +227,7 @@ export default function NFTForm() {
         account: normalizedAccount,
         chainId: chainId,
         chain: chain,
-        args: [BigInt(tokenId), 5, 5, true],
+        args: [Number(tokenId) , Number(data.supply), Number(data.supply), true],
         gas: 1000000n,
       }, 
       {
@@ -250,7 +240,7 @@ export default function NFTForm() {
               account: normalizedAccount,
               chainId: chainId,
               chain: chain,
-              args: [address, BigInt(tokenId), BigInt(data.supply), cid, "0x"],
+              args: [address, Number(tokenId), 1, cid, "0x"],
               gas: 1000000n,
             },
             {

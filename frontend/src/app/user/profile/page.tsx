@@ -13,7 +13,7 @@ import {
   LayoutPanelTop,
   Columns,
 } from "lucide-react";
-import { useAccount, usePublicClient } from "wagmi"
+import { useAccount } from "wagmi"
 import {IFileStore, PinataFile} from "@/types"
 
 import userSlice, { IUserStore } from "@/store/userSlice";

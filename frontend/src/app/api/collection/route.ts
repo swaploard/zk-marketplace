@@ -1,10 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { pinata } from "../../../utils/config/pinata";
 import connectMongo from "@/lib/mongodb";
-import { CollectionGroup } from "@/models/collection";
-import User from "@/models/User";
+import { CollectionGroup } from "@/mongoSchemas/collection";
+import User from "@/mongoSchemas/User";
 import { saveFile } from "@/utils/routeHelper/saveImage";
 import { collection } from "@/types";
+import _ from "lodash";
 export async function POST(request: NextRequest) {
   await connectMongo();
 
@@ -84,12 +85,36 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: Request) {
   await connectMongo();
-  let collections;
-  try {
-    const { searchParams } = new URL(request.url);
-    const walletAddress = searchParams.get("walletAddress");
+  const { searchParams } = new URL(request.url);
+  const walletAddress = searchParams.get("walletAddress");
+  const tokenAddress = searchParams.get("contractAddress");
 
-    if (walletAddress) {
+  if (
+    !_.isEmpty(tokenAddress) &&
+    tokenAddress !== "null" &&
+    tokenAddress !== "undefined"
+  ) {
+    try {
+      const collection = await CollectionGroup.findOne(
+        { contractAddress: tokenAddress },
+      ).lean().exec();
+      return NextResponse.json(collection, { status: 200 });
+    } catch (error) {
+      console.error("Error fetching collections:", error);
+      return NextResponse.json(
+        { error: "Failed to fetch collections" },
+        { status: 500 },
+      );
+    }
+  }
+
+  try {
+    let collections;
+    if (
+      !_.isEmpty(walletAddress) &&
+      walletAddress !== "null" &&
+      walletAddress !== "undefined"
+    ) {
       const user = await User.findOne({ walletAddress });
       collections = await CollectionGroup.find({ User: user._id })
         .sort({ createdAt: -1 })
@@ -97,7 +122,6 @@ export async function GET(request: Request) {
     } else {
       collections = await CollectionGroup.find().sort({ createdAt: -1 });
     }
-
     return NextResponse.json(collections, { status: 200 });
   } catch (error) {
     console.error("Error fetching collections:", error);
@@ -149,22 +173,26 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json(
       { error: "Failed to update collection" },
       { status: 500 },
-    )
+    );
   }
 }
-
-
 
 export async function DELETE(request: NextRequest) {
   await connectMongo();
   const { searchParams } = new URL(request.url);
   const collectionId = searchParams.get("id");
   const groupId = searchParams.get("groupId");
-  try{
-    await pinata.groups.delete({ groupId: groupId });  
+  try {
+    await pinata.groups.delete({ groupId: groupId });
     await CollectionGroup.deleteOne({ _id: collectionId });
-    return NextResponse.json({ message: "Collection deleted successfully" }, { status: 200 });
-  }catch(error){
-    return NextResponse.json({ error: "Failed to delete collection" }, { status: 500 });
+    return NextResponse.json(
+      { message: "Collection deleted successfully" },
+      { status: 200 },
+    );
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to delete collection" },
+      { status: 500 },
+    );
   }
 }

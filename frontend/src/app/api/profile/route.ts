@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import connectMongo from "@/lib/mongodb";
-import User from "@/models/User";
+import User from "@/mongoSchemas/User";
 import { saveFile } from "@/utils/routeHelper/saveImage";
 import { user } from "@/types";
 

@@ -3,20 +3,25 @@ import { use, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 import useHandleFiles from "@/store/fileSlice";
+import useCollectionStore from "@/store/collectionSlice";
 import FilterComponent from "@/components/topFilter";
-import PriceCardNft from "@/components/nftPriceCard";
-import { IFileStore } from "@/types";
+import { IFileStore, PinataFile } from "@/types";
+import ListingCard from "@/components/listingCard";
+import ApprovePurchaseModal from "@/components/purchaseModal";
+import { ICollectionStore } from "@/types";
 
 interface ICollectionPageParams {
   collectionId: string;
 }
 export default function CollectionPage({ params }) {
   const { files, getFiles } = useHandleFiles((state: IFileStore) => state);
+  const { collections, getCollections } = useCollectionStore((state: ICollectionStore) => state);
   const [showEditButton, setShowEditButton] = useState(false);
   const [bannerImage, setBannerImage] = useState<string | null>();
   const [profileImage, setProfileImage] = useState<string | null>();
   const [showProfileEdit, setShowProfileEdit] = useState(false);
-
+  const [purchaseModal, setPurchaseModal] = useState(false);
+  const [fileForPurchase, setFileForPurchase] = useState<PinataFile>();
   const unwrappedParams: ICollectionPageParams = use(params);
 
   const bannerFileInputRef = useRef<HTMLInputElement>(null);
@@ -24,6 +29,7 @@ export default function CollectionPage({ params }) {
 
   useEffect(() => {
     getFiles(unwrappedParams?.collectionId, null);
+    getCollections(null, unwrappedParams?.collectionId);
   }, [unwrappedParams.collectionId, getFiles]);
 
   const handleBannerClick = () => {
@@ -61,7 +67,10 @@ export default function CollectionPage({ params }) {
       reader.readAsDataURL(file);
       await handleImageUpload(file, type);
     };
-
+  const handlePurchaseModal = (file: PinataFile) => {
+    setFileForPurchase(file);
+    setPurchaseModal(true);
+  }
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
       {/* Banner */}
@@ -198,10 +207,11 @@ export default function CollectionPage({ params }) {
       <div className="w-screen sticky top-0 z-50">
         <FilterComponent />
       </div>
+      {purchaseModal && <ApprovePurchaseModal file={fileForPurchase} contractName={collections.contractName} setClose={setPurchaseModal}/> }
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {files &&
           files?.map((file) => (
-            <PriceCardNft key={file.id} image={file.ipfs_pin_hash} />
+              <ListingCard key={file._id} file={file} handlePurchaseModal={handlePurchaseModal}/>
           ))}
       </div>
     </div>

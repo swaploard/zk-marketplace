@@ -19,7 +19,10 @@ interface IUseQuickListingModal {
   setClose: (value: boolean) => void;
 }
 
-export const useQuickListingModal = ({ file, setClose }: IUseQuickListingModal) => {
+export const useQuickListingModal = ({
+  file,
+  setClose,
+}: IUseQuickListingModal) => {
   const { updateFiles } = useHandleFiles();
   const { writeContract } = useWriteContract();
   const { address, chainId, chain } = useAccount();
@@ -29,12 +32,11 @@ export const useQuickListingModal = ({ file, setClose }: IUseQuickListingModal) 
 
   const contractAddress = process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS;
 
- 
   const { data: currentSupply } = useReadContract({
     address: file.tokenAddress as `0x${string}`,
     abi: AdvancedERC1155.abi,
     functionName: "totalSupply",
-    args: [BigInt(file.tokenId)],
+    args: [Number(file.tokenId)],
   });
 
   const { data } = useReadContract({
@@ -47,6 +49,13 @@ export const useQuickListingModal = ({ file, setClose }: IUseQuickListingModal) 
     },
   });
 
+  const { data: isApproved, isLoading } = useReadContract({
+    address: file.tokenAddress as `0x${string}`,
+    abi: AdvancedERC1155.abi as Abi,
+    functionName: "isApprovedForAll",
+    args: [address, contractAddress],
+  });
+
   useEffect(() => {
     if (data) {
       const royalties = formattedPercentage(data[1]);
@@ -56,6 +65,7 @@ export const useQuickListingModal = ({ file, setClose }: IUseQuickListingModal) 
       setMaxTokenForListing(Number(currentSupply));
     }
   }, [data, currentSupply]);
+
   const handleSetQuickListing = async (price, amount) => {
     if (
       _.isEmpty(file.tokenId) &&
@@ -63,6 +73,29 @@ export const useQuickListingModal = ({ file, setClose }: IUseQuickListingModal) 
       _.isEmpty(file.transactionHash)
     ) {
       return "Mint Token First";
+    }
+
+    if (!isApproved) {
+      writeContract({
+        account: address,
+        abi: AdvancedERC1155.abi as Abi,
+        address: file.tokenAddress,
+        functionName: "setApprovalForAll",
+        chainId: chainId,
+        chain: chain,
+        args: [
+          contractAddress,
+          true,
+        ],
+      },
+    {
+      onSuccess: async (data) => {
+        console.log("data", data)
+      },
+      onError: (error) => {
+        console.log("error", error)
+      }
+    });
     }
     const priceInWei = parseUnits(price.toString(), 18);
     writeContract(

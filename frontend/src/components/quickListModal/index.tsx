@@ -18,7 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { X, HelpCircle, ChevronUp } from "lucide-react";
 import Image from "next/image";
 import _ from "lodash";
-import { PinataFile, Metadata } from "@/types";
+import { PinataFile } from "@/types";
 import { Switch } from "@radix-ui/react-switch";
 import { useQuickListingModal } from "./hook";
 import { reduceEth } from "@/utils/ethUtils";

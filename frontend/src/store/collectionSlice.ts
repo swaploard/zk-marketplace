@@ -2,20 +2,7 @@ import { create } from "zustand";
 import { axiosInstance } from "@/axios/index";
 import { COLLECTION_URL } from "../ApiEndpoints/pinataEndpoints";
 import { handlePromiseToaster } from "@/components/toaster/promise";
-import { collection } from "@/types";
-
-export interface ICollectionStore {
-  collection: collection[] | null;
-  collections: collection[];
-  error: string | null;
-  loading: boolean;
-  getCollections: (walletAddress: string) => void;
-  createCollection: (collection: FormData) => void;
-  getLatestCollection: () => collection[] | null;
-  updateCollection: (collection: FormData) => void;
-  deleteCollection: (id: string, groupId: string) => void;
-}
-
+import {ICollectionStore } from "@/types";
 
 const useCollectionStore = create<ICollectionStore>((set, get) => ({
   collection: null,
@@ -23,11 +10,12 @@ const useCollectionStore = create<ICollectionStore>((set, get) => ({
   error: null,
   loading: false,
 
-  getCollections: async (walletAddress) => {
+
+  getCollections: async (walletAddress, contractAddress) => {
     set({ loading: true, error: null });
     try {
       const response = await axiosInstance.get(
-        `${COLLECTION_URL}?walletAddress=${encodeURIComponent(walletAddress)}`,
+        `${COLLECTION_URL}?walletAddress=${encodeURIComponent(walletAddress)}&contractAddress=${encodeURIComponent(contractAddress)}`,
       );
 
       if (response.status === 200) {

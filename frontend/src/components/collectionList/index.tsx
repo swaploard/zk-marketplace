@@ -13,7 +13,7 @@ export const CollectionList: React.FC<{
         {collections?.map((collection) => (
           <div
             key={collection._id}
-            onClick={() => handleCollectionList(collection.groupId)}
+            onClick={() => handleCollectionList(collection.contractAddress)}
             className="bg-gray-900 rounded-xl overflow-hidden hover:ring-2 hover:ring-gray-700 transition-all"
           >
             <div className="h-40 relative">

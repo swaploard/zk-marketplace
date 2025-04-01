@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { pinata } from "@/utils/config/pinata";
 import connectMongo from "@/lib/mongodb";
-import { UploadDataModel } from "@/models/nftFile";
+import { UploadDataModel } from "@/mongoSchemas/nftFile";
 import _ from "lodash";
 export async function POST(request: NextRequest) {
   await connectMongo();
@@ -110,11 +110,11 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
 
-    const collectionId = searchParams.get("collection");
+    const tokenAddress = searchParams.get("contractAddress");
     const walletAddress = searchParams.get("walletAddress");
-    let files;
 
-    if (!_.isEmpty(walletAddress)) {
+    let files;
+    if (!_.isEmpty(walletAddress) && walletAddress !== "null" && walletAddress !== "undefined") {
       try {
         files = await UploadDataModel.find({ walletAddress: walletAddress })
           .lean()
@@ -129,18 +129,22 @@ export async function GET(request: NextRequest) {
           { status: 500 },
         );
       }
-    } else if (!_.isEmpty(collectionId)) {
+    } else if (!_.isEmpty(tokenAddress) && tokenAddress !== "null" && tokenAddress !== "undefined") {
       try {
-        files = await pinata.listFiles().group(collectionId); 
-      } catch (pinataError) {
-        console.error("Pinata API Error:", pinataError);
+         files = await UploadDataModel.find({
+          tokenAddress: tokenAddress,
+          price: { $gt: 0 },
+        }).lean().exec();
+
+      } catch (error) {
+        console.error("Pinata API Error:", error);
         return NextResponse.json(
           {
             error: "Failed to fetch collection",
             details:
-              pinataError.response?.data?.error?.message || pinataError.message,
+            error.response?.data?.error?.message || error.message,
           },
-          { status: pinataError.response?.status || 500 },
+          { status: error.response?.status || 500 },
         );
       }
     } else {
@@ -243,7 +247,7 @@ export async function PUT(request: NextRequest) {
       updatedDocument,
       { status: 200 },
     );
-    
+
   } catch (error) {
     console.error("Error updating metadata:", error);
     return NextResponse.json(
