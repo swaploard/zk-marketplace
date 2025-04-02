@@ -219,7 +219,6 @@ export default function NFTForm() {
 
       const cid = currentFile.IpfsHash;
       const tokenId = files.length + 1;
-
       writeContract({
         address: contractAddress,
         abi: AdvancedERC1155.abi,
@@ -227,7 +226,7 @@ export default function NFTForm() {
         account: normalizedAccount,
         chainId: chainId,
         chain: chain,
-        args: [Number(tokenId) , Number(data.supply), Number(data.supply), true],
+        args: [Number(tokenId), Number(data.supply), Number(data.supply), true],
         gas: 1000000n,
       }, 
       {

@@ -14,7 +14,7 @@ interface IPurchaseModal {
 } 
 export default function ApprovePurchaseModal({ file, contractName, setClose }:IPurchaseModal = {}) {
    const { chain } = useAccount();
-   const { handlePurchase } = usePurchaseModal({file});
+   const { handlePurchase } = usePurchaseModal({file, setClose});
    const { handleEthToUsd } = ethPriceConvertor();
    const priceInWei = Number(parseUnits(file.price.toString(), 18));
    const executedRef = useRef(false); 

@@ -1,18 +1,28 @@
-import { useWriteContract, useAccount } from "wagmi";
+import { useWriteContract, useAccount, useReadContract } from "wagmi";
 import Marketplace from "@/utils/contracts/Marketplace.json";
 import { PinataFile } from "@/types"
 interface IPurchaseModalHook {
     file?: PinataFile;
+    setClose?: (value: boolean) => void
 }
-export const usePurchaseModal = ({file}: IPurchaseModalHook = {}) => {
+export const usePurchaseModal = ({file, setClose}: IPurchaseModalHook = {}) => {
       
     const { writeContract } = useWriteContract();
     const { address, chainId, chain } = useAccount();
-     
-    const handlePurchase = async (price) => {
-        console.log("BigInt(file.tokenId)", Number(file.tokenId), price)
+
+    const { data: getListing } = useReadContract({
+        address: process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS as `0x${string}`,
+        abi: Marketplace.abi,
+        functionName: "getListing",
+        args: [Number(file.tokenId)],
+        query: {
+          enabled: !!file.tokenAddress,
+        },
+      }); 
+  
+      const handlePurchase = async (price) => {
         await writeContract({
-            address: process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS,
+            address: process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS as `0x${string}`,
             abi: Marketplace.abi,
             functionName: "buyItem",
             account: address,
@@ -22,7 +32,7 @@ export const usePurchaseModal = ({file}: IPurchaseModalHook = {}) => {
             value: price
           },{
             onSuccess: async (data) => {
-                console.log("data", data)
+                setClose(false)
             },
             onError: (error) => {
                 console.log("error", error)

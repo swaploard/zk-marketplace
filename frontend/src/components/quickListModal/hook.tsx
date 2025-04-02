@@ -31,7 +31,6 @@ export const useQuickListingModal = ({
   const [maxTokenForListing, setMaxTokenForListing] = useState<number>(0);
 
   const contractAddress = process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS;
-
   const { data: currentSupply } = useReadContract({
     address: file.tokenAddress as `0x${string}`,
     abi: AdvancedERC1155.abi,
@@ -67,6 +66,7 @@ export const useQuickListingModal = ({
   }, [data, currentSupply]);
 
   const handleSetQuickListing = async (price, amount) => {
+    const priceInWei = parseUnits(price.toString(), 18);
     if (
       _.isEmpty(file.tokenId) &&
       _.isEmpty(file.tokenAddress) &&
@@ -90,47 +90,52 @@ export const useQuickListingModal = ({
       },
     {
       onSuccess: async (data) => {
-        console.log("data", data)
+        const receipt = await publicClient.waitForTransactionReceipt({
+          hash: data,
+        });
+        if (receipt.status.toLowerCase() === "success") {
+          writeContract(
+            {
+              abi: Marketplace.abi as Abi,
+              account: address,
+              address: contractAddress,
+              functionName: "listItem",
+              args: [
+                file.tokenAddress,
+                Number(file.tokenId),
+                Number(amount),
+                Number(priceInWei),
+              ],
+              chainId: chainId,
+              chain: chain,
+            },
+            {
+              onSuccess: async (data) => {
+                const receipt = await publicClient.waitForTransactionReceipt({
+                  hash: data,
+                });
+                if (receipt.status.toLowerCase() === "success") {
+                  await updateFiles({
+                    tokenId: file.tokenId,
+                    price: price,
+                  });
+                  setClose(false);
+                }
+              },
+              onError: (error) => {
+                console.log("error", error);
+              },
+            },
+          );
+        }
       },
       onError: (error) => {
         console.log("error", error)
       }
     });
     }
-    const priceInWei = parseUnits(price.toString(), 18);
-    writeContract(
-      {
-        abi: Marketplace.abi as Abi,
-        account: address,
-        address: contractAddress,
-        functionName: "listItem",
-        args: [
-          file.tokenAddress,
-          BigInt(file.tokenId),
-          BigInt(amount),
-          BigInt(priceInWei),
-        ],
-        chainId: chainId,
-        chain: chain,
-      },
-      {
-        onSuccess: async (data) => {
-          const receipt = await publicClient.waitForTransactionReceipt({
-            hash: data,
-          });
-          if (receipt.status.toLowerCase() === "success") {
-            await updateFiles({
-              tokenId: file.tokenId,
-              price: price,
-            });
-            setClose(false);
-          }
-        },
-        onError: (error) => {
-          console.log("error", error);
-        },
-      },
-    );
+    
+
   };
 
   return {
