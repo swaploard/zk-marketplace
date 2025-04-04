@@ -81,6 +81,5 @@ export interface IFileStore {
   getLatestFile: () => PinataFile;
   deleteFile: (id: string) => void;
   clearError: () => void;
-  getNftsFromUserAddress: (walletAddress: string) => void;
   addTokenData: <T extends keyof PinataFile>(body: Pick<PinataFile, T>, id: string) => Promise<void>;
 }

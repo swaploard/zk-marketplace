@@ -68,9 +68,15 @@ export default {
                   transform: "translate3d(0, 0, 0)",
               },
           },
+          "lineProgress": {
+            '0%': { height: '0%' },
+            '100%': { height: '100%' },
+          }
       },
       animation:{
         fadeInUp: 'fade-in-up 1s ease-in-out 0.25s 1',
+        'line-progress': 'lineProgress 0.5s ease-out forwards',
+        spin: 'spin 1s linear infinite',
       }
     },
   },

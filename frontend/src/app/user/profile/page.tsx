@@ -24,7 +24,7 @@ import ethPriceConvertor from "@/components/ethPriceConvertor";
 export default function Profile() {
   const { address } = useAccount();
   const { user, updateUser } = userSlice((state: IUserStore) => state);
-  const { files, getFiles, getNftsFromUserAddress } = useHandleFiles((state: IFileStore) => state);
+  const { files, getFiles } = useHandleFiles((state: IFileStore) => state);
   const [bannerImage, setBannerImage] = useState<string | null>(
     user?.profileBanner,
   );
@@ -44,10 +44,6 @@ export default function Profile() {
   useEffect(() => {
     getFiles();
   }, [getFiles, address]);
-
-  useEffect(()=> {
-    getNftsFromUserAddress(address);
-  },[address])
 
   const handleBannerClick = () => {
     bannerFileInputRef.current?.click();

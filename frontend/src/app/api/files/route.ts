@@ -5,10 +5,8 @@ import { UploadDataModel } from "@/mongoSchemas/nftFile";
 import _ from "lodash";
 export async function POST(request: NextRequest) {
   await connectMongo();
-
   try {
     const data = await request.formData();
-
     const requiredFields = ["file", "pinataMetadata", "collection"];
     for (const field of requiredFields) {
       if (!data.get(field)) {
@@ -22,8 +20,8 @@ export async function POST(request: NextRequest) {
     const file = data.get("file") as File;
     const metadataString = data.get("pinataMetadata") as string;
     const groupId = data.get("collection") as string;
-
     const metadata = JSON.parse(metadataString);
+    
     const requiredMetadata = [
       "name",
       "supply",
@@ -31,6 +29,7 @@ export async function POST(request: NextRequest) {
       "externalLink",
       "walletAddress",
     ];
+    
     for (const field of requiredMetadata) {
       if (!metadata[field]) {
         return NextResponse.json(
@@ -42,22 +41,17 @@ export async function POST(request: NextRequest) {
 
     const fileUploadResponse = await pinata.upload.file(file).group(groupId);
     const fileCid = fileUploadResponse.IpfsHash;
+    const attributes = Object.entries(metadata.additionalAttributes).map(([trait_type, value]) => ({
+      trait_type,
+      value,
+    }));
 
     const metadataJSON = {
       name: metadata.name,
       description: metadata.description,
       image: `https://ipfs.io/ipfs/${fileCid}`,
       external_url: metadata.externalLink,
-      attributes: [
-        {
-          trait_type: "Supply",
-          value: metadata.supply,
-        },
-        {
-          trait_type: "Wallet Address",
-          value: metadata.walletAddress,
-        },
-      ],
+      attributes: attributes
     };
 
     const metadataBlob = new Blob([JSON.stringify(metadataJSON)], {
@@ -70,6 +64,7 @@ export async function POST(request: NextRequest) {
     const metadataUploadResponse = await pinata.upload
       .file(metadataFile)
       .group(groupId);
+
     const metadataCid = metadataUploadResponse.IpfsHash;
     const uploadData = {
       IpfsHash: metadataCid,
@@ -239,7 +234,7 @@ export async function PUT(request: NextRequest) {
      
     const updatedDocument = await UploadDataModel.findOneAndUpdate(
       { tokenId: tokenId },
-      { $set: data},
+      { $set: data },
       { new: true },
     ).exec();
 

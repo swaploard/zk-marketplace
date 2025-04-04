@@ -48,13 +48,6 @@ export const useQuickListingModal = ({
     },
   });
 
-  const { data: isApproved, isLoading } = useReadContract({
-    address: file.tokenAddress as `0x${string}`,
-    abi: AdvancedERC1155.abi as Abi,
-    functionName: "isApprovedForAll",
-    args: [address, contractAddress],
-  });
-
   useEffect(() => {
     if (data) {
       const royalties = formattedPercentage(data[1]);
@@ -74,68 +67,39 @@ export const useQuickListingModal = ({
     ) {
       return "Mint Token First";
     }
-
-    if (!isApproved) {
-      writeContract({
+    writeContract(
+      {
+        abi: Marketplace.abi as Abi,
         account: address,
-        abi: AdvancedERC1155.abi as Abi,
-        address: file.tokenAddress,
-        functionName: "setApprovalForAll",
+        address: contractAddress as `0x${string}`,
+        functionName: "listItem",
+        args: [
+          file.tokenAddress,
+          Number(file.tokenId),
+          Number(amount),
+          Number(priceInWei),
+        ],
         chainId: chainId,
         chain: chain,
-        args: [
-          contractAddress,
-          true,
-        ],
       },
-    {
-      onSuccess: async (data) => {
-        const receipt = await publicClient.waitForTransactionReceipt({
-          hash: data,
-        });
-        if (receipt.status.toLowerCase() === "success") {
-          writeContract(
-            {
-              abi: Marketplace.abi as Abi,
-              account: address,
-              address: contractAddress,
-              functionName: "listItem",
-              args: [
-                file.tokenAddress,
-                Number(file.tokenId),
-                Number(amount),
-                Number(priceInWei),
-              ],
-              chainId: chainId,
-              chain: chain,
-            },
-            {
-              onSuccess: async (data) => {
-                const receipt = await publicClient.waitForTransactionReceipt({
-                  hash: data,
-                });
-                if (receipt.status.toLowerCase() === "success") {
-                  await updateFiles({
-                    tokenId: file.tokenId,
-                    price: price,
-                  });
-                  setClose(false);
-                }
-              },
-              onError: (error) => {
-                console.log("error", error);
-              },
-            },
-          );
-        }
+      {
+        onSuccess: async (data) => {
+          const receipt = await publicClient.waitForTransactionReceipt({
+            hash: data,
+          });
+          if (receipt.status.toLowerCase() === "success") {
+            await updateFiles({
+              tokenId: file.tokenId,
+              price: price,
+            });
+            setClose(false);
+          }
+        },
+        onError: (error) => {
+          console.log("error", error);
+        },
       },
-      onError: (error) => {
-        console.log("error", error)
-      }
-    });
-    }
-    
-
+    );
   };
 
   return {

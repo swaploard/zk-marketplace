@@ -132,7 +132,7 @@ export default function CreateNFTCollection() {
     formData.append("walletAddress", address);
     await createCollection(formData);
     const collection = getLatestCollection();
-
+    const marketplaceAddress = process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS as `0x${string}`
     if (
       collection[0].contractName === data.contractName &&
       collection[0].tokenSymbol === data.tokenSymbol
@@ -147,6 +147,7 @@ export default function CreateNFTCollection() {
           collection[0].groupId,
           address,
           500,
+          marketplaceAddress
         ] as unknown as ContractConstructorArgs<typeof AdvancedERC1155.abi>,
       });
       await sendTransaction(

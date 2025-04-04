@@ -10,15 +10,17 @@ import {
   Trash2,
   ChevronDown,
   LayoutGrid,
+  Pencil,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import {
   useAccount,
   useWriteContract,
   usePublicClient,
-  useWaitForTransactionReceipt,
   useWatchContractEvent,
   useReadContract,
+  useWatchPendingTransactions 
 } from "wagmi";
 import {
   Abi,
@@ -29,16 +31,18 @@ import {
   stringToHex,
 } from "viem";
 
+import _ from "lodash";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import CollectionListPopover from "@/components/CollectionListPopover";
-import { IFileStore, ICollectionStore } from "@/types";
+import { IFileStore, ICollectionStore, Step, StepStatus } from "@/types";
 import AdvancedERC1155 from "@/utils/contracts/AdvancedERC1155.json";
 import useHandleFiles from "@/store/fileSlice";
 import useCollectionStore from "@/store/collectionSlice";
-import getRandomUint256 from "@/utils/getRandomNumber";
-import { pinata } from "@/utils/config/pinata";
+import AddTraitModal from "@/components/traitsModal";
+import Stepper from "@/components/steppers/createNftStepper";
+import {mintingSteps} from "./constants";
 
 const nftSchema = z.object({
   media: z
@@ -64,6 +68,25 @@ const nftSchema = z.object({
   ),
   description: z.string().optional(),
   externalLink: z.string().url("Invalid URL format").optional(),
+  additionalAttributes: z
+    .record(z.string())
+    .refine(
+      (data) =>
+        Object.keys(data).every((key) => key.length > 0 && key.length <= 25),
+      {
+        message: "Trait names must be between 1-25 characters",
+      },
+    )
+    .refine(
+      (data) =>
+        Object.values(data).every(
+          (value) => value.length > 0 && value.length <= 25,
+        ),
+      {
+        message: "Trait values must be between 1-25 characters",
+      },
+    )
+    .optional(),
 });
 
 type NFTFormData = z.infer<typeof nftSchema>;
@@ -71,8 +94,15 @@ type NFTFormData = z.infer<typeof nftSchema>;
 export default function NFTForm() {
   const publicClient = usePublicClient();
 
-  const { files, success, addFile, getLatestFile, deleteFile, addTokenData, getFiles } =
-    useHandleFiles((state: IFileStore) => state);
+  const {
+    files,
+    success,
+    addFile,
+    getLatestFile,
+    deleteFile,
+    addTokenData,
+    getFiles,
+  } = useHandleFiles((state: IFileStore) => state);
   const { collections, getCollections } = useCollectionStore(
     (state: ICollectionStore) => state,
   );
@@ -84,19 +114,22 @@ export default function NFTForm() {
     isPending: isWriting,
   } = useWriteContract();
 
-  const {
-    data: receipt,
-    error: receiptError,
-    status: receiptStatus,
-  } = useWaitForTransactionReceipt({
-    hash: txHash,
-  });
-
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [contractAddress, setContractAddress] = useState<string | null>(
     collections[1]?.contractAddress,
   );
+
+  const [traitsModal, setTraitsModal] = useState(false);
+  const [steps, setSteps] = useState<Step[]>(mintingSteps);
+  const [showStepper, setShowStepper] = useState(false);
+  const updateStepStatus = (stepIndex: number, newStatus: StepStatus) => {
+    setSteps((prev) =>
+      prev.map((step, index) =>
+        index === stepIndex ? { ...step, status: newStatus } : step,
+      ),
+    );
+  };
 
   const {
     register,
@@ -104,10 +137,13 @@ export default function NFTForm() {
     setValue,
     reset,
     formState: { errors },
+    getValues,
+    watch,
   } = useForm<NFTFormData>({
     resolver: zodResolver(nftSchema),
     defaultValues: {
       walletAddress: address,
+      additionalAttributes: {},
     },
   });
 
@@ -131,7 +167,6 @@ export default function NFTForm() {
         console.log("watchContractEvent", error);
       },
     });
-
   }, []);
 
   useWatchContractEvent({
@@ -190,13 +225,14 @@ export default function NFTForm() {
 
   const onSubmit = async (data: NFTFormData) => {
     const { media, collection, ...rest } = data;
-
     if (!media) {
       console.error("No media file provided");
       return;
     }
 
     try {
+      setShowStepper(true);
+      updateStepStatus(0, "current");
       const formData = new FormData();
       formData.append("file", media);
       formData.append("collection", collection);
@@ -216,64 +252,53 @@ export default function NFTForm() {
       if (!isAddress(normalizedAccount)) {
         throw new Error("Invalid user address");
       }
-
       const cid = currentFile.IpfsHash;
       const tokenId = files.length + 1;
-      writeContract({
-        address: contractAddress,
-        abi: AdvancedERC1155.abi,
-        functionName: "configureToken",
-        account: normalizedAccount,
-        chainId: chainId,
-        chain: chain,
-        args: [Number(tokenId), Number(data.supply), Number(data.supply), true],
-        gas: 1000000n,
-      }, 
-      {
-        onSuccess: async (txHash) => {
-          writeContract(
-            {
-              address: contractAddress,
-              abi: AdvancedERC1155.abi,
-              functionName: "mint",
-              account: normalizedAccount,
-              chainId: chainId,
-              chain: chain,
-              args: [address, Number(tokenId), 1, cid, "0x"],
-              gas: 1000000n,
-            },
-            {
-              onSuccess: async (txHash) => {
-                const receipt = await publicClient.waitForTransactionReceipt({
-                  hash: txHash,
-                });
-                const body = {
-                  id: currentFile.ID,
-                  tokenId,
-                  tokenAddress: contractAddress,
-                  transactionHash: txHash,
-                };
-                await addTokenData(body, currentFile.ID);
-                if (success) {
-                  reset();
-                  handleRemoveImage();
-                }
-              },
-              onError: (error) => {
-                console.error("Full Error:", error);
-                deleteFile(currentFile.IpfsHash);
-              },
-            },
-          );
+       updateStepStatus(0, "completed");
+       updateStepStatus(1, "current");
+       writeContract(
+        {
+          address: contractAddress as `0x${string}`,
+          abi: AdvancedERC1155.abi,
+          functionName: "mint",
+          account: normalizedAccount,
+          chainId: chainId,
+          chain: chain,
+          args: [address, Number(tokenId), Number(data.supply), cid, "0x"],
+          gas: 1000000n,
         },
-        onError: (error) => {
-          console.error("Full Error:", error);
-          deleteFile(currentFile.IpfsHash);
+        {
+          onSuccess: async (txHash) => {
+            updateStepStatus(1, "completed");
+            updateStepStatus(2, "current");
+            const receipt =
+              await publicClient.waitForTransactionReceipt({
+                hash: txHash,
+              });
+              
+            if (receipt.status.toLowerCase() === "success") {
+              updateStepStatus(2, "completed");
+              const body = {
+                ID: currentFile.ID,
+                tokenId: tokenId,
+                tokenAddress: contractAddress,
+                transactionHash: txHash,
+              };
+              await addTokenData(body, currentFile.ID);
+              await reset();
+              await handleRemoveImage();
+              await setShowStepper(false);
+              await setSteps(mintingSteps);
+            }
+          },
+          onError: async(error) => {
+            console.error("Full Error:", error);
+            await deleteFile(currentFile.IpfsHash);
+            setShowStepper(false);
+            setSteps(mintingSteps);
+          },
         },
-      }
-    );
-
-
+      );
     } catch (err) {
       console.error("Error uploading file:", err);
     }
@@ -282,6 +307,7 @@ export default function NFTForm() {
   return (
     <div className="min-h-screen bg-black text-white p-6">
       <div className="max-w-6xl mx-auto space-y-8">
+        {showStepper && <Stepper steps={steps} />}
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -297,7 +323,13 @@ export default function NFTForm() {
             </div>
           </div>
         </div>
-
+        {traitsModal && (
+          <AddTraitModal
+            onClose={setTraitsModal}
+            setValue={setValue}
+            getValues={getValues}
+          />
+        )}
         {/* Main Content */}
         <form
           onSubmit={handleSubmit(onSubmit)}
@@ -313,7 +345,7 @@ export default function NFTForm() {
             {previewUrl ? (
               <>
                 {file?.type.startsWith("image/") ? (
-                  <div className="relative w-full h-full">
+                  <div className="relative w-full h-full z-0">
                     {/* Use regular img tag for blob URLs */}
                     <Image
                       src={previewUrl}
@@ -499,6 +531,52 @@ export default function NFTForm() {
               )}
             </div>
 
+            {/* Updated traits section */}
+            <div className="space-y-2">
+              <h6 className="text-semibold text-sm">Traits</h6>
+              <p className="text-xs my-2">
+                Traits describe attributes of your item. They appear as filters
+                inside your collection page and are also listed out inside your
+                item page.
+              </p>
+
+              {Object.entries(watch("additionalAttributes") || {}).map(
+                ([key, value]) => (
+                  <div
+                    key={key}
+                    className="bg-zinc-900 border-zinc-800 flex items-center py-2 px-4 justify-between rounded-md mb-2"
+                  >
+                    <div className="flex gap-2">
+                      <span className="text-sm font-medium">{key}</span>
+                      <span className="text-sm">:</span>
+                      <span className="text-sm">{value}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const currentAttributes = {
+                          ...getValues("additionalAttributes"),
+                        };
+                        delete currentAttributes[key];
+                        setValue("additionalAttributes", {
+                          ...currentAttributes,
+                        });
+                      }}
+                      className="hover:text-red-500 transition-colors"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ),
+              )}
+
+              <div
+                className="text-semibold text-base my-3 cursor-pointer text-blue-500 hover:text-blue-400"
+                onClick={() => setTraitsModal(true)}
+              >
+                + Add trait
+              </div>
+            </div>
             <Button
               type="submit"
               className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-500 disabled:cursor-not-allowed"
