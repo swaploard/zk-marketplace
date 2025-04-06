@@ -22,6 +22,8 @@ interface UploadData extends Document {
   NumberOfFiles: number;
   MimeType: string;
   GroupId: string;
+  isActiveAuction: boolean;
+  highestBid: number;
   KeyValues: KeyValues;
 }
 
@@ -44,6 +46,8 @@ const uploadDataSchema = new Schema<UploadData>({
   tokenId: { type: String },
   tokenAddress: { type: String },
   transactionHash: { type: String },
+  isActiveAuction: { type: Boolean, default: false },
+  highestBid: { type: Number, default: 0 },
   NumberOfFiles: { type: Number, required: true },
   MimeType: { type: String, required: true },
   GroupId: { type: String, required: true },

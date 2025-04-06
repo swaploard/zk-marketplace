@@ -19,6 +19,8 @@ import { PinataFile } from "@/types";
 import { formattedPercentage } from "@/utils/ethUtils";
 import useHandleFiles from "@/store/fileSlice";
 import { reduceEth } from "@/utils/ethUtils";
+import useAuctionStore from "@/store/auctionSlice";
+import { IAuctionStore } from "@/types";
 interface IUseQuickListingModal {
   file: PinataFile;
   setClose: (value: boolean) => void;
@@ -34,7 +36,6 @@ export const useQuickListingModal = ({
   const publicClient = usePublicClient();
   const [royaltyPercentage, setRoyaltyPercentage] = useState<number>(0);
   const [maxTokenForListing, setMaxTokenForListing] = useState<number>(0);
-
   const listingFormSchema = z.object({
     amount: z.coerce
       .number()
@@ -151,6 +152,9 @@ export const useQuickAuctionModal = ({
 }: IUseQuickAuctionModal = {}) => {
   const { writeContract } = useWriteContract();
   const { address, chainId, chain } = useAccount();
+  const { createAuction } = useAuctionStore((state: IAuctionStore) => state);
+
+  const { updateFiles } = useHandleFiles();
   const [endDate, setEndDate] = useState("");
   const [endTime, setEndTime] = useState("");
   const [earnings, setEarnings] = useState(0);
@@ -208,12 +212,13 @@ export const useQuickAuctionModal = ({
     setEndDate(`${year}-${month}-${day}`);
     setEndTime(`${hours}:${minutes}`);
   };
+
   const quickAuctionForm = useForm<z.infer<typeof auctionFormSchema>>({
     resolver: zodResolver(auctionFormSchema),
     defaultValues: {
       amount: 1,
       price: 0,
-      duration: "1 day"
+      duration: "1 day",
     },
   });
 
@@ -265,16 +270,46 @@ export const useQuickAuctionModal = ({
     setEarnings(calculatedEarnings);
   }, [quickAuctionForm.getValues("price")]);
 
+  useEffect(() => {
+    publicClient.watchContractEvent({
+      abi: Marketplace.abi as Abi,
+      address: contractAddress as `0x${string}`,
+      poll: true,
+      pollingInterval: 500,
+      eventName: "AuctionCreated",
+      fromBlock: BigInt(19637210),
+      onLogs(logs) {
+        const auctionCreated = logs[0]?.args;
+        const auction = {
+          auctionId: Number(auctionCreated.auctionId),
+          marketplaceOwnerAddress: auctionCreated.seller,
+          tokenAddress: auctionCreated.tokenAddress,
+          tokenId: Number(auctionCreated.tokenId),
+          amount: Number(auctionCreated.amount),
+          startingPrice: Number(auctionCreated.startingPrice),
+          duration: Number(auctionCreated.duration),
+        };
+        handleCreateAuction(auction);
+      },
+      onError(error) {
+        console.log("watchContractEvent", error);
+      },
+    });
+  }, []);
+  const handleCreateAuction = _.debounce((auction) => {
+    createAuction(auction);
+  }, 2000);
+
   const handleSetQuickAuction = (data) => {
     const priceInWei = parseUnits(data.price.toString(), 18);
     const endTimestamp = Math.floor(
-      new Date(`${endDate}T${endTime}`).getTime() / 1000
-    )
+      new Date(`${endDate}T${endTime}`).getTime() / 1000,
+    );
 
-    const currentTimestamp = Math.floor(Date.now() / 1000)
+    const currentTimestamp = Math.floor(Date.now() / 1000);
     const duration = endTimestamp - currentTimestamp;
     if (duration <= 0) {
-      console.error("End time must be in the future")
+      console.error("End time must be in the future");
       return;
     }
     writeContract(
@@ -288,27 +323,32 @@ export const useQuickAuctionModal = ({
           Number(file.tokenId),
           Number(data.amount),
           Number(priceInWei),
-          duration
+          duration,
         ],
         chainId: chainId,
         chain: chain,
       },
       {
-        onSuccess: async (data) => {
+        onSuccess: async (transactionHash) => {
           const receipt = await publicClient.waitForTransactionReceipt({
-            hash: data,
+            hash: transactionHash,
           });
           if (receipt.status.toLowerCase() === "success") {
+            const body = {
+              isActiveAuction: true,
+              tokenId: file.tokenId,
+              highestBid: data.price,
+            };
+            updateFiles(body);
             setClose(false);
           }
         },
-
         onError: (error) => {
           console.log("error", error);
         },
       },
     );
-  }
+  };
 
   return {
     endDate,
@@ -317,6 +357,6 @@ export const useQuickAuctionModal = ({
     quickAuctionForm,
     setEndDate,
     setEndTime,
-    handleSetQuickAuction
+    handleSetQuickAuction,
   };
 };

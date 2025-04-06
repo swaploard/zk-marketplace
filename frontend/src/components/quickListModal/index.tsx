@@ -78,7 +78,7 @@ export default function QuickListingModal({
           >
             <div className="flex items-center gap-4 p-4">
               <div className="relative w-16 h-16 overflow-hidden rounded-lg">
-                {fileForListing.IpfsHash && (
+                {fileForListing.AssetIpfsHash && (
                   <Image
                     src={`https://silver-rainy-chipmunk-430.mypinata.cloud/ipfs/${fileForListing.AssetIpfsHash}`}
                     alt="NFT Image"
@@ -171,8 +171,14 @@ export default function QuickListingModal({
                             ETH
                           </div>
                         </div>
+                        <div className="flex flex-row justify-between px-2">
+                        {quickListingForm.formState.errors.price && (
+                          <p className="text-red-500 text-sm mt-1">
+                            {quickListingForm.formState.errors.price.message}
+                          </p>
+                        )}
                         {quickListingForm.watch("price") && (
-                          <span className="text-sm text-gray-400">
+                          <span className="text-sm text-gray-400 left-auto ml-auto mt-1">
                             $
                             {handleEthToUsd(
                               Number(quickListingForm.watch("price")),
@@ -180,11 +186,9 @@ export default function QuickListingModal({
                             USD
                           </span>
                         )}
-                        {quickListingForm.formState.errors.price && (
-                          <p className="text-red-500 text-sm mt-1">
-                            {quickListingForm.formState.errors.price.message}
-                          </p>
-                        )}
+                        </div>
+                        
+                        
                       </div>
                     </div>
                     <div className="flex items-center justify-between my-5 border-b-2 border-b-gray-600 pb-4">
@@ -198,6 +202,7 @@ export default function QuickListingModal({
                           : "--ETH"}
                       </div>
                     </div>
+
                     <div className="flex items-center justify-between my-5 border-b-2 border-b-gray-600 pb-4">
                       <div className="flex">
                         <h3 className="text-b.ase font-medium">
@@ -244,7 +249,7 @@ export default function QuickListingModal({
             <CardContent className="p-0 max-h-96 overflow-y-auto">
               <div className="flex items-center gap-4 p-4">
                 <div className="relative w-16 h-16 overflow-hidden rounded-lg">
-                  {fileForListing.IpfsHash && (
+                  {fileForListing.AssetIpfsHash && (
                     <Image
                       src={`https://silver-rainy-chipmunk-430.mypinata.cloud/ipfs/${fileForListing.AssetIpfsHash}`}
                       alt="NFT Image"
@@ -349,12 +354,12 @@ export default function QuickListingModal({
                             {quickAuctionForm.formState.errors.price.message}
                           </p>
                         )}
-                        {quickAuctionForm.watch("price") && (
+                        {(
                           <span className="text-sm text-gray-400 left-auto ml-auto mt-1">
                             $
                             {handleEthToUsd(
                               Number(quickAuctionForm.watch("price")),
-                            ).toFixed(2)}{" "}
+                            ).toFixed(2)}
                             USD
                           </span>
                         )}
@@ -400,43 +405,40 @@ export default function QuickListingModal({
                       />
                     </div>
                   </div>
-
-                  {/* Include Reserve Price */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">
-                        Include reserve price
-                      </span>
-                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex items-center justify-between my-5 border-b-2 border-b-gray-600 pb-4">
+                    <div className="flex">
+                      <h3 className="text-b.ase font-medium">
+                        Creator earnings
+                      </h3>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="w-5 h-5 p-0"
+                      >
+                        <HelpCircle className="w-4 h-4 text-gray-400" />
+                      </Button>
                     </div>
-                    <Switch className="bg-white cursor-pointer" />
+                    <div> {royaltyPercentage}% </div>
                   </div>
-
-                  {/* Fewer Options */}
-                  <button className="flex items-center text-sm text-primary">
-                    Fewer options
-                    <ChevronUp className="ml-1 h-4 w-4" />
-                  </button>
-
-                  {/* Fees */}
-                  <div className="space-y-6 pt-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Fees</span>
-                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex items-center justify-between my-5 pb-4">
+                    <div className="flex">
+                      <h3 className="text-base font-medium">
+                        Total potential earnings
+                      </h3>
                     </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Service Fee</span>
-                      <span>2.5%</span>
+                    <div className="flex flex-col">
+                      <div className="">
+                        {earnings ? `${earnings} ETH` : "--ETH"}
+                      </div>
                     </div>
                   </div>
                 </div>
-
                 {/* Complete Listing Button */}
                 <Button
                   type="submit"
                   className="w-full bg-slate-700 hover:bg-slate-600z text-primary-foreground"
                 >
-                  Complete listing
+                  Create auction
                 </Button>
               </form>
             </CardContent>

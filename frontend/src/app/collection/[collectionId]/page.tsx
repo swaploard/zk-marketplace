@@ -8,6 +8,8 @@ import FilterComponent from "@/components/topFilter";
 import { IFileStore, PinataFile } from "@/types";
 import ListingCard from "@/components/listingCard";
 import ApprovePurchaseModal from "@/components/purchaseModal";
+import BidModal from "@/components/bidModal";
+import ethPriceConvertor from "@/components/ethPriceConvertor";
 import { ICollectionStore } from "@/types";
 
 interface ICollectionPageParams {
@@ -16,11 +18,13 @@ interface ICollectionPageParams {
 export default function CollectionPage({ params }) {
   const { files, getFiles } = useHandleFiles((state: IFileStore) => state);
   const { collections, getCollections } = useCollectionStore((state: ICollectionStore) => state);
+  const { handleEthToUsd } = ethPriceConvertor();
   const [showEditButton, setShowEditButton] = useState(false);
   const [bannerImage, setBannerImage] = useState<string | null>();
   const [profileImage, setProfileImage] = useState<string | null>();
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [purchaseModal, setPurchaseModal] = useState(false);
+  const [bidModalOpen, setBidModalOpen] = useState(false);
   const [fileForPurchase, setFileForPurchase] = useState<PinataFile>();
   const unwrappedParams: ICollectionPageParams = use(params);
 
@@ -70,6 +74,10 @@ export default function CollectionPage({ params }) {
   const handlePurchaseModal = (file: PinataFile) => {
     setFileForPurchase(file);
     setPurchaseModal(true);
+  }
+  const handleBidModal = (file: PinataFile) => {
+    setFileForPurchase(file);
+    setBidModalOpen(true);
   }
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
@@ -208,10 +216,11 @@ export default function CollectionPage({ params }) {
         <FilterComponent />
       </div>
       {purchaseModal && <ApprovePurchaseModal file={fileForPurchase} contractName={collections.contractName} setClose={setPurchaseModal}/> }
+      {bidModalOpen && <BidModal setClose={setBidModalOpen} handleEthToUsd={handleEthToUsd} fileForListing={fileForPurchase} />} 
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {files &&
           files?.map((file) => (
-              <ListingCard key={file._id} file={file} handlePurchaseModal={handlePurchaseModal}/>
+              <ListingCard key={file._id} file={file} handlePurchaseModal={handlePurchaseModal} handleBidModal={handleBidModal} />
           ))}
       </div>
     </div>

@@ -128,7 +128,10 @@ export async function GET(request: NextRequest) {
       try {
          files = await UploadDataModel.find({
           tokenAddress: tokenAddress,
-          price: { $gt: 0 },
+          $or: [
+            { price: { $gt: 0 } },
+            { isActiveAuction: true }
+          ]
         }).lean().exec();
 
       } catch (error) {
@@ -191,10 +194,12 @@ export async function DELETE(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  await connectMongo();
+
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
-
-  if (id) {
+  
+  if (!_.isEmpty(id) && id !== "null" && id !== "undefined") {
     try {
       const { tokenId, tokenAddress, transactionHash } = await request.json();
 
@@ -224,7 +229,6 @@ export async function PUT(request: NextRequest) {
 
   try {
     const {tokenId, ...data } = await request.json();
-
     if (_.isEmpty(tokenId)) {
       return NextResponse.json(
         { error: "Missing required parameters tokenId" },

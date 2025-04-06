@@ -89,30 +89,10 @@ const useHandleFiles = create<IFileStore>((set, get) => ({
         },
       });
 
-      handlePromiseToaster(
-        promise,
-        {
-          title: "Updating Metadata",
-          message: "Your collection metadata is being updated",
-        },
-        {
-          title: "Success!",
-          message: "Metadata updated successfully",
-        },
-        {
-          title: "Update Error",
-          message: "Failed to update collection metadata",
-        },
-      );
-
-      const response = await promise;
+      const response = (await promise).data;
       if (response.status === 200) {
         set({ loading: false, success: true });
-        return response.data;
       }
-
-      const errorMessage = response.data?.error || "Failed to update metadata";
-      set({ error: errorMessage, loading: false });
       throw new Error(errorMessage);
     } catch (error) {
       console.error("Update error:", error);

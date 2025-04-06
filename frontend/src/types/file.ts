@@ -63,6 +63,8 @@ export interface PinataFile {
   }[];
   mime_type: string;
   number_of_files: number;
+  highestBid: number;
+  isActiveAuction: boolean;
 }
 
 export interface IFileStore {
