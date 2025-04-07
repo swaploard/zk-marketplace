@@ -248,7 +248,7 @@ export async function PUT(request: NextRequest) {
     );
 
   } catch (error) {
-    console.error("Error updating metadata:", error);
+    console.error("Error updating file data:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 },
@@ -273,7 +273,7 @@ const updateTokenIdAndAddress = async (
 
     return NextResponse.json(updateToken, { status: 200 });
   } catch (error) {
-    console.error("Error updating metadata:", error);
+    console.error("Error updating file data:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 },

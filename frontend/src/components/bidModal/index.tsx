@@ -18,8 +18,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import _ from "lodash";
 import { Abi, formatEther, parseEther, parseUnits } from "viem";
-import { formattedPercentage, reduceEth } from "@/utils/ethUtils";
-
+import { formattedPercentage } from "@/utils/ethUtils";
+import useAuctionStore from "@/store/auctionSlice";
+import useHandleFiles from "@/store/fileSlice";
+import { IAuctionStore } from "@/types";
 interface IBidModalProps {
   setClose?: (value: boolean) => void;
   handleEthToUsd?: (value: number) => number;
@@ -36,20 +38,23 @@ const BidModal = ({
   const { chainId, address, chain } = useAccount();
   const { writeContractAsync } = useWriteContract();
   const publicClient = usePublicClient();
-
+  const {auction, getAuction } = useAuctionStore((state: IAuctionStore) => state);
+  const {updateFiles} = useHandleFiles();
   const [amount, setAmount] = useState(0);
   const [royalties, setRoyalties] = useState(0);
+  const [highestBid, setHighestBid] = useState(0);
 
   const bidFormSchema = z.object({
     price: z.coerce
       .number()
-      .min(fileForListing.highestBid, {
-        message: `Must be greater than ${fileForListing.highestBid}`,
+      .min(highestBid, {
+        message: `Must be greater than ${highestBid}`,
       })
       .refine((val) => val > fileForListing.highestBid, {
-        message: `Must be greater than ${fileForListing.highestBid}`,
+        message: `Must be greater than ${highestBid}`,
       }),
   });
+
   const bidForm = useForm<z.infer<typeof bidFormSchema>>({
     resolver: zodResolver(bidFormSchema),
     defaultValues: {
@@ -61,7 +66,7 @@ const BidModal = ({
     address: MarketplaceAddress,
     abi: Marketplace.abi,
     functionName: "auctions",
-    args: [Number(fileForListing?.tokenId)],
+    args: [Number(auction?.auctionId)],
     chainId: chainId,
     account: address,
     query: {
@@ -77,11 +82,17 @@ const BidModal = ({
     query: {
       enabled: !!fileForListing.tokenAddress,
     },
-  });
+   });
 
   useEffect(() => {
-    if (auctionData) {
+    getAuction(fileForListing._id);
+  }, []);
+
+  useEffect(() => {
+    if (auctionData && auctionData[4] && auctionData[6]) {
       setAmount(Number(auctionData[4]));
+      const leastBid = formatEther(auctionData[6]);
+      setHighestBid(Number(leastBid));
     }
     if (royalty) {
       const royaltiesPercentage = formattedPercentage(royalty[1]);
@@ -98,16 +109,21 @@ const BidModal = ({
           address: MarketplaceAddress,
           functionName: "placeBid",
           args: [Number(auctionData[0])],
-          value: Number(parseEther(data.price.toString())),
+          value: BigInt(parseEther(data.price.toString())),
           chainId: chainId,
           chain: chain,
         },
         {
-          onSuccess: async (transactionHash) => {
+          onSuccess: async (transactionHash) => { 
             const receipt = await publicClient.waitForTransactionReceipt({
               hash: transactionHash,
             });
             if (receipt.status.toLowerCase() === "success") {
+              const body = {
+                tokenId: String(auction.tokenId),
+                highestBid: highestBid
+              }
+              updateFiles(body)
               setClose(false);
             }
           },

@@ -1,4 +1,5 @@
 export interface IAuction {
+  _id?: string;
   auctionId?: number;
   marketplaceOwnerAddress?: string;
   tokenAddress?: string;
@@ -13,4 +14,5 @@ export interface IAuctionStore {
   error: null | string;
   loading: boolean;
   createAuction: (auction: IAuction) => void;
+  getAuction: (id: string) => void;
 }

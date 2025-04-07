@@ -281,6 +281,7 @@ export const useQuickAuctionModal = ({
       onLogs(logs) {
         const auctionCreated = logs[0]?.args;
         const auction = {
+          file: file._id,
           auctionId: Number(auctionCreated.auctionId),
           marketplaceOwnerAddress: auctionCreated.seller,
           tokenAddress: auctionCreated.tokenAddress,
