@@ -7,7 +7,7 @@ import {
 } from "wagmi";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
-import { PinataFile } from "@/types";
+import { PinataFile, StepStatus } from "@/types";
 import Image from "next/image";
 import { Input } from "../ui/input";
 import Marketplace from "@/utils/contracts/Marketplace.json";
@@ -21,12 +21,26 @@ import { Abi, formatEther, parseEther, parseUnits } from "viem";
 import { formattedPercentage } from "@/utils/ethUtils";
 import useAuctionStore from "@/store/auctionSlice";
 import useHandleFiles from "@/store/fileSlice";
-import { IAuctionStore } from "@/types";
+import { IAuctionStore, Step } from "@/types";
+import Stepper from "../steppers/createNftStepper";
 interface IBidModalProps {
   setClose?: (value: boolean) => void;
   handleEthToUsd?: (value: number) => number;
   fileForListing?: PinataFile;
 }
+
+export const biddingSteps = [
+  {
+    title: "Go to your wallet to approve this transaction",
+    description: "A blockchain transaction is required to place your bid.",
+    status: "pending" as const,
+  },
+  {
+    title: "Placing your bid",
+    description: "Please stay on this page and keep this browser tab open.",
+    status: "pending" as const,
+  },
+]
 
 const BidModal = ({
   setClose,
@@ -43,6 +57,8 @@ const BidModal = ({
   const [amount, setAmount] = useState(0);
   const [royalties, setRoyalties] = useState(0);
   const [highestBid, setHighestBid] = useState(0);
+  const [steps, setSteps] = useState<Step[]>(biddingSteps);
+  const [showStepper, setShowStepper] = useState(false);
 
   const bidFormSchema = z.object({
     price: z.coerce
@@ -62,6 +78,14 @@ const BidModal = ({
     },
   });
 
+  const updateStepStatus = (stepIndex: number, newStatus: StepStatus) => {
+    setSteps((prev) =>
+      prev.map((step, index) =>
+        index === stepIndex ? { ...step, status: newStatus } : step,
+      ),
+    );
+  };
+  
   const { data: auctionData } = useReadContract({
     address: MarketplaceAddress,
     abi: Marketplace.abi,
@@ -73,7 +97,6 @@ const BidModal = ({
       enabled: true,
     },
   });
-
   const { data: royalty } = useReadContract({
     address: fileForListing.tokenAddress as `0x${string}`,
     abi: AdvancedERC1155.abi,
@@ -89,10 +112,14 @@ const BidModal = ({
   }, []);
 
   useEffect(() => {
-    if (auctionData && auctionData[4] && auctionData[6]) {
+    if (auctionData) {
       setAmount(Number(auctionData[4]));
-      const leastBid = formatEther(auctionData[6]);
-      setHighestBid(Number(leastBid));
+      const latestBid = formatEther(auctionData[6]);
+      const startingPrice = formatEther(auctionData[5]);
+      if(Number(latestBid) === 0){
+        setHighestBid(Number(startingPrice));
+      }
+      setHighestBid(Number(latestBid));
     }
     if (royalty) {
       const royaltiesPercentage = formattedPercentage(royalty[1]);
@@ -101,6 +128,8 @@ const BidModal = ({
   }, [auctionData]);
 
   const handleBidding = async (data) => {
+    setShowStepper(true);
+    updateStepStatus(0, "current")
     try {
       await writeContractAsync(
         {
@@ -115,30 +144,37 @@ const BidModal = ({
         },
         {
           onSuccess: async (transactionHash) => { 
+            updateStepStatus(0, "completed");
+            updateStepStatus(1, "current");
             const receipt = await publicClient.waitForTransactionReceipt({
               hash: transactionHash,
             });
             if (receipt.status.toLowerCase() === "success") {
+              updateStepStatus(1, "completed");
               const body = {
                 tokenId: String(auction.tokenId),
-                highestBid: highestBid,
+                highestBid: data.price.toString(),
                 highestBidder: address
               }
-              updateFiles(body)
+              await updateFiles(body);
               setClose(false);
+              setShowStepper(false);
             }
           },
           onError: (error) => {
-            console.log("error", error);
+            console.error("error", error);
+            setShowStepper(false);
           },
         },
       );
     } catch (error) {
       console.error(error);
+      setShowStepper(false);
     }
   };
   return (
     <div className="flex items-center justify-center bg-black/80 z-50 min-w-full min-h-full fixed inset-0">
+       {showStepper && <Stepper steps={steps} />}
       <Card className="w-[550px] bg-[#1a1a1a]  text-white border-none shadow-xl">
         <div className="flex items-center justify-between p-4 border-b border-gray-800">
           <div className="flex items-center ml-auto left-auto">

@@ -17,7 +17,6 @@ export default function ListingCard({
   handleBidModal,
 }: IPriceCardNft = {}) {
   const { address } = useAccount();
-
   return (
     <div className="flex items-center justify-center p-2">
       <div className="max-w-md w-full bg-white rounded overflow-hidden shadow-xl group relative">
@@ -36,16 +35,16 @@ export default function ListingCard({
             {file.KeyValues.name && file?.KeyValues?.name}
           </h1>
           <p className="text-sm text-black font-bold min-h-[20px]">
-            {file?.price ? `${file?.price} ETH`: `${file?.highestBid} ETH`}
+            {file?.price && file?.price > 0? `${file?.price} ETH`: file?.highestBid && file?.highestBid > 0 ? `${file?.highestBid} ETH`: "N/A"}
           </p>
           {/* Animated Button Container */}
           <div
             className="absolute bottom-0 left-0 right-0 h-0 overflow-hidden 
   group-hover:h-auto border border-solid group-hover:border-white transition-all duration-300"
           >
-            {!_.isEqual(file?.KeyValues?.walletAddress, address) && (
+            {!_.isEqual(file?.walletAddress, address) && (
               <>
-                {_.isNumber(file.price) && (
+                {_.isNumber(file.price) && _.isNumber(file.price) !== 0 &&(
                   <div>
                     <Button
                       className="w-full flex items-center bg-black text-white 
@@ -58,7 +57,7 @@ export default function ListingCard({
                     </Button>
                   </div>
                 )}
-                {_.isNumber(file.highestBid) && (
+                {_.isNumber(file.highestBid) && _.isNumber(file.highestBid) !== 0 && (
                   <div>
                     <Button
                       className="w-full flex items-center bg-black text-white 
@@ -73,7 +72,7 @@ export default function ListingCard({
                 )}
               </>
             )}
-            {_.isEqual(file?.KeyValues?.walletAddress, address) && (
+            {_.isEqual(file?.walletAddress, address) && !file.isListed && (
                 <div>
                   <Button
                     className="w-full flex items-center bg-black text-white 
