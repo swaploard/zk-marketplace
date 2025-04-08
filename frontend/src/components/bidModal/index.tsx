@@ -121,7 +121,8 @@ const BidModal = ({
             if (receipt.status.toLowerCase() === "success") {
               const body = {
                 tokenId: String(auction.tokenId),
-                highestBid: highestBid
+                highestBid: highestBid,
+                highestBidder: address
               }
               updateFiles(body)
               setClose(false);

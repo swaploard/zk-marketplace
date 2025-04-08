@@ -36,7 +36,7 @@ export default function ListingCard({
             {file.KeyValues.name && file?.KeyValues?.name}
           </h1>
           <p className="text-sm text-black font-bold min-h-[20px]">
-            {file?.price && `${file?.price} ETH`}
+            {file?.price ? `${file?.price} ETH`: `${file?.highestBid} ETH`}
           </p>
           {/* Animated Button Container */}
           <div

@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
     const file = data.get("file") as File;
     const metadataString = data.get("pinataMetadata") as string;
     const groupId = data.get("collection") as string;
+    const walletAddress = data.get("walletAddress") as string;
     const metadata = JSON.parse(metadataString);
     
     const requiredMetadata = [
@@ -27,7 +28,6 @@ export async function POST(request: NextRequest) {
       "supply",
       "description",
       "externalLink",
-      "walletAddress",
     ];
     
     for (const field of requiredMetadata) {
@@ -76,12 +76,12 @@ export async function POST(request: NextRequest) {
       NumberOfFiles: 1,
       MimeType: metadataFile.type,
       GroupId: groupId,
+      walletAddress: walletAddress,
       KeyValues: {
         name: metadata.name,
         supply: Number(metadata.supply),
         description: metadata.description,
         externalLink: metadata.externalLink,
-        walletAddress: metadata.walletAddress,
       },
       tokenId: "",
       tokenAddress: "",
@@ -198,14 +198,13 @@ export async function PUT(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
-  
   if (!_.isEmpty(id) && id !== "null" && id !== "undefined") {
     try {
       const { tokenId, tokenAddress, transactionHash } = await request.json();
-
-      if (!tokenId || !tokenAddress || !transactionHash) {
+      if (!tokenId) {
+        console.error("Missing required fields: tokenId, tokenAddress");
         return NextResponse.json(
-          {
+          { 
             error:
               "Missing required fields: tokenId, tokenAddress, transactionHash",
           },
@@ -266,7 +265,7 @@ const updateTokenIdAndAddress = async (
     const updateToken = await UploadDataModel.findOneAndUpdate(
       { ID: id },
       {
-        $set: { tokenId, tokenAddress, transactionHash },
+        $set: { tokenId },
       },
       { new: true },
     ).exec();

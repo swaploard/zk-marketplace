@@ -45,6 +45,8 @@ export interface PinataFile {
   tokenId: string;
   tokenAddress: string;
   transactionHash: string;
+  isListed: boolean;
+  walletAddress: string;
   KeyValues: {
     name: string;
     supply: number;
@@ -54,7 +56,6 @@ export interface PinataFile {
     duration: string;
     endDate: string;
     endTime: string;
-    walletAddress: string;
   };
   regions: {
     regionId: string;
@@ -64,6 +65,7 @@ export interface PinataFile {
   mime_type: string;
   number_of_files: number;
   highestBid: number;
+  highestBidder: string;
   isActiveAuction: boolean;
 }
 

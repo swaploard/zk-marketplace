@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,7 +20,8 @@ import {
   usePublicClient,
   useWatchContractEvent,
   useReadContract,
-  useWatchPendingTransactions 
+  useWatchPendingTransactions,
+  useFeeData,
 } from "wagmi";
 import {
   Abi,
@@ -42,7 +43,7 @@ import useHandleFiles from "@/store/fileSlice";
 import useCollectionStore from "@/store/collectionSlice";
 import AddTraitModal from "@/components/traitsModal";
 import Stepper from "@/components/steppers/createNftStepper";
-import {mintingSteps} from "./constants";
+import { mintingSteps } from "./constants";
 
 const nftSchema = z.object({
   media: z
@@ -93,7 +94,6 @@ type NFTFormData = z.infer<typeof nftSchema>;
 
 export default function NFTForm() {
   const publicClient = usePublicClient();
-
   const {
     files,
     success,
@@ -119,10 +119,10 @@ export default function NFTForm() {
   const [contractAddress, setContractAddress] = useState<string | null>(
     collections[1]?.contractAddress,
   );
-
   const [traitsModal, setTraitsModal] = useState(false);
   const [steps, setSteps] = useState<Step[]>(mintingSteps);
   const [showStepper, setShowStepper] = useState(false);
+  const [tokenEvent, setTokenEvent] = useState(null);
   const updateStepStatus = (stepIndex: number, newStatus: StepStatus) => {
     setSteps((prev) =>
       prev.map((step, index) =>
@@ -153,37 +153,45 @@ export default function NFTForm() {
   }, [address, getCollections]);
 
   useEffect(() => {
-    publicClient.watchContractEvent({
-      abi: AdvancedERC1155.abi as Abi,
-      address: contractAddress as `0x${string}`,
-      poll: true,
-      pollingInterval: 500,
-      eventName: "TokenMinted",
-      fromBlock: BigInt(19637210),
-      onLogs(logs) {
-        console.log("watchContractEvent", logs);
-      },
-      onError(error) {
-        console.log("watchContractEvent", error);
-      },
-    });
+    (async () => {
+      const latestBlock = await publicClient.getBlockNumber();
+      try {
+        publicClient.watchContractEvent({
+          abi: AdvancedERC1155.abi as Abi,
+          address: contractAddress as `0x${string}`,
+          poll: true,
+          pollingInterval: 500,
+          eventName: "TokenMinted",
+          fromBlock: latestBlock - BigInt(10),
+          async onLogs(logs) {
+            const event = await logs[0].args;
+            setTokenEvent(event);
+
+          },
+          onError(error) {
+            console.error("watchContractEvent", error);
+          },
+        });
+      } catch (error) {
+        console.error("watchContractEvent", error);
+      }
+    })();
   }, []);
 
-  useWatchContractEvent({
-    address: contractAddress as `0x${string}`,
-    eventName: "TokenMinted",
-    chainId: chainId,
-    fromBlock: 19637210n,
-    abi: AdvancedERC1155.abi as Abi,
-    onLogs: (logs) => {
-      console.log("logs useWatchContractEvent", logs);
-    },
-    onError: (error) => {
-      console.log("error useWatchContractEvent", error);
-    },
-    poll: true,
-    pollingInterval: 5000,
-  });
+  useEffect(()=> {
+    handleEventData(tokenEvent);
+  },[tokenEvent])
+
+  const handleEventData = useMemo(() => async(args: any) => {
+    const currentFile = await getLatestFile();
+    const body = {
+      ID: currentFile.ID,
+      tokenId: Number(args.id),
+    };
+    await addTokenData(body, currentFile.ID);
+    reset();
+    handleRemoveImage();
+  }, [tokenEvent]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -202,7 +210,6 @@ export default function NFTForm() {
       if (droppedFile) {
         setFile(droppedFile);
         setValue("media", droppedFile);
-        // Generate a preview URL for the file
         const url = URL.createObjectURL(droppedFile);
         setPreviewUrl(url);
       }
@@ -236,6 +243,7 @@ export default function NFTForm() {
       const formData = new FormData();
       formData.append("file", media);
       formData.append("collection", collection);
+      formData.append("walletAddress", address);
       const pinataMetadata = JSON.stringify(rest);
       formData.append("pinataMetadata", pinataMetadata);
 
@@ -253,10 +261,9 @@ export default function NFTForm() {
         throw new Error("Invalid user address");
       }
       const cid = currentFile.IpfsHash;
-      const tokenId = files.length + 1;
-       updateStepStatus(0, "completed");
-       updateStepStatus(1, "current");
-       writeContract(
+      updateStepStatus(0, "completed");
+      updateStepStatus(1, "current");
+      writeContract(
         {
           address: contractAddress as `0x${string}`,
           abi: AdvancedERC1155.abi,
@@ -264,34 +271,23 @@ export default function NFTForm() {
           account: normalizedAccount,
           chainId: chainId,
           chain: chain,
-          args: [address, Number(tokenId), Number(data.supply), cid, "0x"],
-          gas: 1000000n,
+          args: [address, Number(data.supply), cid, "0x"],
         },
         {
           onSuccess: async (txHash) => {
             updateStepStatus(1, "completed");
             updateStepStatus(2, "current");
-            const receipt =
-              await publicClient.waitForTransactionReceipt({
-                hash: txHash,
-              });
-              
+            const receipt = await publicClient.waitForTransactionReceipt({
+              hash: txHash,
+            });
+
             if (receipt.status.toLowerCase() === "success") {
               updateStepStatus(2, "completed");
-              const body = {
-                ID: currentFile.ID,
-                tokenId: tokenId,
-                tokenAddress: contractAddress,
-                transactionHash: txHash,
-              };
-              await addTokenData(body, currentFile.ID);
-              await reset();
-              await handleRemoveImage();
-              await setShowStepper(false);
-              await setSteps(mintingSteps);
+              setShowStepper(false);
+              setSteps(mintingSteps);
             }
           },
-          onError: async(error) => {
+          onError: async (error) => {
             console.error("Full Error:", error);
             await deleteFile(currentFile.IpfsHash);
             setShowStepper(false);

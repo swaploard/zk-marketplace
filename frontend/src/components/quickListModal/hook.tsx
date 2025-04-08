@@ -122,6 +122,7 @@ export const useQuickListingModal = ({
             await updateFiles({
               tokenId: file.tokenId,
               price: data.price,
+              isListed: true,
             });
             setClose(false);
           }
@@ -339,6 +340,7 @@ export const useQuickAuctionModal = ({
               isActiveAuction: true,
               tokenId: file.tokenId,
               highestBid: data.price,
+              isListed: true,
             };
             updateFiles(body);
             setClose(false);

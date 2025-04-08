@@ -5,7 +5,6 @@ interface KeyValues {
   supply: number;
   description: string;
   externalLink: string;
-  walletAddress: string;
 }
 
 interface UploadData extends Document {
@@ -24,7 +23,10 @@ interface UploadData extends Document {
   GroupId: string;
   isActiveAuction: boolean;
   highestBid: number;
+  highestBidder: string;
+  isListed: boolean;
   KeyValues: KeyValues;
+  walletAddress: string;
 }
 
 const keyValuesSchema = new Schema<KeyValues>({
@@ -32,7 +34,6 @@ const keyValuesSchema = new Schema<KeyValues>({
   supply: { type: Number, required: true },
   description: { type: String, required: true },
   externalLink: { type: String, required: true },
-  walletAddress: { type: String, required: true }
 });
 
 const uploadDataSchema = new Schema<UploadData>({
@@ -44,6 +45,7 @@ const uploadDataSchema = new Schema<UploadData>({
   ID: { type: String, required: true },
   Name: { type: String, required: true },
   tokenId: { type: String },
+  isListed: { type: Boolean, default: false },
   tokenAddress: { type: String },
   transactionHash: { type: String },
   isActiveAuction: { type: Boolean, default: false },
@@ -51,6 +53,7 @@ const uploadDataSchema = new Schema<UploadData>({
   NumberOfFiles: { type: Number, required: true },
   MimeType: { type: String, required: true },
   GroupId: { type: String, required: true },
+  walletAddress: { type: String, required: true },
   KeyValues: { type: keyValuesSchema, required: true }
 });
 
