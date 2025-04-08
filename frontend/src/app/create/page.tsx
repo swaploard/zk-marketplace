@@ -117,7 +117,7 @@ export default function NFTForm() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [contractAddress, setContractAddress] = useState<string | null>(
-    collections[1]?.contractAddress,
+    collections[0]?.contractAddress,
   );
   const [traitsModal, setTraitsModal] = useState(false);
   const [steps, setSteps] = useState<Step[]>(mintingSteps);
@@ -244,6 +244,7 @@ export default function NFTForm() {
       formData.append("file", media);
       formData.append("collection", collection);
       formData.append("walletAddress", address);
+      formData.append("tokenAddress", contractAddress)
       const pinataMetadata = JSON.stringify(rest);
       formData.append("pinataMetadata", pinataMetadata);
 

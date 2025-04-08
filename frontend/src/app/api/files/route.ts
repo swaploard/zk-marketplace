@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
     const metadataString = data.get("pinataMetadata") as string;
     const groupId = data.get("collection") as string;
     const walletAddress = data.get("walletAddress") as string;
+    const tokenAddress = data.get("tokenAddress") as string;
     const metadata = JSON.parse(metadataString);
     
     const requiredMetadata = [
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
         externalLink: metadata.externalLink,
       },
       tokenId: "",
-      tokenAddress: "",
+      tokenAddress: tokenAddress,
       transactionHash: "",
     };
 
