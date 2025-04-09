@@ -36,7 +36,7 @@ export const listingSteps = [
     description: "Please stay on this page and keep this browser tab open.",
     status: "pending" as const,
   },
-]
+];
 
 export const useQuickListingModal = ({
   file,
@@ -50,7 +50,7 @@ export const useQuickListingModal = ({
   const [maxTokenForListing, setMaxTokenForListing] = useState<number>(0);
   const [steps, setSteps] = useState<Step[]>(listingSteps);
   const [showStepper, setShowStepper] = useState(false);
-  
+
   const listingFormSchema = z.object({
     amount: z.coerce
       .number()
@@ -111,7 +111,7 @@ export const useQuickListingModal = ({
       ),
     );
   };
-  
+
   const handleSetQuickListing = async (data) => {
     setShowStepper(true);
     updateStepStatus(0, "current");
@@ -151,13 +151,18 @@ export const useQuickListingModal = ({
               tokenId: file.tokenId,
               price: data.price,
               isListed: true,
-            }
+            };
             await updateFiles(updateBody);
+            setClose(false);
+          } else {
+            setShowStepper(false);
             setClose(false);
           }
         },
         onError: (error) => {
           console.log("error", error);
+          setShowStepper(false);
+          setClose(false);
         },
       },
     );
@@ -178,7 +183,6 @@ interface IUseQuickAuctionModal {
   setClose?: (value: boolean) => void;
 }
 
-
 export const auctionSteps = [
   {
     title: "Go to your wallet to approve this transaction",
@@ -190,7 +194,7 @@ export const auctionSteps = [
     description: "Please stay on this page and keep this browser tab open.",
     status: "pending" as const,
   },
-]
+];
 export const useQuickAuctionModal = ({
   file,
   setClose,
@@ -348,7 +352,6 @@ export const useQuickAuctionModal = ({
     createAuction(auction);
   }, 2000);
 
-  
   const updateStepStatus = (stepIndex: number, newStatus: StepStatus) => {
     setSteps((prev) =>
       prev.map((step, index) =>
@@ -402,6 +405,9 @@ export const useQuickAuctionModal = ({
               isListed: true,
             };
             updateFiles(body);
+            setShowStepper(false);
+            setClose(false);
+          } else {
             setShowStepper(false);
             setClose(false);
           }

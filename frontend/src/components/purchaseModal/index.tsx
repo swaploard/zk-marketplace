@@ -6,35 +6,47 @@ import { PinataFile } from "@/types";
 import ethPriceConvertor from "@/components/ethPriceConvertor";
 import { useEffect, useRef } from "react";
 import { parseUnits } from "viem";
+import Stepper from "@/components/steppers/createNftStepper";
 
 interface IPurchaseModal {
   file?: PinataFile;
   contractName?: string;
   setClose?: (value: boolean) => void;
-} 
-export default function ApprovePurchaseModal({ file, contractName, setClose }:IPurchaseModal = {}) {
-   const { chain } = useAccount();
-   const { handlePurchase } = usePurchaseModal({file, setClose});
-   const { handleEthToUsd } = ethPriceConvertor();
-   const priceInWei = Number(parseUnits(file.price.toString(), 18));
-   const executedRef = useRef(false); 
+}
+export default function ApprovePurchaseModal({
+  file,
+  contractName,
+  setClose,
+}: IPurchaseModal = {}) {
+  const { chain } = useAccount();
+  const { steps, showStepper, handlePurchase } = usePurchaseModal({
+    file,
+    setClose,
+  });
+  const { handleEthToUsd } = ethPriceConvertor();
+  const priceInWei = Number(parseUnits(file.price.toString(), 18));
+  const executedRef = useRef(false);
 
-   useEffect(() => {
-     if (!executedRef.current) {
+  useEffect(() => {
+    if (!executedRef.current) {
       handlePurchase(priceInWei);
       executedRef.current = true;
-     }
-   }, []);
+    }
+  }, []);
 
-   const handleModalClose = () => {
-    setClose(false)
-   }
+  const handleModalClose = () => {
+    setClose(false);
+  };
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
       <div className="w-full max-w-md rounded-lg bg-[#121212] p-6 text-white shadow-xl">
+        {showStepper && <Stepper steps={steps} />}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold">Approve purchase</h2>
-          <button className="text-gray-400 hover:text-white" onClick={handleModalClose}>
+          <button
+            className="text-gray-400 hover:text-white"
+            onClick={handleModalClose}
+          >
             <X size={24} />
           </button>
         </div>
@@ -64,10 +76,11 @@ export default function ApprovePurchaseModal({ file, contractName, setClose }:IP
 
         <div className="border-t border-gray-800 pt-6">
           <h4 className="text-lg font-semibold">Go to your wallet</h4>
-          <p className="text-gray-400">You'll be asked to approve this purchase from your wallet.</p>
+          <p className="text-gray-400">
+            You'll be asked to approve this purchase from your wallet.
+          </p>
         </div>
       </div>
     </div>
-  )
+  );
 }
-

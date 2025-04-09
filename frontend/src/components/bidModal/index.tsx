@@ -36,7 +36,7 @@ export const biddingSteps = [
     status: "pending" as const,
   },
   {
-    title: "Placing your bid",
+    title: "Purchasing is in progress",
     description: "Please stay on this page and keep this browser tab open.",
     status: "pending" as const,
   },
@@ -134,7 +134,7 @@ const BidModal = ({
     setShowStepper(true);
     updateStepStatus(0, "current");
     try {
-      await writeContractAsync(
+       writeContractAsync(
         {
           abi: Marketplace.abi as Abi,
           account: address,
@@ -162,6 +162,9 @@ const BidModal = ({
               await updateFiles(body);
               setClose(false);
               setShowStepper(false);
+            }else {
+              setShowStepper(false);
+              setClose(false);
             }
           },
           onError: (error) => {
