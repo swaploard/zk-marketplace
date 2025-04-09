@@ -37,14 +37,13 @@ export default function ListingCard({
           <p className="text-sm text-black font-bold min-h-[20px]">
             {file?.price && file?.price > 0? `${file?.price} ETH`: file?.highestBid && file?.highestBid > 0 ? `${file?.highestBid} ETH`: "N/A"}
           </p>
-          {/* Animated Button Container */}
           <div
             className="absolute bottom-0 left-0 right-0 h-0 overflow-hidden 
   group-hover:h-auto border border-solid group-hover:border-white transition-all duration-300"
           >
             {!_.isEqual(file?.walletAddress, address) && (
               <>
-                {_.isNumber(file.price) && _.isNumber(file.price) !== 0 &&(
+                {_.isNumber(file.price) && file.price > 0 && (
                   <div>
                     <Button
                       className="w-full flex items-center bg-black text-white 
@@ -57,7 +56,7 @@ export default function ListingCard({
                     </Button>
                   </div>
                 )}
-                {_.isNumber(file.highestBid) && _.isNumber(file.highestBid) !== 0 && (
+                {_.isNumber(file.highestBid) && file.highestBid > 0 &&  file.isActiveAuction && (
                   <div>
                     <Button
                       className="w-full flex items-center bg-black text-white 

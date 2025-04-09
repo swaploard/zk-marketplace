@@ -39,7 +39,7 @@ const keyValuesSchema = new Schema<KeyValues>({
 const uploadDataSchema = new Schema<UploadData>({
   IpfsHash: { type: String, required: true },
   AssetIpfsHash: { type: String, required: true },
-  price: { type: Number },
+  price: { type: Number, default: 0 },
   PinSize: { type: Number, required: true },
   Timestamp: { type: Date, required: true },
   ID: { type: String, required: true },
@@ -50,6 +50,7 @@ const uploadDataSchema = new Schema<UploadData>({
   transactionHash: { type: String },
   isActiveAuction: { type: Boolean, default: false },
   highestBid: { type: Number, default: 0 },
+  highestBidder: { type: String, default: "" },
   NumberOfFiles: { type: Number, required: true },
   MimeType: { type: String, required: true },
   GroupId: { type: String, required: true },

@@ -87,6 +87,8 @@ export async function POST(request: NextRequest) {
       tokenId: "",
       tokenAddress: tokenAddress,
       transactionHash: "",
+      price: 0,
+      highestBidder: ""
     };
 
     const newFile = new UploadDataModel(uploadData);

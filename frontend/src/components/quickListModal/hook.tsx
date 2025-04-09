@@ -2,7 +2,6 @@ import { Abi, Hex, hexToNumber, parseEther, parseUnits } from "viem";
 import {
   useAccount,
   usePublicClient,
-  useWaitForTransactionReceipt,
   useWriteContract,
   useReadContract,
 } from "wagmi";
@@ -15,7 +14,7 @@ import { z } from "zod";
 
 import Marketplace from "@/utils/contracts/Marketplace.json";
 import AdvancedERC1155 from "@/utils/contracts/AdvancedERC1155.json";
-import { PinataFile } from "@/types";
+import { PinataFile, Step, StepStatus } from "@/types";
 import { formattedPercentage } from "@/utils/ethUtils";
 import useHandleFiles from "@/store/fileSlice";
 import { reduceEth } from "@/utils/ethUtils";
@@ -25,6 +24,19 @@ interface IUseQuickListingModal {
   file: PinataFile;
   setClose: (value: boolean) => void;
 }
+
+export const listingSteps = [
+  {
+    title: "Go to your wallet to approve this transaction",
+    description: "A blockchain transaction is required to list your NFT.",
+    status: "pending" as const,
+  },
+  {
+    title: "Placing your bid",
+    description: "Please stay on this page and keep this browser tab open.",
+    status: "pending" as const,
+  },
+]
 
 export const useQuickListingModal = ({
   file,
@@ -36,6 +48,9 @@ export const useQuickListingModal = ({
   const publicClient = usePublicClient();
   const [royaltyPercentage, setRoyaltyPercentage] = useState<number>(0);
   const [maxTokenForListing, setMaxTokenForListing] = useState<number>(0);
+  const [steps, setSteps] = useState<Step[]>(listingSteps);
+  const [showStepper, setShowStepper] = useState(false);
+  
   const listingFormSchema = z.object({
     amount: z.coerce
       .number()
@@ -89,7 +104,17 @@ export const useQuickListingModal = ({
     }
   }, [data, currentSupply]);
 
+  const updateStepStatus = (stepIndex: number, newStatus: StepStatus) => {
+    setSteps((prev) =>
+      prev.map((step, index) =>
+        index === stepIndex ? { ...step, status: newStatus } : step,
+      ),
+    );
+  };
+  
   const handleSetQuickListing = async (data) => {
+    setShowStepper(true);
+    updateStepStatus(0, "current");
     const priceInWei = parseUnits(data.price.toString(), 18);
     if (
       _.isEmpty(file.tokenId) &&
@@ -114,16 +139,20 @@ export const useQuickListingModal = ({
         chain: chain,
       },
       {
-        onSuccess: async (data) => {
+        onSuccess: async (listingHash) => {
+          updateStepStatus(0, "completed");
+          updateStepStatus(1, "current");
           const receipt = await publicClient.waitForTransactionReceipt({
-            hash: data,
+            hash: listingHash,
           });
           if (receipt.status.toLowerCase() === "success") {
-            await updateFiles({
+            updateStepStatus(1, "completed");
+            const updateBody = {
               tokenId: file.tokenId,
               price: data.price,
               isListed: true,
-            });
+            }
+            await updateFiles(updateBody);
             setClose(false);
           }
         },
@@ -135,6 +164,8 @@ export const useQuickListingModal = ({
   };
 
   return {
+    steps,
+    showStepper,
     royaltyPercentage,
     maxTokenForListing,
     quickListingForm,
@@ -147,6 +178,19 @@ interface IUseQuickAuctionModal {
   setClose?: (value: boolean) => void;
 }
 
+
+export const auctionSteps = [
+  {
+    title: "Go to your wallet to approve this transaction",
+    description: "A blockchain transaction is required to auction your NFT.",
+    status: "pending" as const,
+  },
+  {
+    title: "Placing your bid",
+    description: "Please stay on this page and keep this browser tab open.",
+    status: "pending" as const,
+  },
+]
 export const useQuickAuctionModal = ({
   file,
   setClose,
@@ -161,6 +205,8 @@ export const useQuickAuctionModal = ({
   const [earnings, setEarnings] = useState(0);
   const [maxTokenForListing, setMaxTokenForListing] = useState<number>(0);
   const [royaltyPercentage, setRoyaltyPercentage] = useState<number>(0);
+  const [steps, setSteps] = useState<Step[]>(auctionSteps);
+  const [showStepper, setShowStepper] = useState(false);
   const publicClient = usePublicClient();
   const auctionFormSchema = z.object({
     amount: z.coerce
@@ -302,7 +348,17 @@ export const useQuickAuctionModal = ({
     createAuction(auction);
   }, 2000);
 
+  
+  const updateStepStatus = (stepIndex: number, newStatus: StepStatus) => {
+    setSteps((prev) =>
+      prev.map((step, index) =>
+        index === stepIndex ? { ...step, status: newStatus } : step,
+      ),
+    );
+  };
   const handleSetQuickAuction = (data) => {
+    setShowStepper(true);
+    updateStepStatus(0, "current");
     const priceInWei = parseUnits(data.price.toString(), 18);
     const endTimestamp = Math.floor(
       new Date(`${endDate}T${endTime}`).getTime() / 1000,
@@ -332,10 +388,13 @@ export const useQuickAuctionModal = ({
       },
       {
         onSuccess: async (transactionHash) => {
+          updateStepStatus(0, "completed");
+          updateStepStatus(1, "current");
           const receipt = await publicClient.waitForTransactionReceipt({
             hash: transactionHash,
           });
           if (receipt.status.toLowerCase() === "success") {
+            updateStepStatus(1, "completed");
             const body = {
               isActiveAuction: true,
               tokenId: file.tokenId,
@@ -343,11 +402,13 @@ export const useQuickAuctionModal = ({
               isListed: true,
             };
             updateFiles(body);
+            setShowStepper(false);
             setClose(false);
           }
         },
         onError: (error) => {
           console.log("error", error);
+          setShowStepper(false);
         },
       },
     );
@@ -358,6 +419,8 @@ export const useQuickAuctionModal = ({
     endTime,
     earnings,
     quickAuctionForm,
+    steps,
+    showStepper,
     setEndDate,
     setEndTime,
     handleSetQuickAuction,

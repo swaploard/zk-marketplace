@@ -15,7 +15,7 @@ import { X, HelpCircle, ChevronUp } from "lucide-react";
 import Image from "next/image";
 import _ from "lodash";
 import { PinataFile } from "@/types";
-import { Switch } from "@radix-ui/react-switch";
+import Stepper from "@/components/steppers/createNftStepper";
 import { useQuickListingModal, useQuickAuctionModal } from "./hook";
 
 interface QuickListingModalProps {
@@ -30,6 +30,8 @@ export default function QuickListingModal({
   fileForListing,
 }: QuickListingModalProps) {
   const {
+    steps,
+    showStepper,
     royaltyPercentage,
     maxTokenForListing,
     handleSetQuickListing,
@@ -43,6 +45,8 @@ export default function QuickListingModal({
     endDate,
     endTime,
     quickAuctionForm,
+    steps: auctionsSteps,
+    showStepper: showAuctionsStepper,
     setEndDate,
     setEndTime,
     handleSetQuickAuction,
@@ -53,6 +57,7 @@ export default function QuickListingModal({
 
   return (
     <div className="flex items-center justify-center bg-black/80 z-50 min-w-full min-h-full fixed inset-0">
+      {showStepper ? <Stepper steps={steps} /> : showAuctionsStepper ? <Stepper steps={auctionsSteps} /> : <></>}
       <Tabs defaultValue="listing" className="">
         <Card className="w-[550px] bg-[#1a1a1a]  text-white border-none shadow-xl">
           <div className="flex items-center justify-between p-4 border-b border-gray-800">
@@ -172,23 +177,21 @@ export default function QuickListingModal({
                           </div>
                         </div>
                         <div className="flex flex-row justify-between px-2">
-                        {quickListingForm.formState.errors.price && (
-                          <p className="text-red-500 text-sm mt-1">
-                            {quickListingForm.formState.errors.price.message}
-                          </p>
-                        )}
-                        {quickListingForm.watch("price") && (
-                          <span className="text-sm text-gray-400 left-auto ml-auto mt-1">
-                            $
-                            {handleEthToUsd(
-                              Number(quickListingForm.watch("price")),
-                            ).toFixed(2)}{" "}
-                            USD
-                          </span>
-                        )}
+                          {quickListingForm.formState.errors.price && (
+                            <p className="text-red-500 text-sm mt-1">
+                              {quickListingForm.formState.errors.price.message}
+                            </p>
+                          )}
+                          {quickListingForm.watch("price") && (
+                            <span className="text-sm text-gray-400 left-auto ml-auto mt-1">
+                              $
+                              {handleEthToUsd(
+                                Number(quickListingForm.watch("price")),
+                              ).toFixed(2)}{" "}
+                              USD
+                            </span>
+                          )}
                         </div>
-                        
-                        
                       </div>
                     </div>
                     <div className="flex items-center justify-between my-5 border-b-2 border-b-gray-600 pb-4">
@@ -354,7 +357,7 @@ export default function QuickListingModal({
                             {quickAuctionForm.formState.errors.price.message}
                           </p>
                         )}
-                        {(
+                        {
                           <span className="text-sm text-gray-400 left-auto ml-auto mt-1">
                             $
                             {handleEthToUsd(
@@ -362,7 +365,7 @@ export default function QuickListingModal({
                             ).toFixed(2)}
                             USD
                           </span>
-                        )}
+                        }
                       </div>
                     </div>
                   </div>

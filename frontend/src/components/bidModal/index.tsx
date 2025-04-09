@@ -40,7 +40,7 @@ export const biddingSteps = [
     description: "Please stay on this page and keep this browser tab open.",
     status: "pending" as const,
   },
-]
+];
 
 const BidModal = ({
   setClose,
@@ -52,8 +52,10 @@ const BidModal = ({
   const { chainId, address, chain } = useAccount();
   const { writeContractAsync } = useWriteContract();
   const publicClient = usePublicClient();
-  const {auction, getAuction } = useAuctionStore((state: IAuctionStore) => state);
-  const {updateFiles} = useHandleFiles();
+  const { auction, getAuction } = useAuctionStore(
+    (state: IAuctionStore) => state,
+  );
+  const { updateFiles } = useHandleFiles();
   const [amount, setAmount] = useState(0);
   const [royalties, setRoyalties] = useState(0);
   const [highestBid, setHighestBid] = useState(0);
@@ -85,7 +87,7 @@ const BidModal = ({
       ),
     );
   };
-  
+
   const { data: auctionData } = useReadContract({
     address: MarketplaceAddress,
     abi: Marketplace.abi,
@@ -105,7 +107,7 @@ const BidModal = ({
     query: {
       enabled: !!fileForListing.tokenAddress,
     },
-   });
+  });
 
   useEffect(() => {
     getAuction(fileForListing._id);
@@ -116,10 +118,11 @@ const BidModal = ({
       setAmount(Number(auctionData[4]));
       const latestBid = formatEther(auctionData[6]);
       const startingPrice = formatEther(auctionData[5]);
-      if(Number(latestBid) === 0){
+      if (Number(latestBid) === 0) {
         setHighestBid(Number(startingPrice));
+      } else {
+        setHighestBid(Number(latestBid));
       }
-      setHighestBid(Number(latestBid));
     }
     if (royalty) {
       const royaltiesPercentage = formattedPercentage(royalty[1]);
@@ -129,7 +132,7 @@ const BidModal = ({
 
   const handleBidding = async (data) => {
     setShowStepper(true);
-    updateStepStatus(0, "current")
+    updateStepStatus(0, "current");
     try {
       await writeContractAsync(
         {
@@ -143,7 +146,7 @@ const BidModal = ({
           chain: chain,
         },
         {
-          onSuccess: async (transactionHash) => { 
+          onSuccess: async (transactionHash) => {
             updateStepStatus(0, "completed");
             updateStepStatus(1, "current");
             const receipt = await publicClient.waitForTransactionReceipt({
@@ -154,8 +157,8 @@ const BidModal = ({
               const body = {
                 tokenId: String(auction.tokenId),
                 highestBid: data.price.toString(),
-                highestBidder: address
-              }
+                highestBidder: address,
+              };
               await updateFiles(body);
               setClose(false);
               setShowStepper(false);
@@ -174,7 +177,7 @@ const BidModal = ({
   };
   return (
     <div className="flex items-center justify-center bg-black/80 z-50 min-w-full min-h-full fixed inset-0">
-       {showStepper && <Stepper steps={steps} />}
+      {showStepper && <Stepper steps={steps} />}
       <Card className="w-[550px] bg-[#1a1a1a]  text-white border-none shadow-xl">
         <div className="flex items-center justify-between p-4 border-b border-gray-800">
           <div className="flex items-center ml-auto left-auto">
