@@ -3,7 +3,7 @@ import { create } from "zustand";
 import { axiosInstance } from "@/axios/index";
 import { PIN_FILE_TO_IPFS_URL } from "../ApiEndpoints/pinataEndpoints";
 import { handlePromiseToaster } from "@/components/toaster/promise";
-import { IFileStore } from "@/types";
+import { IFileStore, PinataFile } from "@/types";
 
 const useHandleFiles = create<IFileStore>((set, get) => ({
   file: null,
@@ -50,6 +50,7 @@ const useHandleFiles = create<IFileStore>((set, get) => ({
           if (response.status === 200) {
             set((state) => ({
               file: response.data,
+              files: [...state.files, response.data],
               loading: false,
               success: true,
             }));
@@ -58,22 +59,6 @@ const useHandleFiles = create<IFileStore>((set, get) => ({
           }
           return response;
         });
-
-      handlePromiseToaster(
-        promise,
-        {
-          title: "Creation Error",
-          message: "Failed to create collection",
-        },
-        {
-          title: "Creating Collection",
-          message: "Your collection is being created",
-        },
-        {
-          title: "Success!",
-          message: "Collection created successfully",
-        },
-      );
     } catch (error) {
       const errorMessage = error.message || "Failed to upload file";
       set({ error: errorMessage, loading: false });
@@ -83,17 +68,35 @@ const useHandleFiles = create<IFileStore>((set, get) => ({
   updateFiles: async (body) => {
     set({ loading: true, error: null, success: false });
     try {
-      const promise = axiosInstance.put(PIN_FILE_TO_IPFS_URL, body, {
+      const promise = await axiosInstance.put(PIN_FILE_TO_IPFS_URL, body, {
         headers: {
-          "Content-Type": "application/json", 
+          "Content-Type": "application/json",
         },
       });
 
       const response = (await promise).data;
-      if (response.status === 200) {
-        set({ loading: false, success: true });
+      if (promise.status === 200) {
+        const currentFiles = get().files;
+        const fileIndex = get().files.findIndex(
+          (file: PinataFile) => file._id === response._id,
+        );
+
+        if (fileIndex === -1) {
+          throw new Error("File not found in store");
+        }
+
+        const newFiles = [
+          ...currentFiles.slice(0, fileIndex),
+          response,
+          ...currentFiles.slice(fileIndex + 1),
+        ];
+        set((state) => ({
+          ...state,
+          files: newFiles,
+          loading: false,
+          success: true,
+        }));
       }
-      throw new Error(errorMessage);
     } catch (error) {
       console.error("Update error:", error);
       const errorMessage =

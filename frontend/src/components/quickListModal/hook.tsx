@@ -32,7 +32,7 @@ export const listingSteps = [
     status: "pending" as const,
   },
   {
-    title: "Placing your bid",
+    title: "Listing your item",
     description: "Please stay on this page and keep this browser tab open.",
     status: "pending" as const,
   },
@@ -50,7 +50,7 @@ export const useQuickListingModal = ({
   const [maxTokenForListing, setMaxTokenForListing] = useState<number>(0);
   const [steps, setSteps] = useState<Step[]>(listingSteps);
   const [showStepper, setShowStepper] = useState(false);
-
+  const [disableButton, setDisableButton] = useState(true);
   const listingFormSchema = z.object({
     amount: z.coerce
       .number()
@@ -84,6 +84,13 @@ export const useQuickListingModal = ({
     args: [Number(file.tokenId)],
   });
 
+  const { data: isApproved } = useReadContract({
+    address: file.tokenAddress as `0x${string}`,
+    abi: AdvancedERC1155.abi,
+    functionName: "isApprovedForAll",
+    args: [address, contractAddress],
+  });
+
   const { data } = useReadContract({
     address: file.tokenAddress as `0x${string}`,
     abi: AdvancedERC1155.abi,
@@ -103,6 +110,39 @@ export const useQuickListingModal = ({
       setMaxTokenForListing(Number(currentSupply));
     }
   }, [data, currentSupply]);
+
+  useEffect(() => {
+    isApproved ? setDisableButton(false) : setDisableButton(true);
+    if (!isApproved) {
+      const approveTransfer = () => {
+        writeContract(
+          {
+            abi: AdvancedERC1155.abi as Abi,
+            account: address,
+            address: file.tokenAddress as `0x${string}`,
+            functionName: "setApprovalForAll",
+            args: [contractAddress, true],
+            chainId: chainId,
+            chain: chain,
+          },
+          {
+            onSuccess: async (transactionHash) => {
+              const receipt = await publicClient.waitForTransactionReceipt({
+                hash: transactionHash,
+              });
+              if (receipt.status.toLowerCase() === "success") {
+                setDisableButton(false);
+              }
+            },
+            onError: (error) => {
+              console.log("onError", error);
+            },
+          },
+        );
+      };
+      approveTransfer();
+    }
+  }, []);
 
   const updateStepStatus = (stepIndex: number, newStatus: StepStatus) => {
     setSteps((prev) =>
@@ -174,6 +214,7 @@ export const useQuickListingModal = ({
     royaltyPercentage,
     maxTokenForListing,
     quickListingForm,
+    disableButton,
     handleSetQuickListing,
   };
 };

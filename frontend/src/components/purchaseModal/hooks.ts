@@ -20,7 +20,7 @@ export const purchaseSteps = [
     status: "pending" as const,
   },
   {
-    title: "Placing your bid",
+    title: "Purchasing is in progress",
     description: "Please stay on this page and keep this browser tab open.",
     status: "pending" as const,
   },

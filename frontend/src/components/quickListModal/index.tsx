@@ -34,6 +34,7 @@ export default function QuickListingModal({
     showStepper,
     royaltyPercentage,
     maxTokenForListing,
+    disableButton,
     handleSetQuickListing,
     quickListingForm,
   } = useQuickListingModal({
@@ -239,8 +240,11 @@ export default function QuickListingModal({
                 {/* Complete Button */}
                 <div className="p-4 pt-2">
                   <Button
-                    className="w-full bg-slate-700 hover:bg-slate-600z text-primary-foreground"
+                    className={`w-full ${
+                      disableButton ? "bg-slate-400 cursor-not-allowed" : "bg-slate-700 hover:bg-slate-600"
+                    } text-primary-foreground`}
                     type="submit"
+                    disabled={disableButton}
                   >
                     Complete listing
                   </Button>

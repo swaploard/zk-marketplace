@@ -286,7 +286,9 @@ export default function NFTForm() {
               updateStepStatus(2, "completed");
               setShowStepper(false);
               setSteps(mintingSteps);
-            }
+            } else {
+              setShowStepper(false);
+              setSteps(mintingSteps);            }
           },
           onError: async (error) => {
             console.error("Full Error:", error);
