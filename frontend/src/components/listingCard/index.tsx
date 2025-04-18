@@ -23,7 +23,7 @@ export default function ListingCard({
         <div className="relative aspect-square w-full flex-shrink-0">
           {file.AssetIpfsHash && (
             <Image
-              src={`https://silver-rainy-chipmunk-430.mypinata.cloud/ipfs/${file.AssetIpfsHash}`}
+              src={`https://ipfs.io/ipfs/${file.AssetIpfsHash}`}
               alt="Human Unreadable #262 - Digital Artwork"
               className="object-cover"
               fill

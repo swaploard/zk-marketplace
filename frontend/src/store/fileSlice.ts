@@ -2,7 +2,6 @@ import { create } from "zustand";
 
 import { axiosInstance } from "@/axios/index";
 import { PIN_FILE_TO_IPFS_URL } from "../ApiEndpoints/pinataEndpoints";
-import { handlePromiseToaster } from "@/components/toaster/promise";
 import { IFileStore, PinataFile } from "@/types";
 
 const useHandleFiles = create<IFileStore>((set, get) => ({

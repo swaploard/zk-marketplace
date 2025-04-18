@@ -331,7 +331,7 @@ export const useQuickAuctionModal = ({
     query: {
       enabled: !!file.tokenAddress,
     },
-  });
+  }); 
 
   useEffect(() => {
     if (data) {

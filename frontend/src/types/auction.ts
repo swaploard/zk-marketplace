@@ -10,7 +10,7 @@ export interface IAuction {
   createdAt?: Date;
 }
 export interface IAuctionStore {
-  auction: IAuction;
+  auctions: IAuction[];
   error: null | string;
   loading: boolean;
   createAuction: (auction: IAuction) => void;

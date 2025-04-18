@@ -5,9 +5,13 @@ import Navbar from "@/components/navbar";
 import useCollectionStore, { ICollectionStore } from "@/store/collectionSlice";
 import { CollectionList } from "@/components/collectionList";
 import { useRouter } from "next/navigation";
+import useAuctionStore from "@/store/auctionSlice";
+import { IAuctionStore } from "@/types/auction";  
 
 export default function Home() {
-  const router = useRouter();
+  const { auctions, getAuction } = useAuctionStore(
+    (state: IAuctionStore) => state,
+  );
 
   const { collections, getCollections } = useCollectionStore(
     (state: ICollectionStore) => state,
@@ -15,7 +19,8 @@ export default function Home() {
 
   useEffect(() => {
     getCollections("");
-  }, [getCollections]);
+    getAuction("");
+  }, [getCollections, getAuction]);
 
   const handleCollectionList = (id: string) => {
     router.push(`/collection/${encodeURIComponent(id)}`);

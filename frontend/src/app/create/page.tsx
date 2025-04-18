@@ -10,7 +10,6 @@ import {
   Trash2,
   ChevronDown,
   LayoutGrid,
-  Pencil,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -18,18 +17,12 @@ import {
   useAccount,
   useWriteContract,
   usePublicClient,
-  useWatchContractEvent,
-  useReadContract,
-  useWatchPendingTransactions,
-  useFeeData,
 } from "wagmi";
+
 import {
   Abi,
-  BaseError,
-  ContractFunctionRevertedError,
   getAddress,
   isAddress,
-  stringToHex,
 } from "viem";
 
 import _ from "lodash";
@@ -95,8 +88,6 @@ type NFTFormData = z.infer<typeof nftSchema>;
 export default function NFTForm() {
   const publicClient = usePublicClient();
   const {
-    files,
-    success,
     addFile,
     getLatestFile,
     deleteFile,
@@ -166,7 +157,6 @@ export default function NFTForm() {
           async onLogs(logs) {
             const event = await logs[0].args;
             setTokenEvent(event);
-
           },
           onError(error) {
             console.error("watchContractEvent", error);
