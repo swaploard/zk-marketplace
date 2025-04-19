@@ -11,7 +11,7 @@ import "./AdvancedERC1155.sol";
 contract ERC1155Marketplace is ERC1155Holder, Ownable, ReentrancyGuard {
     uint256 public listingCounter;
     uint256 public auctionCounter;
-    uint256 public feePercentage = 20; // 20% marketplace fee
+    uint256 public feePercentage = 20;
     address public feeRecipient;
 
     struct Listing {
@@ -105,66 +105,64 @@ contract ERC1155Marketplace is ERC1155Holder, Ownable, ReentrancyGuard {
         uint256 pricePerItem
     ) external nonReentrant {
         AdvancedERC1155 tokenContract = AdvancedERC1155(tokenAddress);
-        (uint256 maxSupply, uint256 mintPrice, bool isFungible) = tokenContract
-            .tokenConfigs(tokenId);
-        AdvancedERC1155.TokenConfig memory config = AdvancedERC1155.TokenConfig(
-            maxSupply,
-            mintPrice,
-            isFungible
-        );
 
-        require(amount > 0, "Invalid amount");
-        require(pricePerItem > 0, "Invalid price");
-        if (!config.isFungible) {
-            require(amount == 1, "NFTs must be listed singly");
+        require(amount > 0, "ERC1155Marketplace: Amount must be > 0");
+        require(pricePerItem > 0, "ERC1155Marketplace: Price must be > 0");
+        try
+            tokenContract.safeTransferFrom(
+                msg.sender,
+                address(this),
+                tokenId,
+                amount,
+                ""
+            )
+        {
+            listingCounter++;
+            listings[tokenId] = Listing({
+                listingId: listingCounter,
+                seller: msg.sender,
+                tokenAddress: tokenAddress,
+                tokenId: tokenId,
+                amount: amount,
+                remaining: amount,
+                pricePerItem: pricePerItem,
+                isActive: true
+            });
+
+            emit NFTListed(
+                listingCounter,
+                msg.sender,
+                tokenAddress,
+                tokenId,
+                amount,
+                pricePerItem
+            );
+        } catch Error(string memory reason) {
+            revert(
+                string(
+                    abi.encodePacked(
+                        "ERC1155Marketplace: Transfer failed - ",
+                        reason
+                    )
+                )
+            );
+        } catch {
+            revert(
+                "ERC1155Marketplace: Token transfer failed. Check balance and approval."
+            );
         }
-
-        tokenContract.safeTransferFrom(
-            msg.sender,
-            address(this),
-            tokenId,
-            amount,
-            ""
-        );
-
-        listingCounter++;
-        listings[listingCounter] = Listing({
-            listingId: listingCounter,
-            seller: msg.sender,
-            tokenAddress: tokenAddress,
-            tokenId: tokenId,
-            amount: amount,
-            remaining: amount,
-            pricePerItem: pricePerItem,
-            isActive: true
-        });
-
-        emit NFTListed(
-            listingCounter,
-            msg.sender,
-            tokenAddress,
-            tokenId,
-            amount,
-            pricePerItem
-        );
     }
 
-    function buyItem(uint256 listingId, uint256 amount)
+    function buyItem(uint256 tokenId, uint256 amount)
         external
         payable
         nonReentrant
     {
-        Listing storage listing = listings[listingId];
+        Listing storage listing = listings[tokenId];
         require(listing.isActive, "Listing inactive");
         require(amount <= listing.remaining, "Insufficient quantity");
 
         AdvancedERC1155 tokenContract = AdvancedERC1155(listing.tokenAddress);
-
-        (, , bool isFungible) = tokenContract.tokenConfigs(listing.tokenId);
-
-        if (!isFungible) {
-            require(amount == 1, "Can only buy 1 NFT");
-        }
 
         uint256 totalPrice = amount * listing.pricePerItem;
         require(msg.value >= totalPrice, "Insufficient funds");
@@ -206,7 +204,7 @@ contract ERC1155Marketplace is ERC1155Holder, Ownable, ReentrancyGuard {
             require(sent, "Refund failed");
         }
 
-        emit NFTSold(listingId, msg.sender, amount, totalPrice);
+        emit NFTSold(tokenId, msg.sender, amount, totalPrice);
     }
 
     // ================== Auction Functions ================== //
@@ -219,18 +217,8 @@ contract ERC1155Marketplace is ERC1155Holder, Ownable, ReentrancyGuard {
         uint256 duration
     ) external nonReentrant {
         AdvancedERC1155 tokenContract = AdvancedERC1155(tokenAddress);
-        (uint256 maxSupply, uint256 mintPrice, bool isFungible) = tokenContract
-            .tokenConfigs(tokenId);
-        AdvancedERC1155.TokenConfig memory config = AdvancedERC1155.TokenConfig(
-            maxSupply,
-            mintPrice,
-            isFungible
-        );
         require(duration > 0, "Invalid duration");
         require(amount > 0, "Invalid amount");
-        if (!config.isFungible) {
-            require(amount == 1, "NFTs must be auctioned singly");
-        }
 
         tokenContract.safeTransferFrom(
             msg.sender,
@@ -288,7 +276,6 @@ contract ERC1155Marketplace is ERC1155Holder, Ownable, ReentrancyGuard {
             );
             uint256 sellerAmount = totalPrice - feeAmount - royaltyAmount;
 
-            // Transfer tokens
             tokenContract.safeTransferFrom(
                 address(this),
                 auction.highestBidder,
@@ -297,7 +284,6 @@ contract ERC1155Marketplace is ERC1155Holder, Ownable, ReentrancyGuard {
                 ""
             );
 
-            // Accumulate funds
             pendingWithdrawals[auction.seller] += sellerAmount;
             pendingWithdrawals[royaltyReceiver] += royaltyAmount;
             pendingWithdrawals[feeRecipient] += feeAmount;
@@ -314,6 +300,23 @@ contract ERC1155Marketplace is ERC1155Holder, Ownable, ReentrancyGuard {
         }
     }
 
+    function placeBid(uint256 auctionId) external payable nonReentrant {
+        Auction storage auction = auctions[auctionId];
+
+        require(block.timestamp < auction.endTime, "Auction ended");
+        require(msg.value > auction.highestBid, "Bid too low");
+        require(msg.value >= auction.startingPrice, "Below starting price");
+
+        if (auction.highestBidder != address(0)) {
+            pendingWithdrawals[auction.highestBidder] += auction.highestBid;
+        }
+
+        auction.highestBid = msg.value;
+        auction.highestBidder = msg.sender;
+
+        emit NewBid(auctionId, msg.sender, msg.value);
+    }
+
     // ================== Batch Functions ================== //
 
     function batchBuy(uint256[] calldata listingIds, uint256[] calldata amounts)
@@ -325,41 +328,23 @@ contract ERC1155Marketplace is ERC1155Holder, Ownable, ReentrancyGuard {
 
         uint256 totalPrice;
 
-        // Validation phase - explicit state reads
         for (uint256 i = 0; i < listingIds.length; i++) {
             Listing storage listing = listings[listingIds[i]];
             require(listing.isActive, "Listing inactive");
             require(amounts[i] > 0, "Zero amount");
             require(amounts[i] <= listing.remaining, "Exceeds available");
 
-            AdvancedERC1155 tokenContract = AdvancedERC1155(
-                listing.tokenAddress
-            );
-            (
-                uint256 maxSupply,
-                uint256 mintPrice,
-                bool isFungible
-            ) = tokenContract.tokenConfigs(listing.tokenId);
-            AdvancedERC1155.TokenConfig memory config = AdvancedERC1155
-                .TokenConfig(maxSupply, mintPrice, isFungible);
-
-            if (!config.isFungible) {
-                require(amounts[i] == 1, "NFTs: amount must be 1");
-            }
-
             totalPrice += listing.pricePerItem * amounts[i];
         }
 
         require(msg.value >= totalPrice, "Insufficient funds");
 
-        // Explicit state modification section
         for (uint256 i = 0; i < listingIds.length; i++) {
             uint256 listingId = listingIds[i];
             Listing storage listing = listings[listingId];
             uint256 amount = amounts[i];
             uint256 itemPrice = listing.pricePerItem * amount;
 
-            // State modification
             listing.remaining -= amount;
             if (listing.remaining == 0) {
                 listing.isActive = false;
@@ -407,7 +392,7 @@ contract ERC1155Marketplace is ERC1155Holder, Ownable, ReentrancyGuard {
         address tokenAddress,
         uint256 tokenId,
         uint256 salePrice
-    ) internal view  returns (address, uint256) {
+    ) internal view returns (address, uint256) {
         try IERC2981(tokenAddress).royaltyInfo(tokenId, salePrice) returns (
             address receiver,
             uint256 amount
@@ -426,5 +411,37 @@ contract ERC1155Marketplace is ERC1155Holder, Ownable, ReentrancyGuard {
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
+    }
+
+    function getListing(uint256 listingId)
+        public
+        view
+        returns (
+            uint256 listingId_,
+            address seller,
+            address tokenAddress,
+            uint256 tokenId,
+            uint256 amount,
+            uint256 remaining,
+            uint256 pricePerItem,
+            bool isActive
+        )
+    {
+        require(
+            listingId > 0 && listingId <= listingCounter,
+            "Invalid listing ID"
+        );
+        Listing storage listing = listings[listingId];
+
+        return (
+            listing.listingId,
+            listing.seller,
+            listing.tokenAddress,
+            listing.tokenId,
+            listing.amount,
+            listing.remaining,
+            listing.pricePerItem,
+            listing.isActive
+        );
     }
 }

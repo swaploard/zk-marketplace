@@ -22,12 +22,13 @@ contract AdvancedERC1155 is
     }
 
     // State variables
-    mapping(uint256 => bool) private _isIdConfigured;
+    mapping(uint256 => string) private _tokenCIDs;
     mapping(uint256 => bool) private _isIdMinted;
-    mapping(uint256 => TokenConfig) public tokenConfigs;
     string public contractURI;
     string public name;
     string public symbol;
+    string private _baseGatewayURI;
+    uint256 private currentTokenId = 1;
     uint256[] private _configuredIds;
     uint256[] private _mintedIds;
 
@@ -43,12 +44,15 @@ contract AdvancedERC1155 is
         string memory _uri,
         string memory _contractURI,
         address _royaltyRecipient,
-        uint96 _royaltyFee
-    ) ERC1155(_uri) Ownable(msg.sender) {
+        uint96 _royaltyFee,
+        address appoveMarketplace
+    ) ERC1155("") Ownable(msg.sender) {
         name = _name;
         symbol = _symbol;
         contractURI = _contractURI;
+        _baseGatewayURI = _uri;
         _setDefaultRoyalty(_royaltyRecipient, _royaltyFee);
+        setApprovalForAll(appoveMarketplace, true);
     }
 
     // ================== Core Functions ================== //
@@ -56,40 +60,28 @@ contract AdvancedERC1155 is
     // Mint tokens (owner only)
     function mint(
         address to,
-        uint256 id,
         uint256 amount,
+        string memory cid,
         bytes memory data
     ) external onlyOwner {
-        require(
-            tokenConfigs[id].isFungible || amount == 1,
-            "NFTs must be minted 1 at a time"
-        );
-        if (!tokenConfigs[id].isFungible) {
-            require(balanceOf(to, id) == 0, "Recipient already owns this NFT");
-        }
+        uint256 id = currentTokenId;
         _mint(to, id, amount, data);
+        _mintedIds.push(id);
+        _isIdMinted[id] = true;
+        _tokenCIDs[id] = cid;
         emit TokenMinted(to, id, amount);
+        currentTokenId++;
     }
 
     // Batch mint tokens (owner only)
     function mintBatch(
         address to,
-        uint256[] memory ids,
         uint256[] memory amounts,
         bytes memory data
     ) external onlyOwner {
-        for (uint256 i = 0; i < ids.length; i++) {
-            uint256 id = ids[i];
-            require(
-                tokenConfigs[id].isFungible || amounts[i] == 1,
-                "NFTs must be minted 1 at a time"
-            );
-            if (!tokenConfigs[id].isFungible) {
-                require(
-                    balanceOf(to, id) == 0,
-                    "Recipient already owns this NFT"
-                );
-            }
+        uint256[] memory ids = new uint256[](amounts.length);
+        for (uint256 i = 0; i < amounts.length; i++) {
+            ids[i] = currentTokenId + i;
         }
         _mintBatch(to, ids, amounts, data);
         for (uint256 i = 0; i < ids.length; i++) {
@@ -97,33 +89,25 @@ contract AdvancedERC1155 is
             _mintedIds.push(ids[i]);
             _isIdMinted[ids[i]] = true;
         }
+        currentTokenId += amounts.length;
     }
 
     // Public mint with payment
-    function publicMint(
-        uint256 id,
-        uint256 amount
-    ) external payable nonReentrant {
-        TokenConfig memory config = tokenConfigs[id];
-        require(msg.value >= config.mintPrice * amount, "Insufficient payment");
-        require(
-            totalSupply(id) + amount <= config.maxSupply,
-            "Exceeds max supply"
-        );
-
-        if (!config.isFungible) {
-            require(amount == 1, "Cannot mint multiple NFTs");
-            require(balanceOf(msg.sender, id) == 0, "Already owns this NFT");
-        }
-
+    function publicMint(uint256 amount) external payable nonReentrant {
+        uint256 id = currentTokenId;
         _mint(msg.sender, id, amount, "");
         _mintedIds.push(id);
         _isIdMinted[id] = true;
         emit TokenMinted(msg.sender, id, amount);
+        currentTokenId++;
     }
 
     // Burn tokens
-    function burn(address from, uint256 id, uint256 amount) external {
+    function burn(
+        address from,
+        uint256 id,
+        uint256 amount
+    ) external {
         require(
             from == msg.sender || isApprovedForAll(from, msg.sender),
             "Not authorized"
@@ -134,24 +118,11 @@ contract AdvancedERC1155 is
 
     // ================== Configuration Functions ================== //
 
-    // Configure token properties (owner only)
-    function configureToken(
-        uint256 id,
-        uint256 maxSupply,
-        uint256 mintPrice,
-        bool isFungible
-    ) external onlyOwner {
-        tokenConfigs[id] = TokenConfig(maxSupply, mintPrice, isFungible);
-        _isIdConfigured[id] = true;
-        _configuredIds.push(id);
-
-    }
-
     // Set royalty info (owner only)
-    function setRoyaltyInfo(
-        address recipient,
-        uint96 feeBasisPoints
-    ) external onlyOwner {
+    function setRoyaltyInfo(address recipient, uint96 feeBasisPoints)
+        external
+        onlyOwner
+    {
         _setDefaultRoyalty(recipient, feeBasisPoints);
         emit RoyaltiesUpdated(recipient, feeBasisPoints);
     }
@@ -165,6 +136,13 @@ contract AdvancedERC1155 is
     // Set contract-level metadata
     function setContractURI(string memory _contractURI) external onlyOwner {
         contractURI = _contractURI;
+    }
+
+    function setApprovalForAll(address operator, bool approved)
+        public
+        override(ERC1155)
+    {
+        super.setApprovalForAll(operator, approved);
     }
 
     // ================== Utility Functions ================== //
@@ -185,18 +163,26 @@ contract AdvancedERC1155 is
         super._update(from, to, ids, values);
     }
 
+    // =============== URI Management =============== //
+    function uri(uint256 tokenId) public view override returns (string memory) {
+        return string(abi.encodePacked(_baseGatewayURI, _tokenCIDs[tokenId]));
+    }
+
     // Interface support
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view override(ERC1155, ERC2981) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC1155, ERC2981)
+        returns (bool)
+    {
         return super.supportsInterface(interfaceId);
     }
 
-    function remainingSupply(uint256 id) public view returns (uint256) {
-        return tokenConfigs[id].maxSupply - totalSupply(id);
-    }
-    
-    function tokenBalance(address owner, uint256 id) public view returns (uint256) {
+    function tokenBalance(address owner, uint256 id)
+        public
+        view
+        returns (uint256)
+    {
         return balanceOf(owner, id);
     }
 }
