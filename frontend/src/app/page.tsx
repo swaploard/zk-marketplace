@@ -2,9 +2,10 @@
 import { useEffect } from "react";
 import Navbar from "@/components/navbar";
 
-import useCollectionStore, { ICollectionStore } from "@/store/collectionSlice";
+import useCollectionStore from "@/store/collectionSlice";
 import { CollectionList } from "@/components/collectionList";
 import { useRouter } from "next/navigation";
+import { ICollectionStore } from "@/types";
 
 export default function Home() {
   const router = useRouter();
@@ -14,7 +15,7 @@ export default function Home() {
   );
 
   useEffect(() => {
-    getCollections("");
+    getCollections("", "");
   }, [getCollections]);
 
   const handleCollectionList = (id: string) => {

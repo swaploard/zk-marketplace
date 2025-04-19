@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { axiosInstance } from "@/axios/index";
 import { COLLECTION_URL } from "../ApiEndpoints/pinataEndpoints";
-import { handlePromiseToaster } from "@/components/toaster/promise";
 import {ICollectionStore } from "@/types";
 
 const useCollectionStore = create<ICollectionStore>((set, get) => ({
@@ -48,22 +47,6 @@ const useCollectionStore = create<ICollectionStore>((set, get) => ({
             set({ error: "Failed to create collection", loading: false });
           }
         });
-
-      handlePromiseToaster(
-        promise,
-        {
-          title: "Creation Error",
-          message: "Failed to create collection",
-        },
-        {
-          title: "Creating Collection",
-          message: "Your collection is being created",
-        },
-        {
-          title: "Success!",
-          message: "Collection created successfully",
-        },
-      );
     } catch (error) {
       set({ error: error.message || "An error occurred", loading: false });
     }

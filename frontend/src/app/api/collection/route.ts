@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { pinata } from "../../../utils/config/pinata";
 import connectMongo from "@/lib/mongodb";
-import { CollectionGroup } from "@/mongoSchemas/collection";
+import { Collection } from "@/mongoSchemas/collection";
 import User from "@/mongoSchemas/User";
 import { saveFile } from "@/utils/routeHelper/saveImage";
 import { collection } from "@/types";
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const existingCollection = await CollectionGroup.findOne({
+    const existingCollection = await Collection.findOne({
       contractName,
       tokenSymbol,
     });
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const collectionGroup = new CollectionGroup({
+    const newCollection = new Collection({
       User: existingUser._id,
       contractName,
       tokenSymbol,
@@ -69,9 +69,9 @@ export async function POST(request: NextRequest) {
       logoUrl: collectionLogo,
     });
 
-    await collectionGroup.save();
+    await newCollection.save();
 
-    const collection = await CollectionGroup.find({ groupId: group.id });
+    const collection = await Collection.find({ groupId: group.id });
 
     return NextResponse.json(collection, { status: 200 });
   } catch (error) {
@@ -95,7 +95,7 @@ export async function GET(request: Request) {
     tokenAddress !== "undefined"
   ) {
     try {
-      const collection = await CollectionGroup.findOne(
+      const collection = await Collection.findOne(
         { contractAddress: tokenAddress },
       ).lean().exec();
       return NextResponse.json(collection, { status: 200 });
@@ -116,11 +116,11 @@ export async function GET(request: Request) {
       walletAddress !== "undefined"
     ) {
       const user = await User.findOne({ walletAddress });
-      collections = await CollectionGroup.find({ User: user._id })
+      collections = await Collection.find({ User: user._id })
         .sort({ createdAt: -1 })
         .lean();
     } else {
-      collections = await CollectionGroup.find().sort({ createdAt: -1 });
+      collections = await Collection.find().sort({ createdAt: -1 });
     }
     return NextResponse.json(collections, { status: 200 });
   } catch (error) {
@@ -156,7 +156,7 @@ export async function PUT(request: NextRequest) {
       updateData.logoUrl = await saveFile(files.logoUrl);
     }
 
-    const updateCollection = await CollectionGroup.findOneAndUpdate(
+    const updateCollection = await Collection.findOneAndUpdate(
       { _id: collectionId },
       {
         $set: {
@@ -184,7 +184,7 @@ export async function DELETE(request: NextRequest) {
   const groupId = searchParams.get("groupId");
   try {
     await pinata.groups.delete({ groupId: groupId });
-    await CollectionGroup.deleteOne({ _id: collectionId });
+    await Collection.deleteOne({ _id: collectionId });
     return NextResponse.json(
       { message: "Collection deleted successfully" },
       { status: 200 },

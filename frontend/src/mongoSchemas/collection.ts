@@ -1,20 +1,24 @@
 import mongoose, { Document, Schema } from "mongoose";
 
-interface ICollectionGroup extends Document {
+interface ICollection extends Document {
   User: Schema.Types.ObjectId;
   contractName: string;
   tokenSymbol: string;
   groupId: string;
   logoUrl: string;
+  floor: Number;
+  volume: Number;
   createdAt: Date;
   contractAddress: string;
 }
 
-const CollectionGroupSchema = new Schema<ICollectionGroup>({
+const CollectionSchema = new Schema<ICollection>({
   contractName: { type: String, unique: true, required: true },
   tokenSymbol: { type: String, required: true },
   groupId: { type: String, required: true },
   logoUrl: { type: String, required: true },
+  floor: {type: Number, default: 0},
+  volume: {type: Number, default: 0},
   User: {
     type: Schema.Types.ObjectId,
     ref: "User",
@@ -24,6 +28,6 @@ const CollectionGroupSchema = new Schema<ICollectionGroup>({
   createdAt: { type: Date, default: Date.now },
 });
 
-export const CollectionGroup =
-  (mongoose.models.CollectionGroup as mongoose.Model<ICollectionGroup>) ||
-  mongoose.model<ICollectionGroup>("CollectionGroup", CollectionGroupSchema);
+export const Collection =
+  (mongoose.models.CollectionGroup as mongoose.Model<ICollection>) ||
+  mongoose.model<ICollection>("CollectionGroup", CollectionSchema);

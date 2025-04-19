@@ -2,7 +2,6 @@ import { create } from "zustand";
 
 import { axiosInstance } from "@/axios/index";
 import { PIN_FILE_TO_IPFS_URL } from "../ApiEndpoints/pinataEndpoints";
-import { handlePromiseToaster } from "@/components/toaster/promise";
 import { IFileStore, PinataFile } from "@/types";
 
 const useHandleFiles = create<IFileStore>((set, get) => ({
@@ -135,11 +134,11 @@ const useHandleFiles = create<IFileStore>((set, get) => ({
     }
   },
 
-  deleteFile: async (cid) => {
+  deleteFile: async (assetCID, metadataCID) => {
     set({ loading: true, error: null });
     try {
       const promise = await axiosInstance.delete(
-        `${PIN_FILE_TO_IPFS_URL}?cid=${encodeURIComponent(cid)}`,
+        `${PIN_FILE_TO_IPFS_URL}?assetcid=${encodeURIComponent(assetCID)}&metadatacid=${encodeURIComponent(metadataCID)}`,
         {
           responseType: "json",
         },

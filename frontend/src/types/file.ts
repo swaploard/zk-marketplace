@@ -6,6 +6,8 @@ export interface collection {
   logoUrl: string;
   User: string;
   contractAddress: string;
+  volume: number;
+  floor: number;
   createdAt: string;
   __v: number;
 }
@@ -83,7 +85,7 @@ export interface IFileStore {
   ) => Promise<void>;
   updateFiles: <T extends keyof PinataFile>(body: Pick<PinataFile, T>) => Promise<void>;
   getLatestFile: () => PinataFile;
-  deleteFile: (id: string) => void;
+  deleteFile: (assetCID: string, metadataCID: string) => void;
   clearError: () => void;
   addTokenData: <T extends keyof PinataFile>(body: Pick<PinataFile, T>, id: string) => Promise<void>;
 }

@@ -3,6 +3,7 @@ import { pinata } from "@/utils/config/pinata";
 import connectMongo from "@/lib/mongodb";
 import { UploadDataModel } from "@/mongoSchemas/nftFile";
 import _ from "lodash";
+import { Collection } from "@/mongoSchemas/collection";
 export async function POST(request: NextRequest) {
   await connectMongo();
   try {
@@ -93,7 +94,15 @@ export async function POST(request: NextRequest) {
 
     const newFile = new UploadDataModel(uploadData);
     await newFile.save();
-
+    const volumeCount = (await UploadDataModel.find({GroupId: groupId})).length;
+    await Collection.findOneAndUpdate(
+      { groupId: groupId },
+      {
+        $set: {
+          volume: volumeCount,
+        },
+      },
+    );
     return NextResponse.json(newFile, { status: 200 });
   } catch (e) {
     console.error("API Error:", e);
@@ -172,17 +181,29 @@ export async function GET(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const cid = searchParams.get("cid");
-    if (!cid)
+    const assetCID = searchParams.get("assetcid");
+    const metadataCID = searchParams.get("metadatacid");
+
+    if (!assetCID && !metadataCID)
       return NextResponse.json({ error: "Missing hash" }, { status: 400 });
 
-    const deleteResponse = await pinata.unpin([cid]);
-    if (deleteResponse[0].status.includes("OK")) {
+    const metadataFile = await pinata.unpin([metadataCID]);
+    const assetFile = await pinata.unpin([assetCID]);
+    if (metadataFile[0].status.includes("OK") && assetFile[0].status.includes("OK")) {
       const deleteFile = await UploadDataModel.findOneAndDelete(
-        { IpfsHash: cid },
-        { new: true },
+        { IpfsHash: assetCID },
+      );
+      const volumeCount = (await UploadDataModel.find({GroupId: deleteFile.GroupId})).length;
+      await Collection.findOneAndUpdate(
+        { groupId: deleteFile.GroupId },
+        {
+          $set: {
+            volume: volumeCount,
+          },
+        },
       );
     }
+
     return NextResponse.json(
       { message: "File deleted successfully" },
       { status: 200 },
@@ -203,7 +224,7 @@ export async function PUT(request: NextRequest) {
   const id = searchParams.get("id");
   if (!_.isEmpty(id) && id !== "null" && id !== "undefined") {
     try {
-      const { tokenId, tokenAddress, transactionHash } = await request.json();
+      const { tokenId } = await request.json();
       if (!tokenId) {
         console.error("Missing required fields: tokenId, tokenAddress");
         return NextResponse.json(
@@ -217,9 +238,7 @@ export async function PUT(request: NextRequest) {
 
       const updatedDocument = await updateTokenIdAndAddress(
         id,
-        tokenId,
-        tokenAddress,
-        transactionHash,
+        tokenId
       );
 
       return NextResponse.json(updatedDocument, { status: 200 });
@@ -243,6 +262,23 @@ export async function PUT(request: NextRequest) {
       { $set: data },
       { new: true },
     ).exec();
+    
+    if(Object.keys(data).includes("price")) {
+      const floorPice = await Collection.findOne({
+        groupId: updatedDocument.GroupId,
+      });
+
+      if(floorPice.floor > data.price || floorPice.floor === 0) {
+          await Collection.findOneAndUpdate(
+          { groupId: updatedDocument.GroupId },
+          {
+            $set: {
+              floor: data.price
+            },
+          },
+        );
+      }
+    }
 
     return NextResponse.json(
       updatedDocument,
@@ -261,8 +297,6 @@ export async function PUT(request: NextRequest) {
 const updateTokenIdAndAddress = async (
   id: string,
   tokenId: string,
-  tokenAddress: string,
-  transactionHash: string,
 ) => {
   try {
     const updateToken = await UploadDataModel.findOneAndUpdate(

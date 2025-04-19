@@ -16,7 +16,7 @@ export const CollectionList: React.FC<{
             onClick={() => handleCollectionList(collection.contractAddress)}
             className="bg-gray-900 rounded-xl overflow-hidden hover:ring-2 hover:ring-gray-700 transition-all"
           >
-            <div className="h-40 relative">
+            <div className="relative aspect-square w-full flex-shrink-0">
               <Image
                 src={collection.logoUrl || "/placeholder.svg"}
                 alt={collection.contractName}
@@ -39,11 +39,11 @@ export const CollectionList: React.FC<{
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-gray-400 ">Floor</p>
-                  <p className="font-medium text-xs">0.01 ETH</p>
+                  <p className="font-medium text-xs">{collection.floor}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-400">Total volume</p>
-                  <p className="font-medium text-xs">100</p>
+                  <p className="font-medium text-xs">{collection.volume}</p>
                 </div>
               </div>
             </div>
