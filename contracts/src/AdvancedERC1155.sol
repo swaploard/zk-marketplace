@@ -9,10 +9,10 @@ import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 
 contract AdvancedERC1155 is
     ERC1155,
+    ERC1155Supply,
     Ownable,
     ReentrancyGuard,
-    ERC2981,
-    ERC1155Supply
+    ERC2981
 {
     // Struct to define token properties
     struct TokenConfig {
@@ -94,6 +94,9 @@ contract AdvancedERC1155 is
 
     // Public mint with payment
     function publicMint(uint256 amount) external payable nonReentrant {
+        if (amount == 0) {
+            revert("ERC1155: mint amount must be positive");
+        }
         uint256 id = currentTokenId;
         _mint(msg.sender, id, amount, "");
         _mintedIds.push(id);
@@ -103,14 +106,11 @@ contract AdvancedERC1155 is
     }
 
     // Burn tokens
-    function burn(
-        address from,
-        uint256 id,
-        uint256 amount
-    ) external {
+    function burn(address from, uint256 id, uint256 amount) external {
+        require(amount > 0, "Amount must be positive");
         require(
-            from == msg.sender || isApprovedForAll(from, msg.sender),
-            "Not authorized"
+            from == _msgSender() || isApprovedForAll(from, _msgSender()),
+            "ERC1155: caller is not token owner or approved"
         );
         _burn(from, id, amount);
         emit TokenBurned(from, id, amount);
@@ -119,10 +119,10 @@ contract AdvancedERC1155 is
     // ================== Configuration Functions ================== //
 
     // Set royalty info (owner only)
-    function setRoyaltyInfo(address recipient, uint96 feeBasisPoints)
-        external
-        onlyOwner
-    {
+    function setRoyaltyInfo(
+        address recipient,
+        uint96 feeBasisPoints
+    ) external onlyOwner {
         _setDefaultRoyalty(recipient, feeBasisPoints);
         emit RoyaltiesUpdated(recipient, feeBasisPoints);
     }
@@ -138,10 +138,10 @@ contract AdvancedERC1155 is
         contractURI = _contractURI;
     }
 
-    function setApprovalForAll(address operator, bool approved)
-        public
-        override(ERC1155)
-    {
+    function setApprovalForAll(
+        address operator,
+        bool approved
+    ) public override(ERC1155) {
         super.setApprovalForAll(operator, approved);
     }
 
@@ -149,10 +149,12 @@ contract AdvancedERC1155 is
 
     // Withdraw funds (owner only)
     function withdraw() external onlyOwner nonReentrant {
-        (bool success, ) = owner().call{value: address(this).balance}("");
+        address payable recipient = payable(owner());
+        uint256 amount = address(this).balance;
+        (bool success, ) = recipient.call{value: amount}("");
         require(success, "Withdraw failed");
     }
-
+    
     // Override required by Solidity
     function _update(
         address from,
@@ -169,20 +171,16 @@ contract AdvancedERC1155 is
     }
 
     // Interface support
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(ERC1155, ERC2981)
-        returns (bool)
-    {
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override(ERC1155, ERC2981) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 
-    function tokenBalance(address owner, uint256 id)
-        public
-        view
-        returns (uint256)
-    {
+    function tokenBalance(
+        address owner,
+        uint256 id
+    ) public view returns (uint256) {
         return balanceOf(owner, id);
     }
 }

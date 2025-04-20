@@ -1,4 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# zk-Marketplace
+
+## Overview
+A Next.js 15 marketplace application with Ethereum authentication, Zero-Knowledge integrations, and MongoDB backend. Built with modern web3 technologies and TurboPack for development efficiency.
+
+## Key Features
+- Wallet-based authentication (Ethereum/SIWE)
+- Secure session management
+- MongoDB database integration
+- IPFS file storage via Pinata
+- Blockchain interaction with Wagmi/Viem
+- Responsive UI with Radix + Tailwind
+- Form validation with Zod + React Hook Form
+- State management with Zustand
+- TypeScript support
+- End-to-end testing with Cypress
+
+---
+
+## Authentication Flow
+
+### Technologies Used
+- **NextAuth.js** (v4.24) - Authentication framework
+- **RainbowKit** (v2.2) - Wallet connection UI
+- **SIWE** (v3.0) - Sign-In with Ethereum protocol
+- **iron-session** - Encrypted cookie sessions
+
+### Flow Description
+1. **Wallet Connection**  
+   Users connect Ethereum wallet via RainbowKit modal
+   
+2. **SIWE Signature**  
+   Frontend generates SIWE message:
+   ```typescript
+   const message = new SiweMessage({
+     domain: window.location.host,
+     address: walletAddress,
+     statement: 'Sign in to zk-Marketplace',
+     uri: window.location.origin,
+     version: '1',
+     chainId: 1,
+     nonce: await getNonce(),
+   })
 
 ## Getting Started
 
