@@ -21,7 +21,7 @@ import { useDisconnect } from "wagmi";
 
 import { Switch } from "./switch";
 import useUserStore, { IUserStore } from "@/store/userSlice";
-
+import _ from "lodash";
 export default function UserMenu() {
   const { disconnect } = useDisconnect();
   const [mounted, setMounted] = useState(false);
@@ -44,10 +44,10 @@ export default function UserMenu() {
     disconnect();
   };
   return (
-    <DropdownMenu open={open} className="border border-gray-600">
+    <DropdownMenu open={open}>
       <DropdownMenuTrigger asChild onMouseEnter={() => setOpen(true)}>
         <div className="bg-bgNav rounded-xl bg-opacity-50">
-          {user?.profileImage ? (
+          {user?.profileImage && _.isEmpty(user.profileImage) ? (
             <Image
               src={user.profileImage}
               width={30}
@@ -61,7 +61,7 @@ export default function UserMenu() {
         </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="w-56 bg-white dark:bg-black border border-gray-600"
+        className="absolute w-56 right-9 bg-white dark:bg-black border border-gray-600"
         onMouseLeave={() => setOpen(false)}
       >
         <DropdownMenuLabel>My Account</DropdownMenuLabel>

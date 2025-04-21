@@ -58,7 +58,7 @@ export default function QuickListingModal({
 
   return (
     <div className="flex items-center justify-center bg-black/80 z-50 min-w-full min-h-full fixed inset-0">
-      {showStepper ? <Stepper steps={steps} /> : showAuctionsStepper ? <Stepper steps={auctionsSteps} /> : <></>}
+      {showStepper && <Stepper steps={steps} /> || showAuctionsStepper && <Stepper steps={auctionsSteps} />}
       <Tabs defaultValue="listing" className="">
         <Card className="w-[550px] bg-[#1a1a1a]  text-white border-none shadow-xl">
           <div className="flex items-center justify-between p-4 border-b border-gray-800">

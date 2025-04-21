@@ -32,7 +32,7 @@ export default function CollectionPage({ params }) {
   const profileFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    getFiles(unwrappedParams?.collectionId, null);
+    getFiles(unwrappedParams?.collectionId, "");
     getCollections(null, unwrappedParams?.collectionId);
   }, [unwrappedParams.collectionId, getFiles]);
 
@@ -215,7 +215,7 @@ export default function CollectionPage({ params }) {
       <div className="w-screen sticky top-0 z-50">
         <FilterComponent />
       </div>
-      {purchaseModal && <ApprovePurchaseModal file={fileForPurchase} contractName={collections.contractName} setClose={setPurchaseModal}/> }
+      {purchaseModal && <ApprovePurchaseModal file={fileForPurchase} contractName={collections[0].contractName} setClose={setPurchaseModal}/> }
       {bidModalOpen && <BidModal setClose={setBidModalOpen} handleEthToUsd={handleEthToUsd} fileForListing={fileForPurchase} />} 
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {files &&

@@ -95,7 +95,7 @@ export async function GET(request: Request) {
     tokenAddress !== "undefined"
   ) {
     try {
-      const collection = await Collection.findOne(
+      const collection = await Collection.find(
         { contractAddress: tokenAddress },
       ).lean().exec();
       return NextResponse.json(collection, { status: 200 });

@@ -36,9 +36,9 @@ export default function ListingCard({
           </h1>
           <p className="text-sm text-white font-bold min-h-[20px]">
             {file?.price && file?.price > 0
-              ? `${file?.price} ETH`
+              ? `${file?.price.toFixed(5)} ETH`
               : file?.highestBid && file?.highestBid > 0
-                ? `${file?.highestBid} ETH`
+                ? `${file?.highestBid.toFixed(5)} ETH`
                 : "N/A"}
           </p>
           <div
@@ -50,9 +50,9 @@ export default function ListingCard({
                 {_.isNumber(file.price) && file.price > 0 && (
                   <div>
                     <Button
-                      className="w-full flex items-center bg-black text-white 
-              justify-center gap-2border border-solid border-white rounded-b-[10px] translate-y-4 
-              opacity-0 duration-300"
+                      className="w-full flex items-center bg-slate-900 text-white 
+              justify-center gap-2 border border-solid border-white rounded-b-[10px] hover:bg-slate-900 group-hover:translate-y-0 group-hover:opacity-100 
+          transition-all duration-300"
                       onClick={() => handlePurchaseModal(file)}
                     >
                       Buy Item
@@ -64,9 +64,9 @@ export default function ListingCard({
                   file.isActiveAuction && (
                     <div>
                       <Button
-                        className="w-full flex items-center bg-black text-white 
-              justify-center gap-2 border border-solid border-white rounded-b-[10px] translate-y-4 
-              opacity-0 transition-all duration-300"
+                        className="w-full flex items-center bg-slate-900 text-white 
+              justify-center gap-2 border border-solid border-white rounded-b-[10px] hover:bg-slate-900 group-hover:translate-y-0 group-hover:opacity-100 
+          transition-all duration-300"
                         onClick={() => handleBidModal(file)}
                       >
                         Place Bid

@@ -4,7 +4,7 @@ import { generateNonce } from "siwe";
 
 export async function POST() {
   try {
-    const nonce = generateNonce();
+    const nonce = await generateNonce();
     await submitCookieToStorageServerAction(nonce);
     return NextResponse.json({ nonce: nonce }, { status: 201 }); // 201 Created
   } catch (error: unknown) {

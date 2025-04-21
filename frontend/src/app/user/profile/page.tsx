@@ -42,7 +42,7 @@ export default function Profile() {
   const [fileForListing, setFileForListing] = useState<PinataFile>();
 
   useEffect(() => {
-    getFiles();
+    getFiles("", address);
   }, [getFiles, address]);
 
   const handleBannerClick = () => {

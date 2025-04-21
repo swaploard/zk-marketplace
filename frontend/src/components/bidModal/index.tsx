@@ -55,7 +55,7 @@ const BidModal = ({
   const { auction, getAuction } = useAuctionStore(
     (state: IAuctionStore) => state,
   );
-  const { updateFiles } = useHandleFiles();
+  const { updateFiles, getFiles } = useHandleFiles();
   const [amount, setAmount] = useState(0);
   const [royalties, setRoyalties] = useState(0);
   const [highestBid, setHighestBid] = useState(0);
@@ -162,6 +162,7 @@ const BidModal = ({
               await updateFiles(body);
               setClose(false);
               setShowStepper(false);
+              await getFiles(fileForListing.tokenAddress, "");
             }else {
               setShowStepper(false);
               setClose(false);

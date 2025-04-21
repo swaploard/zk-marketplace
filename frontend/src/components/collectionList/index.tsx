@@ -39,11 +39,11 @@ export const CollectionList: React.FC<{
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-gray-400 ">Floor</p>
-                  <p className="font-medium text-xs">{collection.floor}</p>
+                  <p className="font-medium text-xs">{collection.floor.toFixed(4)}</p>
                 </div>
-                <div>
-                  <p className="text-xs text-gray-400">Total volume</p>
-                  <p className="font-medium text-xs">{collection.volume}</p>
+                <div className="">
+                  <p className="text-xs text-gray-400 flex items-center gap-1">Total&nbsp;volume</p>
+                  <p className="font-medium text-xs px-2">{collection.volume}</p>
                 </div>
               </div>
             </div>

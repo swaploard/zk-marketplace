@@ -194,6 +194,7 @@ export const useQuickListingModal = ({
             };
             await updateFiles(updateBody);
             setClose(false);
+            setShowStepper(false);
           } else {
             setShowStepper(false);
             setClose(false);

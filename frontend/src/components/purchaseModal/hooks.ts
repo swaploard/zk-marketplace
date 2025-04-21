@@ -29,7 +29,7 @@ export const usePurchaseModal = ({
   file,
   setClose,
 }: IPurchaseModalHook = {}) => {
-  const { updateFiles } = useHandleFiles();
+  const { updateFiles, getFiles } = useHandleFiles();
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
   const { address, chainId, chain } = useAccount();
@@ -89,6 +89,7 @@ export const usePurchaseModal = ({
         });
         setClose?.(false);
         setShowStepper(false);
+        getFiles(file.tokenAddress,"");
       } else {
         console.error("Transaction reverted");
         setClose?.(false);

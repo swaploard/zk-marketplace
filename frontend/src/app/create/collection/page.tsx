@@ -18,9 +18,7 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import AdvancedERC1155 from "@/utils/contracts/AdvancedERC1155.json";
 import { sepolia, amoy } from "@/utils/constants/chainID";
-import useCollectionStore, {
-  ICollectionStore,
-} from "../../../store/collectionSlice";
+import useCollectionStore from "../../../store/collectionSlice";
 import {
   useSendTransaction,
   useAccount,
@@ -30,6 +28,9 @@ import {
 } from "wagmi";
 import { encodeDeployData, Abi, ContractConstructorArgs } from "viem";
 import { localhost } from "viem/chains";
+import { ICollectionStore, Step } from "@/types";
+import Stepper from "@/components/steppers/createNftStepper";
+import { collectionSteps } from "../constants";
 
 const formSchema = z.object({
   contractName: z
@@ -93,6 +94,8 @@ export default function CreateNFTCollection() {
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isHovering, setIsHovering] = useState(false);
+  const [steps, setSteps] = useState<Step[]>(collectionSteps);
+  const [showStepper, setShowStepper] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (file: File) => {
@@ -124,7 +127,17 @@ export default function CreateNFTCollection() {
     if (file) handleFileSelect(file);
   };
 
+  const updateStepStatus = (stepIndex: number, newStatus: StepStatus) => {
+    setSteps((prev) =>
+      prev.map((step, index) =>
+        index === stepIndex ? { ...step, status: newStatus } : step,
+      ),
+    );
+  };
+
   const onSubmit = async (data: FormValues) => {
+    setShowStepper(true);
+    updateStepStatus(0, "current");
     const formData = new FormData();
     formData.append("contractName", data.contractName);
     formData.append("tokenSymbol", data.tokenSymbol);
@@ -137,9 +150,10 @@ export default function CreateNFTCollection() {
       collection[0].contractName === data.contractName &&
       collection[0].tokenSymbol === data.tokenSymbol
     ) {
+      
       const deployData = await encodeDeployData({
         abi: AdvancedERC1155.abi as Abi,
-        bytecode: AdvancedERC1155.bytecode as `0x${string}`,
+        bytecode: AdvancedERC1155.bytecode.object as `0x${string}`,
         args: [
           data.contractName,
           data.tokenSymbol,
@@ -150,6 +164,8 @@ export default function CreateNFTCollection() {
           marketplaceAddress
         ] as unknown as ContractConstructorArgs<typeof AdvancedERC1155.abi>,
       });
+      updateStepStatus(0, "completed");
+      updateStepStatus(1, "current");
       await sendTransaction(
         {
           to: null,
@@ -157,6 +173,8 @@ export default function CreateNFTCollection() {
         },
         {
           onSuccess: async (transactionHash) => {
+            updateStepStatus(1, "completed");
+            updateStepStatus(2, "current");
             const receipt = await publicClient.waitForTransactionReceipt({
               hash: transactionHash,
             });
@@ -165,16 +183,21 @@ export default function CreateNFTCollection() {
               formData.append("collectionId", collection[0]._id);
               formData.append("contractAddress", receipt.contractAddress);
               updateCollection(formData);
+              setShowStepper(false);
+              reset();
+              setPreviewUrl("");
+              updateStepStatus(2, "completed");
+              setSteps(collectionSteps);
             }
           },
           onError: (error) => {
             deleteCollection(collection[0]._id, collection[0].groupId);
+            setShowStepper(false);
+            setSteps(collectionSteps);
           },
         },
       );
     }
-    reset();
-    setPreviewUrl("");
   };
   const handleNetworkChange = async (targetChainId: number) => {
     switchChain?.({ chainId: targetChainId });
@@ -212,7 +235,7 @@ export default function CreateNFTCollection() {
           </div>
         </div>
       </header>
-
+      {showStepper && <Stepper steps={steps} />}
       <main className="flex-1 overflow-auto pt-16 pb-24">
         <div className="max-w-3xl mx-auto py-12 px-4">
           <div className="space-y-8">
