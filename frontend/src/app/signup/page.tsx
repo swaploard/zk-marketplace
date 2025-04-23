@@ -12,7 +12,7 @@ export default function SignUp() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/';
   const [loading, setLoading] = useState(false);
-  
+
   const { signMessage } = useSignMessage({
     mutation: {
       onSettled(data, error) {
@@ -29,8 +29,8 @@ export default function SignUp() {
           console.error('Error during signature process:', error);
           setLoading(false);
         }
-      }
-    }
+      },
+    },
   });
 
   useEffect(() => {
@@ -43,9 +43,9 @@ export default function SignUp() {
         try {
           setLoading(true);
           const message = `Welcome to ZK Marketplace!\n\nPlease sign this message to authenticate.\n\nWallet: ${address}\nTimestamp: ${Date.now()}`;
-          signMessage({ 
+          signMessage({
             message,
-            account: address
+            account: address,
           });
         } catch (error) {
           console.error('Error during authentication:', error);
@@ -70,7 +70,9 @@ export default function SignUp() {
       {loading ? <Loader /> : null}
       {!isConnected && (
         <div className="text-center">
-          <h2 className="text-xl mb-4">Please connect your wallet to continue</h2>
+          <h2 className="text-xl mb-4">
+            Please connect your wallet to continue
+          </h2>
         </div>
       )}
     </div>
