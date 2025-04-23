@@ -8,9 +8,9 @@
  * The adapter also uses the `createSiweMessage` function from `viem/siwe` to
  * create a SIWE message for the user to sign.
  */
-import { createAuthenticationAdapter } from "@rainbow-me/rainbowkit";
-import { createSiweMessage } from "viem/siwe";
-import { signIn, signOut } from "next-auth/react";
+import { createAuthenticationAdapter } from '@rainbow-me/rainbowkit';
+import { createSiweMessage } from 'viem/siwe';
+import { signIn, signOut } from 'next-auth/react';
 
 export const authenticationAdapter = createAuthenticationAdapter({
   /**
@@ -22,14 +22,14 @@ export const authenticationAdapter = createAuthenticationAdapter({
    * @returns {Promise<string>} The nonce fetched from the server.
    */
   getNonce: async () => {
-    const verifyRes = await fetch("/api/nonce", {
-      method: "POST", // Changed to POST
-      headers: { "Content-Type": "application/json" },
+    const verifyRes = await fetch('/api/nonce', {
+      method: 'POST', // Changed to POST
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({}), // Include an empty body or any required data
     });
 
     if (!verifyRes.ok) {
-      throw new Error("Failed to fetch nonce");
+      throw new Error('Failed to fetch nonce');
     }
 
     const data = await verifyRes.json(); // Convert response to JSON
@@ -49,9 +49,9 @@ export const authenticationAdapter = createAuthenticationAdapter({
     return createSiweMessage({
       domain: window.location.host,
       address,
-      statement: "Sign in with Ethereum to the app.",
+      statement: 'Sign in with Ethereum to the app.',
       uri: window.location.origin,
-      version: "1",
+      version: '1',
       chainId,
       nonce,
     });
@@ -68,7 +68,7 @@ export const authenticationAdapter = createAuthenticationAdapter({
    */
   verify: async ({ message, signature }) => {
     const loginData = { message, signature };
-    const verifyRes = await signIn("credentials", {
+    const verifyRes = await signIn('credentials', {
       redirect: false,
       ...loginData,
     });

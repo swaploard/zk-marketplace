@@ -1,22 +1,22 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { X, HelpCircle, ChevronUp } from "lucide-react";
-import Image from "next/image";
-import _ from "lodash";
-import { PinataFile } from "@/types";
-import Stepper from "@/components/steppers/createNftStepper";
-import { useQuickListingModal, useQuickAuctionModal } from "./hook";
+} from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { X, HelpCircle } from 'lucide-react';
+import Image from 'next/image';
+import _ from 'lodash';
+import { PinataFile } from '@/types';
+import Stepper from '@/components/steppers/createNftStepper';
+import { useQuickListingModal, useQuickAuctionModal } from './hook';
 
 interface QuickListingModalProps {
   setClose: (value: boolean) => void;
@@ -58,7 +58,8 @@ export default function QuickListingModal({
 
   return (
     <div className="flex items-center justify-center bg-black/80 z-50 min-w-full min-h-full fixed inset-0">
-      {showStepper && <Stepper steps={steps} /> || showAuctionsStepper && <Stepper steps={auctionsSteps} />}
+      {(showStepper && <Stepper steps={steps} />) ||
+        (showAuctionsStepper && <Stepper steps={auctionsSteps} />)}
       <Tabs defaultValue="listing" className="">
         <Card className="w-[550px] bg-[#1a1a1a]  text-white border-none shadow-xl">
           <div className="flex items-center justify-between p-4 border-b border-gray-800">
@@ -86,7 +87,7 @@ export default function QuickListingModal({
               <div className="relative w-16 h-16 overflow-hidden rounded-lg">
                 {fileForListing.AssetIpfsHash && (
                   <Image
-                    src={`https://silver-rainy-chipmunk-430.mypinata.cloud/ipfs/${fileForListing.AssetIpfsHash}`}
+                    src={`https://ipfs.io/ipfs/${fileForListing.AssetIpfsHash}`}
                     alt="NFT Image"
                     width={64}
                     height={64}
@@ -103,16 +104,16 @@ export default function QuickListingModal({
               <div className="ml-auto text-right">
                 <p className="text-sm text-gray-400">Listing price per item</p>
                 <p className="font-medium">
-                  {!_.isEmpty(quickListingForm.getValues("price"))
-                    ? `${quickListingForm.getValues("price")} ETH`
-                    : "-- ETH"}
+                  {!_.isEmpty(quickListingForm.getValues('price'))
+                    ? `${quickListingForm.getValues('price')} ETH`
+                    : '-- ETH'}
                 </p>
-                {quickListingForm.watch("price") && (
+                {quickListingForm.watch('price') && (
                   <span className="text-sm text-gray-400">
                     $
                     {handleEthToUsd(
-                      Number(quickListingForm.watch("price")),
-                    ).toFixed(2)}{" "}
+                      Number(quickListingForm.watch('price'))
+                    ).toFixed(2)}{' '}
                     USD
                   </span>
                 )}
@@ -133,7 +134,7 @@ export default function QuickListingModal({
                         type="number"
                         placeholder="Amount"
                         className="rounded-[15px] bg-[#2a2a2a] border-white focus-visible:ring-0 text-[150px] h-16 min-h-16 my-2"
-                        {...quickListingForm.register("amount", {
+                        {...quickListingForm.register('amount', {
                           valueAsNumber: true,
                         })}
                       />
@@ -171,7 +172,7 @@ export default function QuickListingModal({
                             step={0.0000000001}
                             placeholder="Price"
                             className="rounded-l-[15px] bg-[#2a2a2a] border-white focus-visible:ring-0 text-[150px] h-16 min-h-16"
-                            {...quickListingForm.register("price")}
+                            {...quickListingForm.register('price')}
                           />
                           <div className="flex items-center justify-center px-4 font-medium bg-[#2a2a2a] border border-l-0 border-white rounded-r-[15px]">
                             ETH
@@ -183,12 +184,12 @@ export default function QuickListingModal({
                               {quickListingForm.formState.errors.price.message}
                             </p>
                           )}
-                          {quickListingForm.watch("price") && (
+                          {quickListingForm.watch('price') && (
                             <span className="text-sm text-gray-400 left-auto ml-auto mt-1">
                               $
                               {handleEthToUsd(
-                                Number(quickListingForm.watch("price")),
-                              ).toFixed(2)}{" "}
+                                Number(quickListingForm.watch('price'))
+                              ).toFixed(2)}{' '}
                               USD
                             </span>
                           )}
@@ -200,10 +201,10 @@ export default function QuickListingModal({
                         <h3 className="text-base font-medium">Listing price</h3>
                       </div>
                       <div>
-                        {" "}
-                        {!_.isEmpty(quickListingForm.getValues("price"))
-                          ? `${quickListingForm.getValues("price")} ETH`
-                          : "--ETH"}
+                        {' '}
+                        {!_.isEmpty(quickListingForm.getValues('price'))
+                          ? `${quickListingForm.getValues('price')} ETH`
+                          : '--ETH'}
                       </div>
                     </div>
 
@@ -230,7 +231,7 @@ export default function QuickListingModal({
                       </div>
                       <div className="flex flex-col">
                         <div className="">
-                          {earnings ? `${earnings} ETH` : "--ETH"}
+                          {earnings ? `${earnings} ETH` : '--ETH'}
                         </div>
                       </div>
                     </div>
@@ -241,7 +242,9 @@ export default function QuickListingModal({
                 <div className="p-4 pt-2">
                   <Button
                     className={`w-full ${
-                      disableButton ? "bg-slate-400 cursor-not-allowed" : "bg-slate-700 hover:bg-slate-600"
+                      disableButton
+                        ? 'bg-slate-400 cursor-not-allowed'
+                        : 'bg-slate-700 hover:bg-slate-600'
                     } text-primary-foreground`}
                     type="submit"
                     disabled={disableButton}
@@ -258,7 +261,7 @@ export default function QuickListingModal({
                 <div className="relative w-16 h-16 overflow-hidden rounded-lg">
                   {fileForListing.AssetIpfsHash && (
                     <Image
-                      src={`https://silver-rainy-chipmunk-430.mypinata.cloud/ipfs/${fileForListing.AssetIpfsHash}`}
+                      src={`https://ipfs.io/ipfs/${fileForListing.AssetIpfsHash}`}
                       alt="NFT Image"
                       width={64}
                       height={64}
@@ -277,16 +280,16 @@ export default function QuickListingModal({
                     Listing price per item
                   </p>
                   <p className="font-medium">
-                    {!_.isEmpty(quickAuctionForm.getValues("price"))
-                      ? `${quickAuctionForm.getValues("price")} ETH`
-                      : "-- ETH"}
+                    {!_.isEmpty(quickAuctionForm.getValues('price'))
+                      ? `${quickAuctionForm.getValues('price')} ETH`
+                      : '-- ETH'}
                   </p>
-                  {quickAuctionForm.watch("price") && (
+                  {quickAuctionForm.watch('price') && (
                     <span className="text-sm text-gray-400">
                       $
                       {handleEthToUsd(
-                        Number(quickAuctionForm.watch("price")),
-                      ).toFixed(2)}{" "}
+                        Number(quickAuctionForm.watch('price'))
+                      ).toFixed(2)}{' '}
                       USD
                     </span>
                   )}
@@ -323,7 +326,7 @@ export default function QuickListingModal({
                       type="number"
                       placeholder="Amount"
                       className="rounded-[15px] bg-[#2a2a2a] border-white focus-visible:ring-0 text-[150px] h-16 min-h-16 my-2"
-                      {...quickAuctionForm.register("amount", {
+                      {...quickAuctionForm.register('amount', {
                         valueAsNumber: true,
                       })}
                     />
@@ -349,7 +352,7 @@ export default function QuickListingModal({
                           step={0.0000000001}
                           placeholder="Price"
                           className="rounded-l-[15px] bg-[#2a2a2a] border-white focus-visible:ring-0 text-[150px] h-16 min-h-16"
-                          {...quickAuctionForm.register("price")}
+                          {...quickAuctionForm.register('price')}
                         />
                         <div className="flex items-center justify-center px-4 font-medium bg-[#2a2a2a] border border-l-0 border-white rounded-r-[15px]">
                           ETH
@@ -365,7 +368,7 @@ export default function QuickListingModal({
                           <span className="text-sm text-gray-400 left-auto ml-auto mt-1">
                             $
                             {handleEthToUsd(
-                              Number(quickAuctionForm.watch("price")),
+                              Number(quickAuctionForm.watch('price'))
                             ).toFixed(2)}
                             USD
                           </span>
@@ -380,9 +383,17 @@ export default function QuickListingModal({
                     <div className="flex">
                       <div className="mr-2 flex-1">
                         <Select
-                          value={quickAuctionForm.watch("duration")}
+                          value={quickAuctionForm.watch('duration')}
                           onValueChange={(value) =>
-                            quickAuctionForm.setValue("duration", value)
+                            quickAuctionForm.setValue(
+                              'duration',
+                              value as
+                                | '1 day'
+                                | '3 days'
+                                | '1 week'
+                                | '1 month'
+                                | '3 months'
+                            )
                           }
                         >
                           <SelectTrigger className="bg-[#2a2a2a] border-gray-700 focus:ring-0">
@@ -400,7 +411,7 @@ export default function QuickListingModal({
                       <input
                         type="date"
                         value={endDate}
-                        min={new Date().toISOString().split("T")[0]}
+                        min={new Date().toISOString().split('T')[0]}
                         className="px-3 bg-[#2a2a2a] border-gray-700 outline-none"
                         onChange={(e) => setEndDate(e.target.value)}
                       />
@@ -435,7 +446,7 @@ export default function QuickListingModal({
                     </div>
                     <div className="flex flex-col">
                       <div className="">
-                        {earnings ? `${earnings} ETH` : "--ETH"}
+                        {earnings ? `${earnings} ETH` : '--ETH'}
                       </div>
                     </div>
                   </div>

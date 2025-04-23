@@ -1,10 +1,10 @@
-"use client";
-import { Search, ShoppingCart } from "lucide-react";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import Link from "next/link";
-import CustomConnectButton from "@/components/walletConnectButton";
-import UserMenu from "./ui/userMenu";
+'use client';
+import { Search, ShoppingCart } from 'lucide-react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import Link from 'next/link';
+import CustomConnectButton from '@/components/walletConnectButton';
+import UserMenu from './ui/userMenu';
 
 function Navbar() {
   return (

@@ -1,28 +1,28 @@
-import { HelpCircle, X } from "lucide-react";
+import { HelpCircle, X } from 'lucide-react';
 import {
   useReadContract,
   useAccount,
   useWriteContract,
   usePublicClient,
-} from "wagmi";
-import { Button } from "../ui/button";
-import { Card, CardContent } from "../ui/card";
-import { PinataFile, StepStatus } from "@/types";
-import Image from "next/image";
-import { Input } from "../ui/input";
-import Marketplace from "@/utils/contracts/Marketplace.json";
-import AdvancedERC1155 from "@/utils/contracts/AdvancedERC1155.json";
-import { useEffect, useState } from "react";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import _ from "lodash";
-import { Abi, formatEther, parseEther, parseUnits } from "viem";
-import { formattedPercentage } from "@/utils/ethUtils";
-import useAuctionStore from "@/store/auctionSlice";
-import useHandleFiles from "@/store/fileSlice";
-import { IAuctionStore, Step } from "@/types";
-import Stepper from "../steppers/createNftStepper";
+} from 'wagmi';
+import { Button } from '../ui/button';
+import { Card, CardContent } from '../ui/card';
+import { PinataFile, StepStatus } from '@/types';
+import Image from 'next/image';
+import { Input } from '../ui/input';
+import Marketplace from '@/utils/contracts/Marketplace.json';
+import AdvancedERC1155 from '@/utils/contracts/AdvancedERC1155.json';
+import { useEffect, useState } from 'react';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import _ from 'lodash';
+import { Abi, formatEther, parseEther } from 'viem';
+import { formattedPercentage } from '@/utils/ethUtils';
+import useAuctionStore from '@/store/auctionSlice';
+import useHandleFiles from '@/store/fileSlice';
+import { IAuctionStore, Step } from '@/types';
+import Stepper from '../steppers/createNftStepper';
 interface IBidModalProps {
   setClose?: (value: boolean) => void;
   handleEthToUsd?: (value: number) => number;
@@ -31,14 +31,14 @@ interface IBidModalProps {
 
 export const biddingSteps = [
   {
-    title: "Go to your wallet to approve this transaction",
-    description: "A blockchain transaction is required to place your bid.",
-    status: "pending" as const,
+    title: 'Go to your wallet to approve this transaction',
+    description: 'A blockchain transaction is required to place your bid.',
+    status: 'pending' as const,
   },
   {
-    title: "Purchasing is in progress",
-    description: "Please stay on this page and keep this browser tab open.",
-    status: "pending" as const,
+    title: 'Purchasing is in progress',
+    description: 'Please stay on this page and keep this browser tab open.',
+    status: 'pending' as const,
   },
 ];
 
@@ -53,7 +53,7 @@ const BidModal = ({
   const { writeContractAsync } = useWriteContract();
   const publicClient = usePublicClient();
   const { auction, getAuction } = useAuctionStore(
-    (state: IAuctionStore) => state,
+    (state: IAuctionStore) => state
   );
   const { updateFiles, getFiles } = useHandleFiles();
   const [amount, setAmount] = useState(0);
@@ -83,15 +83,15 @@ const BidModal = ({
   const updateStepStatus = (stepIndex: number, newStatus: StepStatus) => {
     setSteps((prev) =>
       prev.map((step, index) =>
-        index === stepIndex ? { ...step, status: newStatus } : step,
-      ),
+        index === stepIndex ? { ...step, status: newStatus } : step
+      )
     );
   };
 
   const { data: auctionData } = useReadContract({
     address: MarketplaceAddress,
     abi: Marketplace.abi,
-    functionName: "auctions",
+    functionName: 'auctions',
     args: [Number(auction?.auctionId)],
     chainId: chainId,
     account: address,
@@ -102,8 +102,8 @@ const BidModal = ({
   const { data: royalty } = useReadContract({
     address: fileForListing.tokenAddress as `0x${string}`,
     abi: AdvancedERC1155.abi,
-    functionName: "royaltyInfo",
-    args: [fileForListing.tokenId, parseEther("0.01")],
+    functionName: 'royaltyInfo',
+    args: [fileForListing.tokenId, parseEther('0.01')],
     query: {
       enabled: !!fileForListing.tokenAddress,
     },
@@ -111,7 +111,7 @@ const BidModal = ({
 
   useEffect(() => {
     getAuction(fileForListing._id);
-  }, []);
+  }, [fileForListing._id, getAuction]);
 
   useEffect(() => {
     if (auctionData) {
@@ -128,18 +128,18 @@ const BidModal = ({
       const royaltiesPercentage = formattedPercentage(royalty[1]);
       setRoyalties(royaltiesPercentage);
     }
-  }, [auctionData]);
+  }, [auctionData, royalty]);
 
   const handleBidding = async (data) => {
     setShowStepper(true);
-    updateStepStatus(0, "current");
+    updateStepStatus(0, 'current');
     try {
-       writeContractAsync(
+      writeContractAsync(
         {
           abi: Marketplace.abi as Abi,
           account: address,
           address: MarketplaceAddress,
-          functionName: "placeBid",
+          functionName: 'placeBid',
           args: [Number(auctionData[0])],
           value: BigInt(parseEther(data.price.toString())),
           chainId: chainId,
@@ -147,32 +147,32 @@ const BidModal = ({
         },
         {
           onSuccess: async (transactionHash) => {
-            updateStepStatus(0, "completed");
-            updateStepStatus(1, "current");
+            updateStepStatus(0, 'completed');
+            updateStepStatus(1, 'current');
             const receipt = await publicClient.waitForTransactionReceipt({
               hash: transactionHash,
             });
-            if (receipt.status.toLowerCase() === "success") {
-              updateStepStatus(1, "completed");
+            if (receipt.status.toLowerCase() === 'success') {
+              updateStepStatus(1, 'completed');
               const body = {
-                tokenId: String(auction.tokenId),
+                tokenId: fileForListing._id,
                 highestBid: data.price.toString(),
                 highestBidder: address,
               };
               await updateFiles(body);
               setClose(false);
               setShowStepper(false);
-              await getFiles(fileForListing.tokenAddress, "");
-            }else {
+              await getFiles(fileForListing.tokenAddress, '');
+            } else {
               setShowStepper(false);
               setClose(false);
             }
           },
           onError: (error) => {
-            console.error("error", error);
+            console.error('error', error);
             setShowStepper(false);
           },
-        },
+        }
       );
     } catch (error) {
       console.error(error);
@@ -199,7 +199,7 @@ const BidModal = ({
           <div className="relative w-16 h-16 overflow-hidden rounded-lg">
             {fileForListing.AssetIpfsHash && (
               <Image
-                src={`https://silver-rainy-chipmunk-430.mypinata.cloud/ipfs/${fileForListing.AssetIpfsHash}`}
+                src={`https://ipfs.io/ipfs/${fileForListing.AssetIpfsHash}`}
                 alt="NFT Image"
                 width={64}
                 height={64}
@@ -216,13 +216,13 @@ const BidModal = ({
           <div className="ml-auto text-right">
             <p className="text-sm text-gray-400">Listing price per item</p>
             <p className="font-medium">
-              {!_.isEmpty(bidForm.getValues("price"))
-                ? `${bidForm.getValues("price")} ETH`
-                : "-- ETH"}
+              {!_.isEmpty(bidForm.getValues('price'))
+                ? `${bidForm.getValues('price')} ETH`
+                : '-- ETH'}
             </p>
-            {bidForm.watch("price") && (
+            {bidForm.watch('price') && (
               <span className="text-sm text-gray-400">
-                ${handleEthToUsd(Number(bidForm.watch("price"))).toFixed(2)} USD
+                ${handleEthToUsd(Number(bidForm.watch('price'))).toFixed(2)} USD
               </span>
             )}
           </div>
@@ -261,7 +261,7 @@ const BidModal = ({
                         step={0.0000000001}
                         placeholder="Price"
                         className="rounded-l-[15px] bg-[#2a2a2a] border-white focus-visible:ring-0 text-[150px] h-16 min-h-16"
-                        {...bidForm.register("price")}
+                        {...bidForm.register('price')}
                       />
                       <div className="flex items-center justify-center px-4 font-medium bg-[#2a2a2a] border border-l-0 border-white rounded-r-[15px]">
                         ETH
@@ -273,12 +273,12 @@ const BidModal = ({
                           {bidForm.formState.errors.price.message}
                         </p>
                       )}
-                      {bidForm.watch("price") && (
+                      {bidForm.watch('price') && (
                         <span className="text-sm text-gray-400 left-auto ml-auto mt-1">
                           $
                           {handleEthToUsd(
-                            Number(bidForm.watch("price")),
-                          ).toFixed(2)}{" "}
+                            Number(bidForm.watch('price'))
+                          ).toFixed(2)}{' '}
                           USD
                         </span>
                       )}
@@ -290,10 +290,10 @@ const BidModal = ({
                     <h3 className="text-base font-medium">Bidding price</h3>
                   </div>
                   <div>
-                    {" "}
-                    {!_.isEmpty(bidForm.getValues("price"))
-                      ? `${bidForm.getValues("price")} ETH`
-                      : "--ETH"}
+                    {' '}
+                    {!_.isEmpty(bidForm.getValues('price'))
+                      ? `${bidForm.getValues('price')} ETH`
+                      : '--ETH'}
                   </div>
                 </div>
 

@@ -1,33 +1,33 @@
-import { NextResponse, type NextRequest } from "next/server";
-import { pinata } from "../../../utils/config/pinata";
-import connectMongo from "@/lib/mongodb";
-import { Collection } from "@/mongoSchemas/collection";
-import User from "@/mongoSchemas/User";
-import { saveFile } from "@/utils/routeHelper/saveImage";
-import { collection } from "@/types";
-import _ from "lodash";
+import { NextResponse, type NextRequest } from 'next/server';
+import { pinata } from '../../../utils/config/pinata';
+import connectMongo from '@/lib/mongodb';
+import { Collection } from '@/mongoSchemas/collection';
+import User from '@/mongoSchemas/User';
+import { saveFile } from '@/utils/routeHelper/saveImage';
+import { collection } from '@/types';
+import _ from 'lodash';
 export async function POST(request: NextRequest) {
   await connectMongo();
 
   try {
     const formData = await request.formData();
 
-    const file = formData.get("file") as File;
-    const contractName = formData.get("contractName") as string;
-    const tokenSymbol = formData.get("tokenSymbol") as string;
-    const walletAddress = formData.get("walletAddress") as string;
-    const collectionLogo = await saveFile(formData.get("file") as File);
+    const file = formData.get('file') as File;
+    const contractName = formData.get('contractName') as string;
+    const tokenSymbol = formData.get('tokenSymbol') as string;
+    const walletAddress = formData.get('walletAddress') as string;
+    const collectionLogo = await saveFile(formData.get('file') as File);
 
     if (!file || !contractName || !tokenSymbol || !walletAddress) {
       return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 },
+        { error: 'Missing required fields' },
+        { status: 400 }
       );
     }
 
     const existingUser = await User.findOne({ walletAddress });
     if (!existingUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     const existingCollection = await Collection.findOne({
@@ -37,8 +37,8 @@ export async function POST(request: NextRequest) {
 
     if (existingCollection) {
       return NextResponse.json(
-        { error: "Collection already exists" },
-        { status: 400 },
+        { error: 'Collection already exists' },
+        { status: 400 }
       );
     }
     let group;
@@ -49,15 +49,15 @@ export async function POST(request: NextRequest) {
 
       if (!group.id) {
         return NextResponse.json(
-          { error: "No group ID returned" },
-          { status: 400 },
+          { error: 'No group ID returned' },
+          { status: 400 }
         );
       }
     } catch (error) {
-      console.error("Error creating group:", error);
+      console.error('Error creating group:', error);
       return NextResponse.json(
-        { error: "Internal server error" },
-        { status: 500 },
+        { error: 'Internal server error' },
+        { status: 500 }
       );
     }
 
@@ -75,10 +75,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(collection, { status: 200 });
   } catch (error) {
-    console.error("Error creating group:", error);
+    console.error('Error creating group:', error);
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
+      { error: 'Internal server error' },
+      { status: 500 }
     );
   }
 }
@@ -86,24 +86,26 @@ export async function POST(request: NextRequest) {
 export async function GET(request: Request) {
   await connectMongo();
   const { searchParams } = new URL(request.url);
-  const walletAddress = searchParams.get("walletAddress");
-  const tokenAddress = searchParams.get("contractAddress");
+  const walletAddress = searchParams.get('walletAddress');
+  const tokenAddress = searchParams.get('contractAddress');
 
   if (
     !_.isEmpty(tokenAddress) &&
-    tokenAddress !== "null" &&
-    tokenAddress !== "undefined"
+    tokenAddress !== 'null' &&
+    tokenAddress !== 'undefined'
   ) {
     try {
-      const collection = await Collection.find(
-        { contractAddress: tokenAddress },
-      ).lean().exec();
+      const collection = await Collection.find({
+        contractAddress: tokenAddress,
+      })
+        .lean()
+        .exec();
       return NextResponse.json(collection, { status: 200 });
     } catch (error) {
-      console.error("Error fetching collections:", error);
+      console.error('Error fetching collections:', error);
       return NextResponse.json(
-        { error: "Failed to fetch collections" },
-        { status: 500 },
+        { error: 'Failed to fetch collections' },
+        { status: 500 }
       );
     }
   }
@@ -112,8 +114,8 @@ export async function GET(request: Request) {
     let collections;
     if (
       !_.isEmpty(walletAddress) &&
-      walletAddress !== "null" &&
-      walletAddress !== "undefined"
+      walletAddress !== 'null' &&
+      walletAddress !== 'undefined'
     ) {
       const user = await User.findOne({ walletAddress });
       collections = await Collection.find({ User: user._id })
@@ -124,10 +126,10 @@ export async function GET(request: Request) {
     }
     return NextResponse.json(collections, { status: 200 });
   } catch (error) {
-    console.error("Error fetching collections:", error);
+    console.error('Error fetching collections:', error);
     return NextResponse.json(
-      { error: "Failed to fetch collections" },
-      { status: 500 },
+      { error: 'Failed to fetch collections' },
+      { status: 500 }
     );
   }
 }
@@ -137,8 +139,8 @@ export async function PUT(request: NextRequest) {
 
   const formData = await request.formData();
 
-  const collectionId = formData.get("collectionId");
-  const updateData: collection = {};
+  const collectionId = formData.get('collectionId');
+  const updateData: Partial<collection> = {};
   const files: Record<string, File> = {};
 
   try {
@@ -166,13 +168,14 @@ export async function PUT(request: NextRequest) {
           contractAddress: updateData.contractAddress,
         },
       },
-      { new: true },
+      { new: true }
     );
     return NextResponse.json(updateCollection, { status: 200 });
   } catch (error) {
+    console.error('Error updating collection:', error);
     return NextResponse.json(
-      { error: "Failed to update collection" },
-      { status: 500 },
+      { error: 'Failed to update collection' },
+      { status: 500 }
     );
   }
 }
@@ -180,19 +183,20 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   await connectMongo();
   const { searchParams } = new URL(request.url);
-  const collectionId = searchParams.get("id");
-  const groupId = searchParams.get("groupId");
+  const collectionId = searchParams.get('id');
+  const groupId = searchParams.get('groupId');
   try {
     await pinata.groups.delete({ groupId: groupId });
     await Collection.deleteOne({ _id: collectionId });
     return NextResponse.json(
-      { message: "Collection deleted successfully" },
-      { status: 200 },
+      { message: 'Collection deleted successfully' },
+      { status: 200 }
     );
   } catch (error) {
+    console.error('Error deleting collection:', error);
     return NextResponse.json(
-      { error: "Failed to delete collection" },
-      { status: 500 },
+      { error: 'Failed to delete collection' },
+      { status: 500 }
     );
   }
 }

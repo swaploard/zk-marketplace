@@ -12,13 +12,15 @@ export interface collection {
   __v: number;
 }
 
-
 export interface ICollectionStore {
   collection: collection[] | null;
   collections: collection[];
   error: string | null;
   loading: boolean;
-  getCollections: (walletAddress: string|null,  contractAddress: string|null) => void;
+  getCollections: (
+    walletAddress: string | null,
+    contractAddress: string | null
+  ) => void;
   createCollection: (collection: FormData) => void;
   getLatestCollection: () => collection[] | null;
   updateCollection: (collection: FormData) => void;
@@ -33,6 +35,17 @@ export interface File {
   };
 }
 
+export interface PinataUploadResponse {
+  IpfsHash: string;
+  PinSize: number;
+  Timestamp: string;
+  ID: string;
+  Name: string;
+  NumberOfFiles: number;
+  MimeType: string;
+  GroupId: string;
+  Keyvalues?: Record<string, unknown> | null;
+}
 export interface PinataFile {
   _id: string;
   ID: string;
@@ -81,11 +94,16 @@ export interface IFileStore {
   addFile: (formData: FormData) => Promise<void>;
   getFiles: (
     contractAddress?: string | null,
-    walletAddress?: string | null,
+    walletAddress?: string | null
   ) => Promise<void>;
-  updateFiles: <T extends keyof PinataFile>(body: Pick<PinataFile, T>) => Promise<void>;
+  updateFiles: <T extends keyof PinataFile>(
+    body: Pick<PinataFile, T>
+  ) => Promise<void>;
   getLatestFile: () => PinataFile;
   deleteFile: (assetCID: string, metadataCID: string) => void;
   clearError: () => void;
-  addTokenData: <T extends keyof PinataFile>(body: Pick<PinataFile, T>, id: string) => Promise<void>;
+  addTokenData: <T extends keyof PinataFile>(
+    body: Pick<PinataFile, T>,
+    id: string
+  ) => Promise<void>;
 }

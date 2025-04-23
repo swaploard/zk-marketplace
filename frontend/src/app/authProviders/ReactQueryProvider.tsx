@@ -1,6 +1,6 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useState } from 'react';
 
 type ReactQueryProviderProps = {
   children: ReactNode;
@@ -17,7 +17,7 @@ export default function ReactQueryProvider({
             staleTime: 60 * 1000,
           },
         },
-      }),
+      })
   );
 
   return (

@@ -22,9 +22,9 @@ import {
   getIronSession,
   IronSessionData,
   getServerActionIronSession,
-} from "iron-session";
+} from 'iron-session';
 
-import { cookies } from "next/headers";
+import { cookies } from 'next/headers';
 export const sessionOptions: IronSessionOptions = {
   /**
    * The password to use for encrypting the session data.
@@ -37,7 +37,7 @@ export const sessionOptions: IronSessionOptions = {
   /**
    * The name of the cookie to store the session data in.
    */
-  cookieName: "siwe-session",
+  cookieName: 'siwe-session',
   /**
    * Options for the cookie.
    */
@@ -47,11 +47,11 @@ export const sessionOptions: IronSessionOptions = {
      *
      * This is set to `true` in production, but `false` in development.
      */
-    secure: process.env.NEXT_NODE_ENV === "production",
+    secure: process.env.NEXT_NODE_ENV === 'production',
   },
 };
 
-declare module "iron-session" {
+declare module 'iron-session' {
   /**
    * The shape of the session data.
    */
@@ -81,7 +81,7 @@ const getSession = async (req: Request, res: Response) => {
 const getServerActionSession = async () => {
   const session = await getServerActionIronSession<IronSessionData>(
     sessionOptions,
-    await cookies(),
+    await cookies()
   );
   return session;
 };

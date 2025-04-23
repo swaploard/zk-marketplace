@@ -1,4 +1,4 @@
-import { PinataSDK } from "pinata-web3";
+import { PinataSDK } from 'pinata-web3';
 
 export const pinata = new PinataSDK({
   pinataJwt: process.env.NEXT_JWT_PINATA,

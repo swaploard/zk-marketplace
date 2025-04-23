@@ -1,8 +1,8 @@
-import Image from "next/image";
-import _ from "lodash";
-import { useAccount } from "wagmi";
-import { Button } from "@/components/ui/button";
-import { PinataFile } from "@/types";
+import Image from 'next/image';
+import _ from 'lodash';
+import { useAccount } from 'wagmi';
+import { Button } from '@/components/ui/button';
+import { PinataFile } from '@/types';
 interface IPriceCardNft {
   file?: PinataFile;
   handleQuickList?: (file: PinataFile) => void;
@@ -23,7 +23,7 @@ export default function ListingCard({
         <div className="relative aspect-square w-full flex-shrink-0">
           {file.AssetIpfsHash && (
             <Image
-              src={`https://silver-rainy-chipmunk-430.mypinata.cloud/ipfs/${file.AssetIpfsHash}`}
+              src={`https://ipfs.io/ipfs/${file.AssetIpfsHash}`}
               alt="Human Unreadable #262 - Digital Artwork"
               className="object-cover"
               fill
@@ -39,7 +39,7 @@ export default function ListingCard({
               ? `${file?.price.toFixed(5)} ETH`
               : file?.highestBid && file?.highestBid > 0
                 ? `${file?.highestBid.toFixed(5)} ETH`
-                : "N/A"}
+                : 'N/A'}
           </p>
           <div
             className="absolute bottom-0 left-0 right-0 h-0 overflow-hidden border-0

@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 import {
   Search,
   Menu,
@@ -9,21 +9,21 @@ import {
   Columns,
   LayoutGrid,
   ChevronDown,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 
 export default function FilterComponent() {
   const [viewMode, setViewMode] = useState<
-    "list" | "grid" | "columns" | "large-grid"
-  >("grid");
-  const [sortOption, setSortOption] = useState("Price low to high");
+    'list' | 'grid' | 'columns' | 'large-grid'
+  >('grid');
+  const [sortOption, setSortOption] = useState('Price low to high');
 
   const totalResults = 9819;
 
@@ -68,22 +68,22 @@ export default function FilterComponent() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem
-                onClick={() => setSortOption("Price low to high")}
+                onClick={() => setSortOption('Price low to high')}
               >
                 Price low to high
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => setSortOption("Price high to low")}
+                onClick={() => setSortOption('Price high to low')}
               >
                 Price high to low
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => setSortOption("Recently listed")}
+                onClick={() => setSortOption('Recently listed')}
               >
                 Recently listed
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => setSortOption("Recently created")}
+                onClick={() => setSortOption('Recently created')}
               >
                 Recently created
               </DropdownMenuItem>
@@ -94,32 +94,32 @@ export default function FilterComponent() {
             <Button
               variant="ghost"
               size="icon"
-              className={`rounded-none ${viewMode === "list" ? "bg-gray-100" : ""}`}
-              onClick={() => setViewMode("list")}
+              className={`rounded-none ${viewMode === 'list' ? 'bg-gray-100' : ''}`}
+              onClick={() => setViewMode('list')}
             >
               <List className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className={`rounded-none ${viewMode === "grid" ? "" : ""}`}
-              onClick={() => setViewMode("grid")}
+              className={`rounded-none ${viewMode === 'grid' ? '' : ''}`}
+              onClick={() => setViewMode('grid')}
             >
               <Grid className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className={`rounded-none ${viewMode === "columns" ? "bg-gray-100" : ""}`}
-              onClick={() => setViewMode("columns")}
+              className={`rounded-none ${viewMode === 'columns' ? 'bg-gray-100' : ''}`}
+              onClick={() => setViewMode('columns')}
             >
               <Columns className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className={`rounded-none ${viewMode === "large-grid" ? "bg-gray-100" : ""}`}
-              onClick={() => setViewMode("large-grid")}
+              className={`rounded-none ${viewMode === 'large-grid' ? 'bg-gray-100' : ''}`}
+              onClick={() => setViewMode('large-grid')}
             >
               <LayoutGrid className="h-4 w-4" />
             </Button>

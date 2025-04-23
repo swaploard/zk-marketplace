@@ -1,6 +1,6 @@
-import { submitCookieToStorageServerAction } from "@/utils/action/serverActions";
-import { NextResponse } from "next/server";
-import { generateNonce } from "siwe";
+import { submitCookieToStorageServerAction } from '@/utils/action/serverActions';
+import { NextResponse } from 'next/server';
+import { generateNonce } from 'siwe';
 
 export async function POST() {
   try {
@@ -10,7 +10,7 @@ export async function POST() {
   } catch (error: unknown) {
     return NextResponse.json(
       { message: (error as Error).message },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

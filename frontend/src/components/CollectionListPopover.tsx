@@ -1,12 +1,12 @@
-import { useState } from "react";
-import { Plus } from "lucide-react";
-import Link from "next/link";
-import Image from "next/image";
+import { useState } from 'react';
+import { Plus } from 'lucide-react';
+import Link from 'next/link';
+import Image from 'next/image';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from '@/components/ui/popover';
 
 export default function CollectionListPopover({
   PopoverTriggerElement,
@@ -17,9 +17,9 @@ export default function CollectionListPopover({
   const [open, setOpen] = useState(false);
 
   const handleCollectionClick = (collectionId, contractAddress) => {
-    setValue("collection", collectionId);
+    setValue('collection', collectionId);
     setOpen(false);
-    setContractAddress(contractAddress)
+    setContractAddress(contractAddress);
   };
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -40,7 +40,12 @@ export default function CollectionListPopover({
           <div
             key={collection._id}
             className="flex items-center gap-4 hover:bg-zinc-950 min-w-full py-3 px-3 cursor-pointer"
-            onClick={() => handleCollectionClick(collection.groupId, collection.contractAddress)}
+            onClick={() =>
+              handleCollectionClick(
+                collection.groupId,
+                collection.contractAddress
+              )
+            }
           >
             <div className="h-14 w-14 flex items-center justify-center">
               <Image

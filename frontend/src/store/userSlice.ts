@@ -1,7 +1,7 @@
-import { create } from "zustand";
-import { axiosInstance } from "@/axios/index";
-import { USER_PROFILE_URL } from "../ApiEndpoints/pinataEndpoints";
-import { user } from "@/types";
+import { create } from 'zustand';
+import { axiosInstance } from '@/axios/index';
+import { USER_PROFILE_URL } from '../ApiEndpoints/pinataEndpoints';
+import { user } from '@/types';
 
 export interface IUserStore {
   user: user;
@@ -21,15 +21,15 @@ const useUserStore = create((set) => ({
     set({ loading: true, error: null });
     try {
       const response = await axiosInstance.get(
-        `${USER_PROFILE_URL}?walletAddress=${encodeURIComponent(walletAddress)}`,
+        `${USER_PROFILE_URL}?walletAddress=${encodeURIComponent(walletAddress)}`
       );
       if (response.status === 200) {
-        set({ user: response.data, loading: false });
+        set({ user: response.data.user, loading: false });
       } else {
-        set({ error: "Failed to fetch user", loading: false });
+        set({ error: 'Failed to fetch user', loading: false });
       }
     } catch (error) {
-      set({ error: error.message || "An error occurred", loading: false });
+      set({ error: error.message || 'An error occurred', loading: false });
     }
     return;
   },
@@ -38,16 +38,16 @@ const useUserStore = create((set) => ({
     set({ loading: true, error: null });
     try {
       const response = await axiosInstance.post(USER_PROFILE_URL, user, {
-        headers: { "Content-Type": "application/json" },
-        responseType: "json",
+        headers: { 'Content-Type': 'application/json' },
+        responseType: 'json',
       });
       if (response.status === 201) {
         set({ user: response.data.user, loading: false });
       } else {
-        set({ error: "Failed to fetch user", loading: false });
+        set({ error: 'Failed to fetch user', loading: false });
       }
     } catch (error) {
-      set({ error: error.message || "An error occurred", loading: false });
+      set({ error: error.message || 'An error occurred', loading: false });
     }
   },
 
@@ -55,15 +55,15 @@ const useUserStore = create((set) => ({
     set({ loading: true, error: null });
     try {
       const response = await axiosInstance.put(USER_PROFILE_URL, user, {
-        responseType: "json",
+        responseType: 'json',
       });
-      if (response.status === 201) {
+      if (response.status === 200) {
         set({ user: response.data.user, loading: false });
       } else {
-        set({ error: "Failed to fetch user", loading: false });
+        set({ error: 'Failed to fetch user', loading: false });
       }
     } catch (error) {
-      set({ error: error.message || "An error occurred", loading: false });
+      set({ error: error.message || 'An error occurred', loading: false });
     }
   },
 }));

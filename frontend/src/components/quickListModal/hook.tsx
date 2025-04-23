@@ -1,25 +1,25 @@
-import { Abi, Hex, hexToNumber, parseEther, parseUnits } from "viem";
+import { Abi, parseEther, parseUnits } from 'viem';
 import {
   useAccount,
   usePublicClient,
   useWriteContract,
   useReadContract,
-} from "wagmi";
-import _ from "lodash";
+} from 'wagmi';
+import _ from 'lodash';
 
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 
-import Marketplace from "@/utils/contracts/Marketplace.json";
-import AdvancedERC1155 from "@/utils/contracts/AdvancedERC1155.json";
-import { PinataFile, Step, StepStatus } from "@/types";
-import { formattedPercentage } from "@/utils/ethUtils";
-import useHandleFiles from "@/store/fileSlice";
-import { reduceEth } from "@/utils/ethUtils";
-import useAuctionStore from "@/store/auctionSlice";
-import { IAuctionStore } from "@/types";
+import Marketplace from '@/utils/contracts/Marketplace.json';
+import AdvancedERC1155 from '@/utils/contracts/AdvancedERC1155.json';
+import { PinataFile, Step, StepStatus } from '@/types';
+import { formattedPercentage } from '@/utils/ethUtils';
+import useHandleFiles from '@/store/fileSlice';
+import { reduceEth } from '@/utils/ethUtils';
+import useAuctionStore from '@/store/auctionSlice';
+import { IAuctionStore } from '@/types';
 interface IUseQuickListingModal {
   file: PinataFile;
   setClose: (value: boolean) => void;
@@ -27,14 +27,14 @@ interface IUseQuickListingModal {
 
 export const listingSteps = [
   {
-    title: "Go to your wallet to approve this transaction",
-    description: "A blockchain transaction is required to list your NFT.",
-    status: "pending" as const,
+    title: 'Go to your wallet to approve this transaction',
+    description: 'A blockchain transaction is required to list your NFT.',
+    status: 'pending' as const,
   },
   {
-    title: "Listing your item",
-    description: "Please stay on this page and keep this browser tab open.",
-    status: "pending" as const,
+    title: 'Listing your item',
+    description: 'Please stay on this page and keep this browser tab open.',
+    status: 'pending' as const,
   },
 ];
 
@@ -54,18 +54,18 @@ export const useQuickListingModal = ({
   const listingFormSchema = z.object({
     amount: z.coerce
       .number()
-      .min(1, { message: "Must be at least 1" })
+      .min(1, { message: 'Must be at least 1' })
       .max(maxTokenForListing, {
         message: `Must be less than ${maxTokenForListing}`,
       })
       .refine((val) => val > 0, {
-        message: "amount must be a positive number",
+        message: 'amount must be a positive number',
       }),
     price: z.coerce
       .number()
-      .min(0.0000000001, { message: "Must be at least 1" })
+      .min(0.0000000001, { message: 'Must be at least 1' })
       .refine((val) => val > 0, {
-        message: "Price must be a positive number",
+        message: 'Price must be a positive number',
       }),
   });
 
@@ -80,22 +80,22 @@ export const useQuickListingModal = ({
   const { data: currentSupply } = useReadContract({
     address: file.tokenAddress as `0x${string}`,
     abi: AdvancedERC1155.abi,
-    functionName: "totalSupply",
+    functionName: 'totalSupply',
     args: [Number(file.tokenId)],
   });
 
   const { data: isApproved } = useReadContract({
     address: file.tokenAddress as `0x${string}`,
     abi: AdvancedERC1155.abi,
-    functionName: "isApprovedForAll",
+    functionName: 'isApprovedForAll',
     args: [address, contractAddress],
   });
 
   const { data } = useReadContract({
     address: file.tokenAddress as `0x${string}`,
     abi: AdvancedERC1155.abi,
-    functionName: "royaltyInfo",
-    args: [file.tokenId, parseEther("0.01")],
+    functionName: 'royaltyInfo',
+    args: [file.tokenId, parseEther('0.01')],
     query: {
       enabled: !!file.tokenAddress,
     },
@@ -112,63 +112,75 @@ export const useQuickListingModal = ({
   }, [data, currentSupply]);
 
   useEffect(() => {
-    isApproved ? setDisableButton(false) : setDisableButton(true);
-    if (!isApproved) {
-      const approveTransfer = () => {
-        writeContract(
-          {
-            abi: AdvancedERC1155.abi as Abi,
-            account: address,
-            address: file.tokenAddress as `0x${string}`,
-            functionName: "setApprovalForAll",
-            args: [contractAddress, true],
-            chainId: chainId,
-            chain: chain,
-          },
-          {
-            onSuccess: async (transactionHash) => {
-              const receipt = await publicClient.waitForTransactionReceipt({
-                hash: transactionHash,
-              });
-              if (receipt.status.toLowerCase() === "success") {
-                setDisableButton(false);
-              }
-            },
-            onError: (error) => {
-              console.log("onError", error);
-            },
-          },
-        );
-      };
-      approveTransfer();
+    if (isApproved) {
+      setDisableButton(false);
+      return;
     }
-  }, []);
+
+    setDisableButton(true);
+    const approveTransfer = () => {
+      writeContract(
+        {
+          abi: AdvancedERC1155.abi as Abi,
+          account: address,
+          address: file.tokenAddress as `0x${string}`,
+          functionName: 'setApprovalForAll',
+          args: [contractAddress, true],
+          chainId: chainId,
+          chain: chain,
+        },
+        {
+          onSuccess: async (transactionHash) => {
+            const receipt = await publicClient.waitForTransactionReceipt({
+              hash: transactionHash,
+            });
+            if (receipt.status.toLowerCase() === 'success') {
+              setDisableButton(false);
+            }
+          },
+          onError: (error) => {
+            console.log('onError', error);
+          },
+        }
+      );
+    };
+    approveTransfer();
+  }, [
+    isApproved,
+    address,
+    chainId,
+    chain,
+    contractAddress,
+    file.tokenAddress,
+    publicClient,
+    writeContract,
+  ]);
 
   const updateStepStatus = (stepIndex: number, newStatus: StepStatus) => {
     setSteps((prev) =>
       prev.map((step, index) =>
-        index === stepIndex ? { ...step, status: newStatus } : step,
-      ),
+        index === stepIndex ? { ...step, status: newStatus } : step
+      )
     );
   };
 
   const handleSetQuickListing = async (data) => {
     setShowStepper(true);
-    updateStepStatus(0, "current");
+    updateStepStatus(0, 'current');
     const priceInWei = parseUnits(data.price.toString(), 18);
     if (
       _.isEmpty(file.tokenId) &&
       _.isEmpty(file.tokenAddress) &&
       _.isEmpty(file.transactionHash)
     ) {
-      return "Mint Token First";
+      return 'Mint Token First';
     }
     writeContract(
       {
         abi: Marketplace.abi as Abi,
         account: address,
         address: contractAddress as `0x${string}`,
-        functionName: "listItem",
+        functionName: 'listItem',
         args: [
           file.tokenAddress,
           Number(file.tokenId),
@@ -180,15 +192,15 @@ export const useQuickListingModal = ({
       },
       {
         onSuccess: async (listingHash) => {
-          updateStepStatus(0, "completed");
-          updateStepStatus(1, "current");
+          updateStepStatus(0, 'completed');
+          updateStepStatus(1, 'current');
           const receipt = await publicClient.waitForTransactionReceipt({
             hash: listingHash,
           });
-          if (receipt.status.toLowerCase() === "success") {
-            updateStepStatus(1, "completed");
+          if (receipt.status.toLowerCase() === 'success') {
+            updateStepStatus(1, 'completed');
             const updateBody = {
-              tokenId: file.tokenId,
+              tokenId: file._id,
               price: data.price,
               isListed: true,
             };
@@ -201,11 +213,11 @@ export const useQuickListingModal = ({
           }
         },
         onError: (error) => {
-          console.log("error", error);
+          console.log('error', error);
           setShowStepper(false);
           setClose(false);
         },
-      },
+      }
     );
   };
 
@@ -227,14 +239,14 @@ interface IUseQuickAuctionModal {
 
 export const auctionSteps = [
   {
-    title: "Go to your wallet to approve this transaction",
-    description: "A blockchain transaction is required to auction your NFT.",
-    status: "pending" as const,
+    title: 'Go to your wallet to approve this transaction',
+    description: 'A blockchain transaction is required to auction your NFT.',
+    status: 'pending' as const,
   },
   {
-    title: "Placing your bid",
-    description: "Please stay on this page and keep this browser tab open.",
-    status: "pending" as const,
+    title: 'Placing your bid',
+    description: 'Please stay on this page and keep this browser tab open.',
+    status: 'pending' as const,
   },
 ];
 export const useQuickAuctionModal = ({
@@ -246,8 +258,8 @@ export const useQuickAuctionModal = ({
   const { createAuction } = useAuctionStore((state: IAuctionStore) => state);
 
   const { updateFiles } = useHandleFiles();
-  const [endDate, setEndDate] = useState("");
-  const [endTime, setEndTime] = useState("");
+  const [endDate, setEndDate] = useState('');
+  const [endTime, setEndTime] = useState('');
   const [earnings, setEarnings] = useState(0);
   const [maxTokenForListing, setMaxTokenForListing] = useState<number>(0);
   const [royaltyPercentage, setRoyaltyPercentage] = useState<number>(0);
@@ -257,39 +269,39 @@ export const useQuickAuctionModal = ({
   const auctionFormSchema = z.object({
     amount: z.coerce
       .number()
-      .min(1, { message: "Must be at least 1" })
+      .min(1, { message: 'Must be at least 1' })
       .max(maxTokenForListing, {
         message: `Must be less than ${maxTokenForListing}`,
       })
       .refine((val) => val > 0, {
-        message: "amount must be a positive number",
+        message: 'amount must be a positive number',
       }),
     price: z.coerce
       .number()
-      .min(0.0000000001, { message: "Must be at least 1" })
+      .min(0.0000000001, { message: 'Must be at least 1' })
       .refine((val) => val > 0, {
-        message: "Price must be a positive number",
+        message: 'Price must be a positive number',
       }),
-    duration: z.enum(["1 day", "3 days", "1 week", "1 month", "3 months"]),
+    duration: z.enum(['1 day', '3 days', '1 week', '1 month', '3 months']),
   });
   const calculateEndDateTime = (duration: string) => {
     const now = new Date();
-    let endDate = new Date(now);
+    const endDate = new Date(now);
 
     switch (duration) {
-      case "1 day":
+      case '1 day':
         endDate.setDate(now.getDate() + 1);
         break;
-      case "3 days":
+      case '3 days':
         endDate.setDate(now.getDate() + 3);
         break;
-      case "1 week":
+      case '1 week':
         endDate.setDate(now.getDate() + 7);
         break;
-      case "1 month":
+      case '1 month':
         endDate.setMonth(now.getMonth() + 1);
         break;
-      case "3 months":
+      case '3 months':
         endDate.setMonth(now.getMonth() + 3);
         break;
       default:
@@ -297,10 +309,10 @@ export const useQuickAuctionModal = ({
     }
 
     const year = endDate.getFullYear();
-    const month = String(endDate.getMonth() + 1).padStart(2, "0");
-    const day = String(endDate.getDate()).padStart(2, "0");
-    const hours = String(endDate.getHours()).padStart(2, "0");
-    const minutes = String(endDate.getMinutes()).padStart(2, "0");
+    const month = String(endDate.getMonth() + 1).padStart(2, '0');
+    const day = String(endDate.getDate()).padStart(2, '0');
+    const hours = String(endDate.getHours()).padStart(2, '0');
+    const minutes = String(endDate.getMinutes()).padStart(2, '0');
 
     setEndDate(`${year}-${month}-${day}`);
     setEndTime(`${hours}:${minutes}`);
@@ -311,7 +323,7 @@ export const useQuickAuctionModal = ({
     defaultValues: {
       amount: 1,
       price: 0,
-      duration: "1 day",
+      duration: '1 day',
     },
   });
 
@@ -320,15 +332,15 @@ export const useQuickAuctionModal = ({
   const { data: currentSupply } = useReadContract({
     address: file.tokenAddress as `0x${string}`,
     abi: AdvancedERC1155.abi,
-    functionName: "totalSupply",
+    functionName: 'totalSupply',
     args: [Number(file.tokenId)],
   });
 
   const { data } = useReadContract({
     address: file.tokenAddress as `0x${string}`,
     abi: AdvancedERC1155.abi,
-    functionName: "royaltyInfo",
-    args: [file.tokenId, parseEther("0.01")],
+    functionName: 'royaltyInfo',
+    args: [file.tokenId, parseEther('0.01')],
     query: {
       enabled: !!file.tokenAddress,
     },
@@ -345,23 +357,28 @@ export const useQuickAuctionModal = ({
   }, [data, currentSupply]);
 
   useEffect(() => {
-    calculateEndDateTime(quickAuctionForm.getValues("duration"));
+    calculateEndDateTime(quickAuctionForm.getValues('duration'));
 
     const subscription = quickAuctionForm.watch((value, { name }) => {
-      if (name === "duration" || !name) {
-        calculateEndDateTime(value.duration || "1 day");
+      if (name === 'duration' || !name) {
+        calculateEndDateTime(value.duration || '1 day');
       }
     });
     return () => subscription.unsubscribe();
-  }, [quickAuctionForm.watch]);
+  }, [quickAuctionForm.watch, quickAuctionForm]);
 
   useEffect(() => {
+    const currentPrice = quickAuctionForm.watch('price');
     const calculatedEarnings = reduceEth(
       royaltyPercentage,
-      Number(quickAuctionForm.watch("price")),
+      Number(currentPrice)
     );
     setEarnings(calculatedEarnings);
-  }, [quickAuctionForm.getValues("price")]);
+  }, [quickAuctionForm, royaltyPercentage]);
+
+  const handleCreateAuction = _.debounce((auction) => {
+    createAuction(auction);
+  }, 2000);
 
   useEffect(() => {
     publicClient.watchContractEvent({
@@ -369,50 +386,57 @@ export const useQuickAuctionModal = ({
       address: contractAddress as `0x${string}`,
       poll: true,
       pollingInterval: 500,
-      eventName: "AuctionCreated",
+      eventName: 'AuctionCreated',
       fromBlock: BigInt(19637210),
       onLogs(logs) {
-        const auctionCreated = logs[0]?.args;
+        const auctionCreated = logs[0] as unknown as {
+          args: {
+            auctionId: bigint;
+            seller: string;
+            tokenAddress: string;
+            tokenId: bigint;
+            amount: bigint;
+            startingPrice: bigint;
+            duration: bigint;
+          };
+        };
         const auction = {
           file: file._id,
-          auctionId: Number(auctionCreated.auctionId),
-          marketplaceOwnerAddress: auctionCreated.seller,
-          tokenAddress: auctionCreated.tokenAddress,
-          tokenId: Number(auctionCreated.tokenId),
-          amount: Number(auctionCreated.amount),
-          startingPrice: Number(auctionCreated.startingPrice),
-          duration: Number(auctionCreated.duration),
+          auctionId: Number(auctionCreated.args.auctionId),
+          marketplaceOwnerAddress: auctionCreated.args.seller,
+          tokenAddress: auctionCreated.args.tokenAddress,
+          tokenId: Number(auctionCreated.args.tokenId),
+          amount: Number(auctionCreated.args.amount),
+          startingPrice: Number(auctionCreated.args.startingPrice),
+          duration: Number(auctionCreated.args.duration),
         };
         handleCreateAuction(auction);
       },
       onError(error) {
-        console.log("watchContractEvent", error);
+        console.log('watchContractEvent', error);
       },
     });
-  }, []);
-  const handleCreateAuction = _.debounce((auction) => {
-    createAuction(auction);
-  }, 2000);
+  }, [contractAddress, file._id, publicClient, handleCreateAuction]);
 
   const updateStepStatus = (stepIndex: number, newStatus: StepStatus) => {
     setSteps((prev) =>
       prev.map((step, index) =>
-        index === stepIndex ? { ...step, status: newStatus } : step,
-      ),
+        index === stepIndex ? { ...step, status: newStatus } : step
+      )
     );
   };
   const handleSetQuickAuction = (data) => {
     setShowStepper(true);
-    updateStepStatus(0, "current");
+    updateStepStatus(0, 'current');
     const priceInWei = parseUnits(data.price.toString(), 18);
     const endTimestamp = Math.floor(
-      new Date(`${endDate}T${endTime}`).getTime() / 1000,
+      new Date(`${endDate}T${endTime}`).getTime() / 1000
     );
 
     const currentTimestamp = Math.floor(Date.now() / 1000);
     const duration = endTimestamp - currentTimestamp;
     if (duration <= 0) {
-      console.error("End time must be in the future");
+      console.error('End time must be in the future');
       return;
     }
     writeContract(
@@ -420,7 +444,7 @@ export const useQuickAuctionModal = ({
         abi: Marketplace.abi as Abi,
         account: address,
         address: contractAddress as `0x${string}`,
-        functionName: "createAuction",
+        functionName: 'createAuction',
         args: [
           file.tokenAddress,
           Number(file.tokenId),
@@ -433,13 +457,13 @@ export const useQuickAuctionModal = ({
       },
       {
         onSuccess: async (transactionHash) => {
-          updateStepStatus(0, "completed");
-          updateStepStatus(1, "current");
+          updateStepStatus(0, 'completed');
+          updateStepStatus(1, 'current');
           const receipt = await publicClient.waitForTransactionReceipt({
             hash: transactionHash,
           });
-          if (receipt.status.toLowerCase() === "success") {
-            updateStepStatus(1, "completed");
+          if (receipt.status.toLowerCase() === 'success') {
+            updateStepStatus(1, 'completed');
             const body = {
               isActiveAuction: true,
               tokenId: file.tokenId,
@@ -455,10 +479,10 @@ export const useQuickAuctionModal = ({
           }
         },
         onError: (error) => {
-          console.log("error", error);
+          console.log('error', error);
           setShowStepper(false);
         },
-      },
+      }
     );
   };
 

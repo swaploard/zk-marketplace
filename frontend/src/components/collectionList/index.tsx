@@ -1,7 +1,7 @@
-import Image from "next/image";
-import { Badge } from "@/components/ui/badge";
+import Image from 'next/image';
+import { Badge } from '@/components/ui/badge';
 
-import { collection } from "@/types";
+import { collection } from '@/types';
 export const CollectionList: React.FC<{
   collections: collection[];
   handleCollectionList: (id: string) => void;
@@ -18,7 +18,7 @@ export const CollectionList: React.FC<{
           >
             <div className="relative aspect-square w-full flex-shrink-0">
               <Image
-                src={collection.logoUrl || "/placeholder.svg"}
+                src={collection.logoUrl || '/placeholder.svg'}
                 alt={collection.contractName}
                 fill
                 className="object-cover"
@@ -39,11 +39,17 @@ export const CollectionList: React.FC<{
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-gray-400 ">Floor</p>
-                  <p className="font-medium text-xs">{collection.floor.toFixed(4)}</p>
+                  <p className="font-medium text-xs">
+                    {collection.floor.toFixed(4)}
+                  </p>
                 </div>
                 <div className="">
-                  <p className="text-xs text-gray-400 flex items-center gap-1">Total&nbsp;volume</p>
-                  <p className="font-medium text-xs px-2">{collection.volume}</p>
+                  <p className="text-xs text-gray-400 flex items-center gap-1">
+                    Total&nbsp;volume
+                  </p>
+                  <p className="font-medium text-xs px-2">
+                    {collection.volume}
+                  </p>
                 </div>
               </div>
             </div>

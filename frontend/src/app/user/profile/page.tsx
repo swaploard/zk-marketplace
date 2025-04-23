@@ -1,10 +1,8 @@
-"use client";
-import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
+'use client';
+import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import {
-  HeartHandshake,
-  Share,
-  MoreVertical,
+  Pencil,
   Filter,
   ChevronDown,
   Search,
@@ -12,38 +10,44 @@ import {
   List,
   LayoutPanelTop,
   Columns,
-} from "lucide-react";
-import { useAccount } from "wagmi"
-import {IFileStore, PinataFile} from "@/types"
+} from 'lucide-react';
+import { useAccount } from 'wagmi';
+import { IFileStore, PinataFile } from '@/types';
 
-import userSlice, { IUserStore } from "@/store/userSlice";
-import useHandleFiles from "@/store/fileSlice";
-import ListingCard from "@/components/listingCard";
-import QuickListingModal from "@/components/quickListModal/index";
-import ethPriceConvertor from "@/components/ethPriceConvertor";
+import userSlice, { IUserStore } from '@/store/userSlice';
+import useHandleFiles from '@/store/fileSlice';
+import ListingCard from '@/components/listingCard';
+import QuickListingModal from '@/components/quickListModal/index';
+import { EthPriceConvertor } from '@/components/ethPriceConvertor';
+import Link from 'next/link';
+
 export default function Profile() {
   const { address } = useAccount();
-  const { user, updateUser } = userSlice((state: IUserStore) => state);
+  const { user, updateUser, getUser } = userSlice((state: IUserStore) => state);
   const { files, getFiles } = useHandleFiles((state: IFileStore) => state);
-  const [bannerImage, setBannerImage] = useState<string | null>(
-    user?.profileBanner,
-  );
-  const { handleEthToUsd } = ethPriceConvertor();
+  const [bannerImage, setBannerImage] = useState<string | null>();
+  const { handleEthToUsd } = EthPriceConvertor();
   const [showEditButton, setShowEditButton] = useState(false);
   const bannerFileInputRef = useRef<HTMLInputElement>(null);
 
-  const [profileImage, setProfileImage] = useState<string | null>(
-    user?.profileImage,
-  );
+  const [profileImage, setProfileImage] = useState<string | null>();
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const profileFileInputRef = useRef<HTMLInputElement>(null);
 
   const [qListingModal, setQListingModal] = useState(false);
   const [fileForListing, setFileForListing] = useState<PinataFile>();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    getFiles('', address);
+    getUser(address);
+  }, []);
 
   useEffect(() => {
-    getFiles("", address);
-  }, [getFiles, address]);
+    if (user) {
+      setBannerImage(user.profileBanner);
+      setProfileImage(user.profileImage);
+    }
+  }, [user]);
 
   const handleBannerClick = () => {
     bannerFileInputRef.current?.click();
@@ -55,23 +59,23 @@ export default function Profile() {
   };
 
   function formatDateToMonthYear(isoString) {
-    return new Intl.DateTimeFormat("en-US", {
-      month: "long",
-      year: "numeric",
-      timeZone: "UTC",
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'UTC',
     }).format(new Date(isoString));
   }
+
   const handleFileSelect =
-    (type: "profile" | "banner") =>
+    (type: 'profile' | 'banner') =>
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       if (!file) return;
 
-      // Set preview image
       const reader = new FileReader();
       reader.onload = (e) => {
         if (e.target?.result) {
-          if (type === "profile") {
+          if (type === 'profile') {
             setProfileImage(e.target.result as string);
           } else {
             setBannerImage(e.target.result as string);
@@ -82,20 +86,20 @@ export default function Profile() {
       await handleImageUpload(file, type);
     };
 
-  const handleImageUpload = async (file: File, type: "profile" | "banner") => {
+  const handleImageUpload = async (file: File, type: 'profile' | 'banner') => {
     if (!file || !user?.walletAddress) return;
     const formData = new FormData();
-    formData.append("walletAddress", user.walletAddress);
+    formData.append('walletAddress', user.walletAddress);
     formData.append(
-      type === "profile" ? "profileImage" : "profileBanner",
-      file,
+      type === 'profile' ? 'profileImage' : 'profileBanner',
+      file
     );
     updateUser(formData);
   };
 
   const handleQuickListing = (file) => {
-    setQListingModal(!qListingModal)
-    setFileForListing(file)
+    setQListingModal(!qListingModal);
+    setFileForListing(file);
   };
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
@@ -105,19 +109,20 @@ export default function Profile() {
         onMouseEnter={() => setShowEditButton(true)}
         onMouseLeave={() => setShowEditButton(false)}
       >
-        <div
-          className="absolute inset-0 bg-slate-900"
-          style={
-            bannerImage
-              ? {
-                  backgroundImage: `url(${bannerImage})`,
-                  backgroundSize: "cover",
-                }
-              : {}
-          }
-        >
-          <div className="absolute inset-0 opacity-20">
-            <div className="flex flex-wrap -rotate-12"></div>
+        <div className="relative h-64 w-full overflow-hidden">
+          <div className="absolute inset-0 bg-slate-900">
+            {bannerImage && (
+              <Image
+                src={bannerImage}
+                alt="Profile Banner"
+                fill
+                className="object-cover"
+                priority
+              />
+            )}
+            <div className="absolute inset-0 opacity-20">
+              <div className="flex flex-wrap -rotate-12"></div>
+            </div>
           </div>
         </div>
 
@@ -153,7 +158,7 @@ export default function Profile() {
           ref={bannerFileInputRef}
           accept="image/*"
           className="hidden"
-          onChange={handleFileSelect("banner")}
+          onChange={handleFileSelect('banner')}
         />
       </div>
 
@@ -219,7 +224,7 @@ export default function Profile() {
                     ref={profileFileInputRef}
                     accept="image/*"
                     className="hidden"
-                    onChange={handleFileSelect("profile")}
+                    onChange={handleFileSelect('profile')}
                   />
 
                   {/* Rest of profile info remains same */}
@@ -249,7 +254,7 @@ export default function Profile() {
                 <span>
                   {user?.walletAddress
                     ? truncateAddress(user.walletAddress)
-                    : "0xCF00...A283"}
+                    : '0xCF00...A283'}
                 </span>
                 <span className="text-gray-600">•</span>
                 <span>
@@ -260,15 +265,12 @@ export default function Profile() {
           </div>
 
           <div className="flex gap-2 mt-4">
-            <button className="p-2 rounded-full hover:bg-gray-800">
-              <HeartHandshake className="h-5 w-5" />
-            </button>
-            <button className="p-2 rounded-full hover:bg-gray-800">
-              <Share className="h-5 w-5" />
-            </button>
-            <button className="p-2 rounded-full hover:bg-gray-800">
-              <MoreVertical className="h-5 w-5" />
-            </button>
+            <Link
+              className="p-2 rounded-full hover:bg-gray-800"
+              href={'/user/update'}
+            >
+              <Pencil className="h-5 w-5" />
+            </Link>
           </div>
         </div>
       </div>
@@ -352,16 +354,24 @@ export default function Profile() {
           </div>
         </div>
       </div>
-        {qListingModal && (
-          <QuickListingModal setClose={setQListingModal} fileForListing={fileForListing} handleEthToUsd={handleEthToUsd} />
-        )}
+      {qListingModal && (
+        <QuickListingModal
+          setClose={setQListingModal}
+          fileForListing={fileForListing}
+          handleEthToUsd={handleEthToUsd}
+        />
+      )}
       {/* Collection count */}
       <div className="px-4 pb-2 text-sm">{files.length} Items</div>
       <section className="mb-12">
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {files &&
             files.map((file) => (
-              <ListingCard key={file._id} file={file} handleQuickList={handleQuickListing} />
+              <ListingCard
+                key={file._id}
+                file={file}
+                handleQuickList={handleQuickListing}
+              />
             ))}
         </div>
       </section>

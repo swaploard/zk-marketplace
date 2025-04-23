@@ -1,7 +1,7 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Document, Schema } from 'mongoose';
 
 interface IAuction extends Document {
-  file: Schema.Types.ObjectId 
+  file: Schema.Types.ObjectId;
   auctionId: number;
   marketplaceOwnerAddress: string;
   tokenAddress: string;
@@ -13,7 +13,7 @@ interface IAuction extends Document {
 }
 
 const auctionSchema = new Schema<IAuction>({
-  file: { type: Schema.Types.ObjectId, ref: "UploadData", required: true },
+  file: { type: Schema.Types.ObjectId, ref: 'UploadData', required: true },
   auctionId: { type: Number, required: true },
   marketplaceOwnerAddress: { type: String, required: true },
   tokenAddress: { type: String, required: true },
@@ -25,4 +25,4 @@ const auctionSchema = new Schema<IAuction>({
 
 export const auction =
   (mongoose.models.auction as mongoose.Model<IAuction>) ||
-  mongoose.model<IAuction>("auction", auctionSchema);
+  mongoose.model<IAuction>('auction', auctionSchema);

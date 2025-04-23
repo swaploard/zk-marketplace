@@ -1,21 +1,21 @@
-"use client";
-import { useEffect } from "react";
-import Navbar from "@/components/navbar";
+'use client';
+import { useEffect } from 'react';
+import Navbar from '@/components/navbar';
 
-import useCollectionStore from "@/store/collectionSlice";
-import { CollectionList } from "@/components/collectionList";
-import { useRouter } from "next/navigation";
-import { ICollectionStore } from "@/types";
+import useCollectionStore from '@/store/collectionSlice';
+import { CollectionList } from '@/components/collectionList';
+import { useRouter } from 'next/navigation';
+import { ICollectionStore } from '@/types';
 
 export default function Home() {
   const router = useRouter();
 
   const { collections, getCollections } = useCollectionStore(
-    (state: ICollectionStore) => state,
+    (state: ICollectionStore) => state
   );
 
   useEffect(() => {
-    getCollections("", "");
+    getCollections('', '');
   }, [getCollections]);
 
   const handleCollectionList = (id: string) => {

@@ -50,14 +50,13 @@ const uploadDataSchema = new Schema<UploadData>({
   transactionHash: { type: String },
   isActiveAuction: { type: Boolean, default: false },
   highestBid: { type: Number, default: 0 },
-  highestBidder: { type: String, default: "" },
+  highestBidder: { type: String, default: '' },
   NumberOfFiles: { type: Number, required: true },
   MimeType: { type: String, required: true },
   GroupId: { type: String, required: true },
   walletAddress: { type: String, required: true },
-  KeyValues: { type: keyValuesSchema, required: true }
+  KeyValues: { type: keyValuesSchema, required: true },
 });
 
-export const UploadDataModel = (
-  models.UploadData || model<UploadData>('UploadData', uploadDataSchema)
-) as Model<UploadData>;
+export const UploadDataModel = (models.UploadData ||
+  model<UploadData>('UploadData', uploadDataSchema)) as Model<UploadData>;

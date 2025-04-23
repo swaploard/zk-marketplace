@@ -1,7 +1,7 @@
-import CredentialsProvider from "next-auth/providers/credentials";
-import type { NextAuthOptions } from "next-auth";
-import { SiweMessage } from "siwe";
-import { readCookieFromStorageServerAction } from "@/utils/action/serverActions";
+import CredentialsProvider from 'next-auth/providers/credentials';
+import type { NextAuthOptions } from 'next-auth';
+import { SiweMessage } from 'siwe';
+import { readCookieFromStorageServerAction } from '@/utils/action/serverActions';
 
 interface User {
   id: string;
@@ -13,16 +13,16 @@ export const authConfig: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       credentials: {
-        message: { label: "message", type: "string" },
-        signature: { label: "signature", type: "string" },
+        message: { label: 'message', type: 'string' },
+        signature: { label: 'signature', type: 'string' },
       },
 
       authorize: async (
-        credentials: Record<"message" | "signature", string> | undefined,
+        credentials: Record<'message' | 'signature', string> | undefined
       ): Promise<User | null> => {
         // Handle case where credentials might be undefined
         if (!credentials) {
-          console.error("No credentials provided.");
+          console.error('No credentials provided.');
           return null;
         }
 
@@ -32,7 +32,7 @@ export const authConfig: NextAuthOptions = {
 
           // Check if the nonce matches
           if (nonce !== siweMessage.nonce) {
-            throw new Error("Invalid nonce: Nonce mismatch detected.");
+            throw new Error('Invalid nonce: Nonce mismatch detected.');
           }
 
           // Verify the signature
@@ -45,7 +45,7 @@ export const authConfig: NextAuthOptions = {
           if (verificationResult) {
             const user: User = {
               id: verificationResult.data.address,
-              accessToken: "Ox1010", // Example token, replace with actual logic
+              accessToken: 'Ox1010', // Example token, replace with actual logic
               walletAddress: verificationResult.data.address,
             };
             return user; // Return the user object
@@ -56,12 +56,12 @@ export const authConfig: NextAuthOptions = {
         } catch (error) {
           if (error instanceof Error) {
             // Handle Error object
-            console.error("Login error:", error.message);
+            console.error('Login error:', error.message);
             throw new Error(error.message);
           } else {
             // Handle other types of errors (e.g., string)
-            console.error("Login error:", error);
-            throw new Error("An unknown error occurred.");
+            console.error('Login error:', error);
+            throw new Error('An unknown error occurred.');
           }
         }
       },
@@ -87,8 +87,8 @@ export const authConfig: NextAuthOptions = {
       name: `next-auth.session-token`,
       options: {
         httpOnly: true,
-        sameSite: "lax",
-        path: "/",
+        sameSite: 'lax',
+        path: '/',
         secure: true,
       },
     },
@@ -115,14 +115,14 @@ export const authConfig: NextAuthOptions = {
   },
 };
 
-declare module "next-auth" {
+declare module 'next-auth' {
   interface User {
     accessToken: string;
     walletAddress: string;
   }
 }
 
-declare module "next-auth" {
+declare module 'next-auth' {
   interface Session {
     accessToken: string;
     user: {
@@ -131,7 +131,7 @@ declare module "next-auth" {
   }
 }
 
-declare module "next-auth/jwt" {
+declare module 'next-auth/jwt' {
   interface JWT {
     accessToken: string;
     walletAddress: string;

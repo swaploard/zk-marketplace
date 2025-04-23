@@ -1,5 +1,5 @@
-import toast, { ToastPosition } from "react-hot-toast";
-import { ApiResponse } from "@/axios/index";
+import toast, { ToastPosition } from 'react-hot-toast';
+import { ApiResponse } from '@/axios/index';
 
 type ToastMessage = {
   title: string;
@@ -11,7 +11,7 @@ export const handlePromiseToaster = (
   error: ToastMessage,
   loading: ToastMessage,
   success: ToastMessage,
-  position: ToastPosition = "top-right",
+  position: ToastPosition = 'top-right'
 ) => {
   return toast.promise(
     Promise.resolve(promise),
@@ -60,25 +60,25 @@ export const handlePromiseToaster = (
     {
       position,
       style: {
-        minWidth: "300px",
-        borderRadius: "8px",
-        padding: "16px",
-        backgroundColor: "#1a1a1a",
-        color: "#fff",
+        minWidth: '300px',
+        borderRadius: '8px',
+        padding: '16px',
+        backgroundColor: '#1a1a1a',
+        color: '#fff',
       },
       success: {
         duration: 5000,
-        icon: "✅",
+        icon: '✅',
       },
       error: {
         duration: 5000,
-        icon: "❌",
+        icon: '❌',
       },
       loading: {
         duration: Infinity,
-        icon: "⏳",
+        icon: '⏳',
       },
-      className: "toast-stack cursor-pointer",
-    },
+      className: 'toast-stack cursor-pointer',
+    }
   );
 };

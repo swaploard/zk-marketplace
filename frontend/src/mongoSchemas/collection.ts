@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Document, Schema } from 'mongoose';
 
 interface ICollection extends Document {
   User: Schema.Types.ObjectId;
@@ -6,8 +6,8 @@ interface ICollection extends Document {
   tokenSymbol: string;
   groupId: string;
   logoUrl: string;
-  floor: Number;
-  volume: Number;
+  floor: number;
+  volume: number;
   createdAt: Date;
   contractAddress: string;
 }
@@ -17,11 +17,11 @@ const CollectionSchema = new Schema<ICollection>({
   tokenSymbol: { type: String, required: true },
   groupId: { type: String, required: true },
   logoUrl: { type: String, required: true },
-  floor: {type: Number, default: 0},
-  volume: {type: Number, default: 0},
+  floor: { type: Number, default: 0 },
+  volume: { type: Number, default: 0 },
   User: {
     type: Schema.Types.ObjectId,
-    ref: "User",
+    ref: 'User',
     required: true,
   },
   contractAddress: { type: String },
@@ -30,4 +30,4 @@ const CollectionSchema = new Schema<ICollection>({
 
 export const Collection =
   (mongoose.models.CollectionGroup as mongoose.Model<ICollection>) ||
-  mongoose.model<ICollection>("CollectionGroup", CollectionSchema);
+  mongoose.model<ICollection>('CollectionGroup', CollectionSchema);

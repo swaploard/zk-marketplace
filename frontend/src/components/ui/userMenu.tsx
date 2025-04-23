@@ -11,17 +11,17 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "./dropdown-menu";
-import { useState } from "react";
-import { User } from "lucide-react";
-import Link from "next/link";
-import Image from "next/image";
-import { useTheme } from "next-themes";
-import { useDisconnect } from "wagmi";
+} from './dropdown-menu';
+import { useState } from 'react';
+import { User } from 'lucide-react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { useTheme } from 'next-themes';
+import { useDisconnect } from 'wagmi';
 
-import { Switch } from "./switch";
-import useUserStore, { IUserStore } from "@/store/userSlice";
-import _ from "lodash";
+import { Switch } from './switch';
+import useUserStore, { IUserStore } from '@/store/userSlice';
+import _ from 'lodash';
 export default function UserMenu() {
   const { disconnect } = useDisconnect();
   const [mounted, setMounted] = useState(false);
@@ -32,9 +32,9 @@ export default function UserMenu() {
 
   const handleSetTheme = () => {
     if (!mounted) {
-      setTheme("dark");
+      setTheme('dark');
     } else {
-      setTheme("light");
+      setTheme('light');
     }
     setMounted(!mounted);
   };
@@ -61,7 +61,7 @@ export default function UserMenu() {
         </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="absolute w-56 right-9 bg-white dark:bg-black border border-gray-600"
+        className="w-56 right-9 bg-white dark:bg-black border border-gray-600"
         onMouseLeave={() => setOpen(false)}
       >
         <DropdownMenuLabel>My Account</DropdownMenuLabel>

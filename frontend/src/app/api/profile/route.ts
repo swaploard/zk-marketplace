@@ -1,33 +1,33 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
 
-import connectMongo from "@/lib/mongodb";
-import User from "@/mongoSchemas/User";
-import { saveFile } from "@/utils/routeHelper/saveImage";
-import { user } from "@/types";
+import connectMongo from '@/lib/mongodb';
+import User from '@/mongoSchemas/User';
+import { saveFile } from '@/utils/routeHelper/saveImage';
+import { user } from '@/types';
 
 export async function GET(req: NextRequest) {
   await connectMongo();
   const { searchParams } = new URL(req.url);
   try {
-    const walletAddress = searchParams.get("walletAddress");
+    const walletAddress = searchParams.get('walletAddress');
     if (!walletAddress) {
       return NextResponse.json(
-        { error: "walletAddress is required" },
-        { status: 400 },
+        { error: 'walletAddress is required' },
+        { status: 400 }
       );
     }
 
     const user = await User.findOne({ walletAddress });
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     return NextResponse.json({ user }, { status: 200 });
   } catch (error) {
-    console.error("Error fetching user:", error);
+    console.error('Error fetching user:', error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 },
+      { error: 'Internal Server Error' },
+      { status: 500 }
     );
   }
 }
@@ -69,13 +69,13 @@ export async function PUT(req: NextRequest) {
           profileBanner: updateData.profileBanner,
           walletAddress: updateData.walletAddress,
         },
-      },
+      }
     );
 
     if (!updatedUser) {
       return NextResponse.json(
-        { success: false, message: "User not found" },
-        { status: 404 },
+        { success: false, message: 'User not found' },
+        { status: 404 }
       );
     }
 
@@ -84,9 +84,9 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        message: error.message || "Server error",
+        message: error.message || 'Server error',
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -95,13 +95,13 @@ export async function POST(req: Request) {
   await connectMongo();
   try {
     const { walletAddress } = await req.json();
-    if (!walletAddress || typeof walletAddress !== "string") {
+    if (!walletAddress || typeof walletAddress !== 'string') {
       return NextResponse.json(
         {
           success: false,
-          message: "Wallet address is required and must be a string",
+          message: 'Wallet address is required and must be a string',
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -109,20 +109,20 @@ export async function POST(req: Request) {
     if (existingUser) {
       return NextResponse.json(
         { success: true, user: existingUser },
-        { status: 201 },
+        { status: 201 }
       );
     }
 
     const newUser = await User.create({
       walletAddress,
-      username: "",
-      email: "",
-      bio: "",
-      profileImage: "",
-      profileBanner: "",
+      username: '',
+      email: '',
+      bio: '',
+      profileImage: '',
+      profileBanner: '',
       socials: {
-        twitter: "",
-        instagram: "",
+        twitter: '',
+        instagram: '',
       },
       links: [],
     });
@@ -130,8 +130,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, user: newUser }, { status: 201 });
   } catch (error) {
     return NextResponse.json(
-      { success: false, message: error.message || "Server error" },
-      { status: 500 },
+      { success: false, message: error.message || 'Server error' },
+      { status: 500 }
     );
   }
 }

@@ -1,4 +1,4 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema } from 'mongoose';
 
 interface Socials {
   twitter: string;
@@ -25,32 +25,32 @@ const userSchema = new Schema<IUser>(
     },
     username: {
       type: String,
-      default: "",
+      default: '',
     },
     email: {
       type: String,
-      default: "",
+      default: '',
     },
     bio: {
       type: String,
-      default: "",
+      default: '',
     },
     profileImage: {
       type: String,
-      default: "",
+      default: '',
     },
     profileBanner: {
       type: String,
-      default: "",
+      default: '',
     },
     socials: {
       twitter: {
         type: String,
-        default: "",
+        default: '',
       },
       instagram: {
         type: String,
-        default: "",
+        default: '',
       },
     },
     links: {
@@ -58,11 +58,11 @@ const userSchema = new Schema<IUser>(
       default: [],
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 const User =
   (mongoose.models.User as mongoose.Model<IUser>) ||
-  mongoose.model<IUser>("User", userSchema);
+  mongoose.model<IUser>('User', userSchema);
 
 export default User;

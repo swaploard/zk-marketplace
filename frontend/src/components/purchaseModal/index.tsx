@@ -1,12 +1,12 @@
-import Image from "next/image";
-import { X } from "lucide-react";
-import { useAccount } from "wagmi";
-import { usePurchaseModal } from "./hooks";
-import { PinataFile } from "@/types";
-import ethPriceConvertor from "@/components/ethPriceConvertor";
-import { useEffect, useRef } from "react";
-import { parseUnits } from "viem";
-import Stepper from "@/components/steppers/createNftStepper";
+import Image from 'next/image';
+import { X } from 'lucide-react';
+import { useAccount } from 'wagmi';
+import { usePurchaseModal } from './hooks';
+import { PinataFile } from '@/types';
+import { EthPriceConvertor } from '@/components/ethPriceConvertor';
+import { useEffect, useRef } from 'react';
+import { parseUnits } from 'viem';
+import Stepper from '@/components/steppers/createNftStepper';
 
 interface IPurchaseModal {
   file?: PinataFile;
@@ -23,16 +23,16 @@ export default function ApprovePurchaseModal({
     file,
     setClose,
   });
-  const { handleEthToUsd } = ethPriceConvertor();
+  const { handleEthToUsd } = EthPriceConvertor();
   const priceInWei = Number(parseUnits(file.price.toString(), 18));
   const executedRef = useRef(false);
 
   useEffect(() => {
     if (!executedRef.current) {
-      handlePurchase(priceInWei);
+      handlePurchase(BigInt(priceInWei));
       executedRef.current = true;
     }
-  }, []);
+  }, [handlePurchase, priceInWei]);
 
   const handleModalClose = () => {
     setClose(false);
@@ -54,7 +54,7 @@ export default function ApprovePurchaseModal({
         <div className="flex items-start mb-8">
           <div className="mr-4 flex-shrink-0">
             <Image
-              src={`https://silver-rainy-chipmunk-430.mypinata.cloud/ipfs/${file.AssetIpfsHash}`}
+              src={`https://ipfs.io/ipfs/${file.AssetIpfsHash}`}
               alt={file.KeyValues.name}
               width={64}
               height={64}
@@ -77,7 +77,7 @@ export default function ApprovePurchaseModal({
         <div className="border-t border-gray-800 pt-6">
           <h4 className="text-lg font-semibold">Go to your wallet</h4>
           <p className="text-gray-400">
-            You'll be asked to approve this purchase from your wallet.
+            You&apos;ll be asked to approve this purchase from your wallet.
           </p>
         </div>
       </div>

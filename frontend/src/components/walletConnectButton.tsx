@@ -1,6 +1,6 @@
-import React, { useEffect } from "react";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount } from "wagmi";
+import React, { useEffect } from 'react';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useAccount } from 'wagmi';
 
 const CustomConnectButton = () => {
   const { address, isConnected } = useAccount();
@@ -19,7 +19,10 @@ const CustomConnectButton = () => {
         smallScreen: false,
         largeScreen: true,
       }}
-      accountStatus="none"
+      accountStatus={{
+        smallScreen: 'avatar',
+        largeScreen: 'full',
+      }}
     />
   );
 };

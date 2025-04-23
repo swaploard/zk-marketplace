@@ -2,7 +2,15 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ["silver-rainy-chipmunk-430.mypinata.cloud", "altcoinsbox.com"],
+    domains: ['ipfs.io', 'altcoinsbox.com', 'localhost', 'res.cloudinary.com'],
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3000',
+        pathname: '/uploads/**',
+      },
+    ],
   },
 };
 

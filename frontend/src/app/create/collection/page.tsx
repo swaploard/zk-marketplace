@@ -1,6 +1,6 @@
-"use client";
-import { useState, useRef, useEffect } from "react";
-import Image from "next/image";
+'use client';
+import { useState, useRef } from 'react';
+import Image from 'next/image';
 import {
   ArrowLeft,
   HelpCircle,
@@ -8,79 +8,75 @@ import {
   Edit,
   Info,
   Ellipsis,
-} from "lucide-react";
-import Link from "next/link";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+} from 'lucide-react';
+import Link from 'next/link';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
-import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import AdvancedERC1155 from "@/utils/contracts/AdvancedERC1155.json";
-import { sepolia, amoy } from "@/utils/constants/chainID";
-import useCollectionStore from "../../../store/collectionSlice";
+import { Card } from '@/components/ui/card';
+import AdvancedERC1155 from '@/utils/contracts/AdvancedERC1155.json';
+import { sepolia, amoy } from '@/utils/constants/chainID';
+import useCollectionStore from '../../../store/collectionSlice';
 import {
   useSendTransaction,
   useAccount,
   useSwitchChain,
   usePublicClient,
-  useWaitForTransactionReceipt
-} from "wagmi";
-import { encodeDeployData, Abi, ContractConstructorArgs } from "viem";
-import { localhost } from "viem/chains";
-import { ICollectionStore, Step } from "@/types";
-import Stepper from "@/components/steppers/createNftStepper";
-import { collectionSteps } from "../constants";
+} from 'wagmi';
+import { encodeDeployData, Abi, ContractConstructorArgs } from 'viem';
+import { localhost } from 'viem/chains';
+import { ICollectionStore, Step, StepStatus } from '@/types';
+import Stepper from '@/components/steppers/createNftStepper';
+import { collectionSteps } from '../constants';
 
 const formSchema = z.object({
   contractName: z
     .string()
-    .min(1, "Contract name is required")
-    .max(50, "Contract name must be less than 50 characters")
-    .regex(/^[a-zA-Z0-9 ]+$/, "Only letters, numbers and spaces allowed"),
+    .min(1, 'Contract name is required')
+    .max(50, 'Contract name must be less than 50 characters')
+    .regex(/^[a-zA-Z0-9 ]+$/, 'Only letters, numbers and spaces allowed'),
 
   tokenSymbol: z
     .string()
-    .min(1, "Token symbol is required")
-    .max(5, "Token symbol must be 5 characters or less")
-    .regex(/^[A-Z]+$/, "Must be uppercase letters only"),
+    .min(1, 'Token symbol is required')
+    .max(5, 'Token symbol must be 5 characters or less')
+    .regex(/^[A-Z]+$/, 'Must be uppercase letters only'),
 
   logoImage: z
-    .instanceof(File, { message: "File is required" })
-    .refine((file) => file.size <= 50 * 1024 * 1024, "File must be under 50MB")
+    .instanceof(File, { message: 'File is required' })
+    .refine((file) => file.size <= 50 * 1024 * 1024, 'File must be under 50MB')
     .refine(
       (file) =>
         [
-          "image/jpeg",
-          "image/png",
-          "image/gif",
-          "image/svg+xml",
-          "video/mp4",
+          'image/jpeg',
+          'image/png',
+          'image/gif',
+          'image/svg+xml',
+          'video/mp4',
         ].includes(file.type),
-      "Invalid file type. Allowed: JPG, PNG, GIF, SVG, MP4",
+      'Invalid file type. Allowed: JPG, PNG, GIF, SVG, MP4'
     ),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 export default function CreateNFTCollection() {
-  const { deleteCollection, updateCollection, createCollection, getLatestCollection } =
-    useCollectionStore((state: ICollectionStore) => state);
+  const {
+    deleteCollection,
+    updateCollection,
+    createCollection,
+    getLatestCollection,
+  } = useCollectionStore((state: ICollectionStore) => state);
   const publicClient = usePublicClient();
   const { address, chain } = useAccount();
   const { sendTransaction } = useSendTransaction();
-  const transactionReceipt = useWaitForTransactionReceipt();
   // const {
   //   isLoading: isConfirming,
   //   isSuccess: isConfirmed,
   //   data,
   // } = useWaitForTransactionReceipt({ hash });
-  const {
-    switchChain,
-    isPending: isSwitching,
-    error,
-    reset: resetError,
-  } = useSwitchChain();
+  const { switchChain } = useSwitchChain();
   const {
     register,
     handleSubmit,
@@ -100,12 +96,12 @@ export default function CreateNFTCollection() {
 
   const handleFileSelect = (file: File) => {
     try {
-      setValue("logoImage", file);
+      setValue('logoImage', file);
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        console.error("File validation error:", error.errors[0].message);
+        console.error('File validation error:', error.errors[0].message);
       }
     }
   };
@@ -130,42 +126,42 @@ export default function CreateNFTCollection() {
   const updateStepStatus = (stepIndex: number, newStatus: StepStatus) => {
     setSteps((prev) =>
       prev.map((step, index) =>
-        index === stepIndex ? { ...step, status: newStatus } : step,
-      ),
+        index === stepIndex ? { ...step, status: newStatus } : step
+      )
     );
   };
 
   const onSubmit = async (data: FormValues) => {
     setShowStepper(true);
-    updateStepStatus(0, "current");
+    updateStepStatus(0, 'current');
     const formData = new FormData();
-    formData.append("contractName", data.contractName);
-    formData.append("tokenSymbol", data.tokenSymbol);
-    formData.append("file", data.logoImage);
-    formData.append("walletAddress", address);
+    formData.append('contractName', data.contractName);
+    formData.append('tokenSymbol', data.tokenSymbol);
+    formData.append('file', data.logoImage);
+    formData.append('walletAddress', address);
     await createCollection(formData);
     const collection = getLatestCollection();
-    const marketplaceAddress = process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS as `0x${string}`
+    const marketplaceAddress = process.env
+      .NEXT_PUBLIC_MARKETPLACE_ADDRESS as `0x${string}`;
     if (
       collection[0].contractName === data.contractName &&
       collection[0].tokenSymbol === data.tokenSymbol
     ) {
-      
       const deployData = await encodeDeployData({
         abi: AdvancedERC1155.abi as Abi,
         bytecode: AdvancedERC1155.bytecode.object as `0x${string}`,
         args: [
           data.contractName,
           data.tokenSymbol,
-          "https://silver-rainy-chipmunk-430.mypinata.cloud/ipfs/",
+          'https://ipfs.io/ipfs/',
           collection[0].groupId,
           address,
           500,
-          marketplaceAddress
+          marketplaceAddress,
         ] as unknown as ContractConstructorArgs<typeof AdvancedERC1155.abi>,
       });
-      updateStepStatus(0, "completed");
-      updateStepStatus(1, "current");
+      updateStepStatus(0, 'completed');
+      updateStepStatus(1, 'current');
       await sendTransaction(
         {
           to: null,
@@ -173,29 +169,30 @@ export default function CreateNFTCollection() {
         },
         {
           onSuccess: async (transactionHash) => {
-            updateStepStatus(1, "completed");
-            updateStepStatus(2, "current");
+            updateStepStatus(1, 'completed');
+            updateStepStatus(2, 'current');
             const receipt = await publicClient.waitForTransactionReceipt({
               hash: transactionHash,
             });
             if (receipt.contractAddress) {
               const formData = new FormData();
-              formData.append("collectionId", collection[0]._id);
-              formData.append("contractAddress", receipt.contractAddress);
+              formData.append('collectionId', collection[0]._id);
+              formData.append('contractAddress', receipt.contractAddress);
               updateCollection(formData);
               setShowStepper(false);
               reset();
-              setPreviewUrl("");
-              updateStepStatus(2, "completed");
+              setPreviewUrl('');
+              updateStepStatus(2, 'completed');
               setSteps(collectionSteps);
             }
           },
           onError: (error) => {
+            console.error('Transaction failed:', error);
             deleteCollection(collection[0]._id, collection[0].groupId);
             setShowStepper(false);
             setSteps(collectionSteps);
           },
-        },
+        }
       );
     }
   };
@@ -296,8 +293,8 @@ export default function CreateNFTCollection() {
                     <div className="text-center">
                       <p className="font-medium">
                         {previewUrl
-                          ? "Click or drag to replace image"
-                          : "Drag and drop or click to upload"}
+                          ? 'Click or drag to replace image'
+                          : 'Drag and drop or click to upload'}
                       </p>
                       <p className="text-sm text-gray-400 mt-1">
                         You may change this after deploying your contract.
@@ -325,7 +322,7 @@ export default function CreateNFTCollection() {
                     <HelpCircle className="w-4 h-4 text-gray-500" />
                   </div>
                   <input
-                    {...register("contractName")}
+                    {...register('contractName')}
                     type="text"
                     id="contract-name"
                     className="w-full bg-gray-900 border border-gray-800 rounded-lg p-3"
@@ -347,7 +344,7 @@ export default function CreateNFTCollection() {
                     <HelpCircle className="w-4 h-4 text-gray-500" />
                   </div>
                   <input
-                    {...register("tokenSymbol")}
+                    {...register('tokenSymbol')}
                     type="text"
                     id="token-symbol"
                     className="w-full bg-gray-900 border border-gray-800 rounded-lg p-3"
@@ -365,12 +362,12 @@ export default function CreateNFTCollection() {
               {/* Blockchain Selection Section */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Label>Blockchain</Label>
+                  <span>Blockchain</span>
                   <Info className="w-4 h-4 text-gray-400" />
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <Card
-                    className={`bg-zinc-900 border-gray-700 p-4 cursor-pointer ${chain.id === sepolia ? "ring-2 ring-blue-500" : ""}`}
+                    className={`bg-zinc-900 border-gray-700 p-4 cursor-pointer ${chain.id === sepolia ? 'ring-2 ring-blue-500' : ''}`}
                     onClick={() => handleNetworkChange(sepolia)}
                   >
                     <div className="flex items-center gap-2 mb-2">
@@ -389,7 +386,7 @@ export default function CreateNFTCollection() {
                     </div>
                   </Card>
                   <Card
-                    className={`bg-zinc-900 border-gray-700 p-4 cursor-pointer ${chain.id === amoy ? "ring-2 ring-blue-500" : ""}`}
+                    className={`bg-zinc-900 border-gray-700 p-4 cursor-pointer ${chain.id === amoy ? 'ring-2 ring-blue-500' : ''}`}
                     onClick={() => handleNetworkChange(amoy)}
                   >
                     <div className="flex items-center gap-2 mb-2">
@@ -407,7 +404,10 @@ export default function CreateNFTCollection() {
                       Estimated cost to deploy contract: $0.00
                     </div>
                   </Card>
-                  <Card className="bg-zinc-900 border-gray-700 p-4 relative" onClick={() => switchChain({ chainId: localhost.id })}>
+                  <Card
+                    className="bg-zinc-900 border-gray-700 p-4 relative"
+                    onClick={() => switchChain({ chainId: localhost.id })}
+                  >
                     <div className="flex items-center gap-2 mb-2 bg-gray-800 p-2 w-10 rounded-full">
                       <Ellipsis />
                     </div>

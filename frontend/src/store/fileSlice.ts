@@ -1,8 +1,8 @@
-import { create } from "zustand";
+import { create } from 'zustand';
 
-import { axiosInstance } from "@/axios/index";
-import { PIN_FILE_TO_IPFS_URL } from "../ApiEndpoints/pinataEndpoints";
-import { IFileStore, PinataFile } from "@/types";
+import { axiosInstance } from '@/axios/index';
+import { PIN_FILE_TO_IPFS_URL } from '../ApiEndpoints/pinataEndpoints';
+import { IFileStore, PinataFile } from '@/types';
 
 const useHandleFiles = create<IFileStore>((set, get) => ({
   file: null,
@@ -18,7 +18,7 @@ const useHandleFiles = create<IFileStore>((set, get) => ({
 
     try {
       const response = await axiosInstance.get(
-        `${PIN_FILE_TO_IPFS_URL}?contractAddress=${encodeURIComponent(contractAddress)}&walletAddress=${encodeURIComponent(walletAddress)}`,
+        `${PIN_FILE_TO_IPFS_URL}?contractAddress=${encodeURIComponent(contractAddress)}&walletAddress=${encodeURIComponent(walletAddress)}`
       );
       if (response.status === 200) {
         set({
@@ -27,10 +27,10 @@ const useHandleFiles = create<IFileStore>((set, get) => ({
           success: true,
         });
       } else {
-        set({ error: "Failed to fetch files", loading: false });
+        set({ error: 'Failed to fetch files', loading: false });
       }
     } catch (error) {
-      const errorMessage = error.message || "Failed to fetch files";
+      const errorMessage = error.message || 'Failed to fetch files';
       set({ error: errorMessage, loading: false });
     }
   },
@@ -38,12 +38,12 @@ const useHandleFiles = create<IFileStore>((set, get) => ({
   addFile: async (formData) => {
     set({ loading: true, error: null });
     try {
-      const promise = await axiosInstance
+      await axiosInstance
         .post(PIN_FILE_TO_IPFS_URL, formData, {
           headers: {
-            "Content-Type": "multipart/form-data",
+            'Content-Type': 'multipart/form-data',
           },
-          responseType: "json",
+          responseType: 'json',
         })
         .then((response) => {
           if (response.status === 200) {
@@ -54,12 +54,12 @@ const useHandleFiles = create<IFileStore>((set, get) => ({
               success: true,
             }));
           } else {
-            set({ error: "Failed to upload file", loading: false });
+            set({ error: 'Failed to upload file', loading: false });
           }
           return response;
         });
     } catch (error) {
-      const errorMessage = error.message || "Failed to upload file";
+      const errorMessage = error.message || 'Failed to upload file';
       set({ error: errorMessage, loading: false });
     }
   },
@@ -69,7 +69,7 @@ const useHandleFiles = create<IFileStore>((set, get) => ({
     try {
       const promise = await axiosInstance.put(PIN_FILE_TO_IPFS_URL, body, {
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
       });
 
@@ -77,11 +77,11 @@ const useHandleFiles = create<IFileStore>((set, get) => ({
       if (promise.status === 200) {
         const currentFiles = get().files;
         const fileIndex = get().files.findIndex(
-          (file: PinataFile) => file._id === response._id,
+          (file: PinataFile) => file._id === response._id
         );
 
         if (fileIndex === -1) {
-          throw new Error("File not found in store");
+          throw new Error('File not found in store');
         }
 
         const newFiles = [
@@ -97,11 +97,11 @@ const useHandleFiles = create<IFileStore>((set, get) => ({
         }));
       }
     } catch (error) {
-      console.error("Update error:", error);
+      console.error('Update error:', error);
       const errorMessage =
         error.response?.data?.error ||
         error.message ||
-        "Failed to update metadata";
+        'Failed to update metadata';
 
       set({ error: errorMessage, loading: false });
     }
@@ -115,20 +115,20 @@ const useHandleFiles = create<IFileStore>((set, get) => ({
         body,
         {
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
-        },
+        }
       );
       if (promise.status === 200) {
         set({ loading: false, success: true });
       } else {
-        set({ error: "Failed to update metadata", loading: false });
+        set({ error: 'Failed to update metadata', loading: false });
       }
     } catch (error) {
       const errorMessage =
         error.response?.data?.error ||
         error.message ||
-        "Failed to update metadata";
+        'Failed to update metadata';
       set({ error: errorMessage, loading: false });
       throw error;
     }
@@ -137,14 +137,14 @@ const useHandleFiles = create<IFileStore>((set, get) => ({
   deleteFile: async (assetCID, metadataCID) => {
     set({ loading: true, error: null });
     try {
-      const promise = await axiosInstance.delete(
+      await axiosInstance.delete(
         `${PIN_FILE_TO_IPFS_URL}?assetcid=${encodeURIComponent(assetCID)}&metadatacid=${encodeURIComponent(metadataCID)}`,
         {
-          responseType: "json",
-        },
+          responseType: 'json',
+        }
       );
     } catch (error) {
-      set({ error: error.message || "An error occurred", loading: false });
+      set({ error: error.message || 'An error occurred', loading: false });
     }
   },
 

@@ -1,6 +1,6 @@
-import Image from "next/image";
-import { ShoppingCart } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Image from 'next/image';
+import { ShoppingCart } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface IPriceCardNft {
   image: string;
@@ -13,7 +13,7 @@ export default function PriceCardNft({ image }: IPriceCardNft) {
         <div className="relative aspect-square w-full">
           {image && (
             <Image
-              src={`https://silver-rainy-chipmunk-430.mypinata.cloud/ipfs/${image}`}
+              src={`https://ipfs.io/ipfs/${image}`}
               alt="Human Unreadable #262 - Digital Artwork"
               className="object-cover"
               fill

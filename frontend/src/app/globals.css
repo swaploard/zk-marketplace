@@ -2,13 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
-button.iekbcc0[data-testid="rk-account-button"] {
+button.iekbcc0[data-testid='rk-account-button'] {
   background: rgb(63, 63, 63) !important;
   border-radius: 10px !important;
   color: white !important;
   opacity: 0.5 !important;
 }
-button.iekbcc0[data-testid="rk-connect-button"] {
+button.iekbcc0[data-testid='rk-connect-button'] {
   background: rgb(63, 63, 63) !important;
   opacity: 0.5 !important;
 }
@@ -28,6 +28,6 @@ button.iekbcc0[data-testid="rk-connect-button"] {
 
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
+  -webkit-appearance: none;
+  margin: 0;
 }

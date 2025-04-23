@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import "@rainbow-me/rainbowkit/styles.css";
-import { cookieToInitialState, WagmiProvider } from "wagmi";
+import '@rainbow-me/rainbowkit/styles.css';
+import { cookieToInitialState, WagmiProvider } from 'wagmi';
 import {
   RainbowKitProvider as NextRainbowKitProvider,
   RainbowKitAuthenticationProvider,
-} from "@rainbow-me/rainbowkit";
-import { ReactNode, useEffect } from "react";
+} from '@rainbow-me/rainbowkit';
+import { ReactNode, useEffect } from 'react';
 
-import { useSession } from "next-auth/react";
-import { authenticationAdapter } from "@/utils/authenticationAdapter";
-import ReactQueryProvider from "./ReactQueryProvider";
-import { config } from "@/config";
-import useUserStore, { IUserStore } from "../../store/userSlice";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useSession } from 'next-auth/react';
+import { authenticationAdapter } from '@/utils/authenticationAdapter';
+import ReactQueryProvider from './ReactQueryProvider';
+import { config } from '@/config';
+import useUserStore, { IUserStore } from '../../store/userSlice';
+import { useConnectModal } from '@rainbow-me/rainbowkit';
 
 type RainbowKitProviderProps = {
   children: ReactNode;
@@ -30,7 +30,7 @@ export default function RainbowKitProvider({
   const initialState = cookieToInitialState(config, cookie);
 
   useEffect(() => {
-    if (status === "authenticated") {
+    if (status === 'authenticated') {
       const wallet = {
         walletAddress: data.user.walletAddress,
       };

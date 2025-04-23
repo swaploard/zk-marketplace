@@ -1,91 +1,74 @@
-"use client";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import Image from "next/image";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+'use client';
+import { useCallback, useEffect, useState } from 'react';
+import Image from 'next/image';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import {
   Upload,
   ArrowLeft,
   Trash2,
   ChevronDown,
   LayoutGrid,
-  Pencil,
   X,
-} from "lucide-react";
-import Link from "next/link";
-import {
-  useAccount,
-  useWriteContract,
-  usePublicClient,
-  useWatchContractEvent,
-  useReadContract,
-  useWatchPendingTransactions,
-  useFeeData,
-} from "wagmi";
-import {
-  Abi,
-  BaseError,
-  ContractFunctionRevertedError,
-  getAddress,
-  isAddress,
-  stringToHex,
-} from "viem";
+} from 'lucide-react';
+import Link from 'next/link';
+import { useAccount, useWriteContract, usePublicClient } from 'wagmi';
+import { Abi, getAddress, isAddress } from 'viem';
 
-import _ from "lodash";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import CollectionListPopover from "@/components/CollectionListPopover";
-import { IFileStore, ICollectionStore, Step, StepStatus } from "@/types";
-import AdvancedERC1155 from "@/utils/contracts/AdvancedERC1155.json";
-import useHandleFiles from "@/store/fileSlice";
-import useCollectionStore from "@/store/collectionSlice";
-import AddTraitModal from "@/components/traitsModal";
-import Stepper from "@/components/steppers/createNftStepper";
-import { mintingSteps } from "./constants";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import CollectionListPopover from '@/components/CollectionListPopover';
+import { IFileStore, ICollectionStore, Step, StepStatus } from '@/types';
+import AdvancedERC1155 from '@/utils/contracts/AdvancedERC1155.json';
+import useHandleFiles from '@/store/fileSlice';
+import useCollectionStore from '@/store/collectionSlice';
+import AddTraitModal from '@/components/traitsModal';
+import Stepper from '@/components/steppers/createNftStepper';
+import { mintingSteps } from './constants';
 
 const nftSchema = z.object({
   media: z
-    .instanceof(File, { message: "File is required" })
-    .refine((file) => file.size <= 50 * 1024 * 1024, "File must be under 50MB")
+    .instanceof(File, { message: 'File is required' })
+    .refine((file) => file.size <= 50 * 1024 * 1024, 'File must be under 50MB')
     .refine(
       (file) =>
         [
-          "image/jpeg",
-          "image/png",
-          "image/gif",
-          "image/svg+xml",
-          "video/mp4",
+          'image/jpeg',
+          'image/png',
+          'image/gif',
+          'image/svg+xml',
+          'video/mp4',
         ].includes(file.type),
-      "Invalid file type. Allowed: JPG, PNG, GIF, SVG, MP4",
+      'Invalid file type. Allowed: JPG, PNG, GIF, SVG, MP4'
     ),
-  collection: z.string().min(1, "Collection is required"),
-  name: z.string().min(1, "NFT name is required"),
-  walletAddress: z.string().min(1, "walletAddress is required"),
+  collection: z.string().min(1, 'Collection is required'),
+  name: z.string().min(1, 'NFT name is required'),
+  walletAddress: z.string().min(1, 'walletAddress is required'),
   supply: z.preprocess(
     (val) => Number(val),
-    z.number().int().positive("Supply must be at least 1"),
+    z.number().int().positive('Supply must be at least 1')
   ),
   description: z.string().optional(),
-  externalLink: z.string().url("Invalid URL format").optional(),
+  externalLink: z.string().url('Invalid URL format').optional(),
   additionalAttributes: z
     .record(z.string())
     .refine(
       (data) =>
         Object.keys(data).every((key) => key.length > 0 && key.length <= 25),
       {
-        message: "Trait names must be between 1-25 characters",
-      },
+        message: 'Trait names must be between 1-25 characters',
+      }
     )
     .refine(
       (data) =>
         Object.values(data).every(
-          (value) => value.length > 0 && value.length <= 25,
+          (value) => value.length > 0 && value.length <= 25
         ),
       {
-        message: "Trait values must be between 1-25 characters",
-      },
+        message: 'Trait values must be between 1-25 characters',
+      }
     )
     .optional(),
 });
@@ -94,30 +77,18 @@ type NFTFormData = z.infer<typeof nftSchema>;
 
 export default function NFTForm() {
   const publicClient = usePublicClient();
-  const {
-    files,
-    success,
-    addFile,
-    getLatestFile,
-    deleteFile,
-    addTokenData,
-    getFiles,
-  } = useHandleFiles((state: IFileStore) => state);
+  const { addFile, getLatestFile, deleteFile, addTokenData, getFiles } =
+    useHandleFiles((state: IFileStore) => state);
   const { collections, getCollections } = useCollectionStore(
-    (state: ICollectionStore) => state,
+    (state: ICollectionStore) => state
   );
   const { address, chainId, chain } = useAccount();
-  const {
-    writeContract,
-    data: txHash,
-    error: writeError,
-    isPending: isWriting,
-  } = useWriteContract();
+  const { writeContract } = useWriteContract();
 
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [contractAddress, setContractAddress] = useState<string | null>(
-    collections[0]?.contractAddress,
+    collections[0]?.contractAddress
   );
   const [traitsModal, setTraitsModal] = useState(false);
   const [steps, setSteps] = useState<Step[]>(mintingSteps);
@@ -126,8 +97,8 @@ export default function NFTForm() {
   const updateStepStatus = (stepIndex: number, newStatus: StepStatus) => {
     setSteps((prev) =>
       prev.map((step, index) =>
-        index === stepIndex ? { ...step, status: newStatus } : step,
-      ),
+        index === stepIndex ? { ...step, status: newStatus } : step
+      )
     );
   };
 
@@ -150,7 +121,7 @@ export default function NFTForm() {
   useEffect(() => {
     getCollections(address, null);
     getFiles();
-  }, [address, getCollections]);
+  }, [address, getCollections, getFiles]);
 
   useEffect(() => {
     (async () => {
@@ -161,43 +132,67 @@ export default function NFTForm() {
           address: contractAddress as `0x${string}`,
           poll: true,
           pollingInterval: 500,
-          eventName: "TokenMinted",
+          eventName: 'TokenMinted',
           fromBlock: latestBlock - BigInt(10),
           async onLogs(logs) {
-            const event = await logs[0].args;
+            const event = logs[0] as unknown as { args: { id: bigint } };
             setTokenEvent(event);
-
           },
           onError(error) {
-            console.error("watchContractEvent", error);
+            console.error('watchContractEvent', error);
           },
         });
       } catch (error) {
-        console.error("watchContractEvent", error);
+        console.error('watchContractEvent', error);
       }
     })();
-  }, []);
+  }, [contractAddress, publicClient]);
 
-  useEffect(()=> {
+  const handleRemoveImage = useCallback(() => {
+    setValue('media', null);
+    setFile(null);
+  }, [setValue]);
+
+  const handleEventData = useCallback(
+    async (
+      event: {
+        eventName: string;
+        args: {
+          amount: bigint;
+          id: bigint;
+          to: string;
+        };
+        removed: boolean;
+        logIndex: number;
+        transactionIndex: number;
+        blockHash: string;
+        blockNumber: bigint;
+        address: string;
+        data: string;
+        topics: string[];
+        transactionHash: string;
+      } | null
+    ) => {
+      const currentFile = await getLatestFile();
+      await addTokenData(
+        { ID: currentFile.ID, tokenId: String(event.args.id) },
+        currentFile.ID
+      );
+      reset();
+      handleRemoveImage();
+    },
+    [getLatestFile, addTokenData, reset, handleRemoveImage]
+  );
+
+  useEffect(() => {
     handleEventData(tokenEvent);
-  },[tokenEvent])
-
-  const handleEventData = useMemo(() => async(args: any) => {
-    const currentFile = await getLatestFile();
-    const body = {
-      ID: currentFile.ID,
-      tokenId: Number(args.id),
-    };
-    await addTokenData(body, currentFile.ID);
-    reset();
-    handleRemoveImage();
-  }, [tokenEvent]);
+  }, [tokenEvent, handleEventData]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
       setFile(selectedFile);
-      setValue("media", selectedFile);
+      setValue('media', selectedFile);
       const url = URL.createObjectURL(selectedFile);
       setPreviewUrl(url);
     }
@@ -209,97 +204,92 @@ export default function NFTForm() {
       const droppedFile = event.dataTransfer.files?.[0];
       if (droppedFile) {
         setFile(droppedFile);
-        setValue("media", droppedFile);
+        setValue('media', droppedFile);
         const url = URL.createObjectURL(droppedFile);
         setPreviewUrl(url);
       }
     },
-    [setValue],
+    [setValue]
   );
 
   const handleDragOver = useCallback(
     (event: React.DragEvent<HTMLDivElement>) => {
       event.preventDefault();
     },
-    [],
+    []
   );
-
-  const handleRemoveImage = () => {
-    setFile(null);
-    setPreviewUrl(null);
-    setValue("media", null as unknown as File);
-  };
 
   const onSubmit = async (data: NFTFormData) => {
     const { media, collection, ...rest } = data;
     if (!media) {
-      console.error("No media file provided");
+      console.error('No media file provided');
       return;
     }
 
     try {
       setShowStepper(true);
-      updateStepStatus(0, "current");
+      updateStepStatus(0, 'current');
       const formData = new FormData();
-      formData.append("file", media);
-      formData.append("collection", collection);
-      formData.append("walletAddress", address);
-      formData.append("tokenAddress", contractAddress)
+      formData.append('file', media);
+      formData.append('collection', collection);
+      formData.append('walletAddress', address);
+      formData.append('tokenAddress', contractAddress);
       const pinataMetadata = JSON.stringify(rest);
-      formData.append("pinataMetadata", pinataMetadata);
+      formData.append('pinataMetadata', pinataMetadata);
 
       const pinataOptions = JSON.stringify({ cidVersion: 1 });
-      formData.append("pinataOptions", pinataOptions);
+      formData.append('pinataOptions', pinataOptions);
       await addFile(formData);
       const currentFile = await getLatestFile();
       const normalizedContractAddress = getAddress(contractAddress);
       const normalizedAccount = getAddress(address);
       if (!isAddress(normalizedContractAddress)) {
-        throw new Error("Invalid contract address");
+        throw new Error('Invalid contract address');
       }
 
       if (!isAddress(normalizedAccount)) {
-        throw new Error("Invalid user address");
+        throw new Error('Invalid user address');
       }
       const cid = currentFile.IpfsHash;
-      updateStepStatus(0, "completed");
-      updateStepStatus(1, "current");
+      updateStepStatus(0, 'completed');
+      updateStepStatus(1, 'current');
       writeContract(
         {
           address: contractAddress as `0x${string}`,
           abi: AdvancedERC1155.abi,
-          functionName: "mint",
+          functionName: 'mint',
           account: normalizedAccount,
           chainId: chainId,
           chain: chain,
-          args: [address, Number(data.supply), cid, "0x"],
+          args: [address, Number(data.supply), cid, '0x'],
         },
         {
           onSuccess: async (txHash) => {
-            updateStepStatus(1, "completed");
-            updateStepStatus(2, "current");
+            updateStepStatus(1, 'completed');
+            updateStepStatus(2, 'current');
             const receipt = await publicClient.waitForTransactionReceipt({
               hash: txHash,
             });
 
-            if (receipt.status.toLowerCase() === "success") {
-              updateStepStatus(2, "completed");
+            if (receipt.status.toLowerCase() === 'success') {
+              updateStepStatus(2, 'completed');
               setShowStepper(false);
               setSteps(mintingSteps);
             } else {
               setShowStepper(false);
-              setSteps(mintingSteps);            }
+              setSteps(mintingSteps);
+            }
           },
           onError: async (error) => {
-            console.error("Full Error:", error);
-            await deleteFile(currentFile.IpfsHash);
+            console.error('Full Error:', error);
+            await deleteFile(currentFile.IpfsHash, address);
             setShowStepper(false);
             setSteps(mintingSteps);
           },
-        },
+        }
       );
     } catch (err) {
-      console.error("Error uploading file:", err);
+      console.error('Error uploading file:', err);
     }
   };
 
@@ -337,13 +327,13 @@ export default function NFTForm() {
           {/* Upload Area */}
           <div
             className="border-2 border-dashed border-zinc-800 rounded-lg aspect-square flex flex-col items-center justify-center p-8 text-center cursor-pointer"
-            onClick={() => document.getElementById("file-input")?.click()}
+            onClick={() => document.getElementById('file-input')?.click()}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
           >
             {previewUrl ? (
               <>
-                {file?.type.startsWith("image/") ? (
+                {file?.type.startsWith('image/') ? (
                   <div className="relative w-full h-full z-0">
                     {/* Use regular img tag for blob URLs */}
                     <Image
@@ -367,7 +357,7 @@ export default function NFTForm() {
                       />
                     </button>
                   </div>
-                ) : file?.type.startsWith("video/") ? (
+                ) : file?.type.startsWith('video/') ? (
                   <div className="relative w-full h-full">
                     <video
                       src={previewUrl}
@@ -404,7 +394,7 @@ export default function NFTForm() {
                 <input
                   id="file-input"
                   type="file"
-                  {...register("media")}
+                  {...register('media')}
                   className="hidden"
                   onChange={handleFileChange}
                 />
@@ -450,7 +440,7 @@ export default function NFTForm() {
               ></CollectionListPopover>
 
               <p className="text-xs text-gray-400">
-                Not all collections are eligible.{" "}
+                Not all collections are eligible.{' '}
                 <Link href="#" className="text-blue-500">
                   Learn more
                 </Link>
@@ -463,7 +453,7 @@ export default function NFTForm() {
               </label>
               <Input
                 placeholder="Enter collection name"
-                {...register("collection")}
+                {...register('collection')}
                 className="bg-zinc-900 border-zinc-800"
               />
               {errors.collection && (
@@ -479,7 +469,7 @@ export default function NFTForm() {
               </label>
               <Input
                 placeholder="Name your NFT"
-                {...register("name")}
+                {...register('name')}
                 className="bg-zinc-900 border-zinc-800"
               />
               {errors.name && (
@@ -494,7 +484,7 @@ export default function NFTForm() {
               <Input
                 type="number"
                 defaultValue="1"
-                {...register("supply")}
+                {...register('supply')}
                 className="bg-zinc-900 border-zinc-800"
               />
               {errors.supply && (
@@ -506,7 +496,7 @@ export default function NFTForm() {
               <label className="block text-sm font-medium">Description</label>
               <Textarea
                 placeholder="Enter a description"
-                {...register("description")}
+                {...register('description')}
                 className="min-h-[120px] bg-zinc-900 border-zinc-800"
               />
               {errors.description && (
@@ -520,7 +510,7 @@ export default function NFTForm() {
               <label className="block text-sm font-medium">External link</label>
               <Input
                 placeholder="https://"
-                {...register("externalLink")}
+                {...register('externalLink')}
                 className="bg-zinc-900 border-zinc-800"
               />
               {errors.externalLink && (
@@ -539,7 +529,7 @@ export default function NFTForm() {
                 item page.
               </p>
 
-              {Object.entries(watch("additionalAttributes") || {}).map(
+              {Object.entries(watch('additionalAttributes') || {}).map(
                 ([key, value]) => (
                   <div
                     key={key}
@@ -554,10 +544,10 @@ export default function NFTForm() {
                       type="button"
                       onClick={() => {
                         const currentAttributes = {
-                          ...getValues("additionalAttributes"),
+                          ...getValues('additionalAttributes'),
                         };
                         delete currentAttributes[key];
-                        setValue("additionalAttributes", {
+                        setValue('additionalAttributes', {
                           ...currentAttributes,
                         });
                       }}
@@ -566,7 +556,7 @@ export default function NFTForm() {
                       <X className="h-4 w-4" />
                     </button>
                   </div>
-                ),
+                )
               )}
 
               <div

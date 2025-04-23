@@ -1,9 +1,9 @@
-"use client";
-import { ReactNode } from "react";
-import RainbowKitProvider from "./RainbowKitProvider";
-import AuthProvider from "./AuthProvider";
-import { Session } from "next-auth";
-import ThemeProviderWrapper from "./ThemeProvider";
+'use client';
+import { ReactNode } from 'react';
+import RainbowKitProvider from './RainbowKitProvider';
+import AuthProvider from './AuthProvider';
+import { Session } from 'next-auth';
+import ThemeProviderWrapper from './ThemeProvider';
 export default function Providers({
   children,
   cookie,

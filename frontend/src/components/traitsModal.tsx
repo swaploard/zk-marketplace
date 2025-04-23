@@ -1,24 +1,28 @@
-import { useState } from "react";
+import { useState } from 'react';
 
 interface AddTraitModalProps {
-    onClose?: (value: boolean) => void;
-    setValue: (name: string, value: any) => void;
-    getValues?: (arg:string) => Record<string, any>; 
+  onClose?: (value: boolean) => void;
+  setValue: (name: string, value: Record<string, string>) => void;
+  getValues?: (arg: string) => Record<string, string>;
 }
 
-export default function AddTraitModal({onClose, setValue, getValues}: AddTraitModalProps) {
+export default function AddTraitModal({
+  onClose,
+  setValue,
+  getValues,
+}: AddTraitModalProps) {
   const [traits, setTraits] = useState({
-    key: "",
-    value: ""
+    key: '',
+    value: '',
   });
   const handleAddTrait = () => {
     if (traits.key && traits.value) {
-      const currentAttributes = getValues("additionalAttributes") || {};
+      const currentAttributes = getValues('additionalAttributes') || {};
       const newAttributes = {
         ...currentAttributes,
-        [traits.key]: traits.value
+        [traits.key]: traits.value,
       };
-      setValue("additionalAttributes", newAttributes);
+      setValue('additionalAttributes', newAttributes);
       onClose(false);
     }
   };
@@ -27,7 +31,10 @@ export default function AddTraitModal({onClose, setValue, getValues}: AddTraitMo
       {/* Modal container */}
       <div className="max-w-lg bg-[#1E1E1E] rounded-lg p-4">
         {/* Close button */}
-        <button className="absolute top-6 right-6 text-white" onClick={()=> onClose(false)}>
+        <button
+          className="absolute top-6 right-6 text-white"
+          onClick={() => onClose(false)}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -46,9 +53,7 @@ export default function AddTraitModal({onClose, setValue, getValues}: AddTraitMo
         </button>
 
         {/* Modal header */}
-        <h2 className="text-white text-lg font-bold">
-          Add trait
-        </h2>
+        <h2 className="text-white text-lg font-bold">Add trait</h2>
 
         {/* Form fields */}
         <div className="flex flex-row flex-nowrap justify-between mt-4 gap-2">
@@ -81,7 +86,9 @@ export default function AddTraitModal({onClose, setValue, getValues}: AddTraitMo
         </div>
         <button
           className={`w-full bg-blue-700 hover:bg-[#3b78e7] text-white font-medium py-2 px-4 rounded-[10px] text-xl mt-6 ${
-            !traits.key || !traits.value ? "opacity-50 cursor-not-allowed bg-blue-900" : ""
+            !traits.key || !traits.value
+              ? 'opacity-50 cursor-not-allowed bg-blue-900'
+              : ''
           }`}
           onClick={handleAddTrait}
           disabled={!traits.key || !traits.value}

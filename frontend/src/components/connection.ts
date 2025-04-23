@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { useAccount } from "wagmi";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useEffect } from 'react';
+import { useAccount } from 'wagmi';
+import { useConnectModal } from '@rainbow-me/rainbowkit';
 
 export default function AutoConnect() {
   const { isConnected } = useAccount();
@@ -10,7 +10,7 @@ export default function AutoConnect() {
 
   useEffect(() => {
     if (!isConnected && openConnectModal) {
-      document.cookie = "walletAddress=; path=/; SameSite=Lax";
+      document.cookie = 'walletAddress=; path=/; SameSite=Lax';
       openConnectModal();
     }
   }, [isConnected, openConnectModal]);

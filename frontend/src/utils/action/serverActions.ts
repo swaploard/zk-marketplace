@@ -1,5 +1,5 @@
-"use server";
-import { getServerActionSession } from "@/utils/config/session";
+'use server';
+import { getServerActionSession } from '@/utils/config/session';
 
 //remove and set serverActions to false in next.config.js to disable server actions
 
@@ -11,5 +11,5 @@ export const submitCookieToStorageServerAction = async (cookie: string) => {
 
 export const readCookieFromStorageServerAction = async (): Promise<string> => {
   const session = await getServerActionSession();
-  return session.nonce || "No Cookie Stored!";
+  return session.nonce || 'No Cookie Stored!';
 };

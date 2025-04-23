@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
-import { pinata } from "../../../utils/config/pinata";
+import { NextResponse } from 'next/server';
+import { pinata } from '../../../utils/config/pinata';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
@@ -21,8 +21,8 @@ export async function GET() {
   } catch (error) {
     console.error(error);
     return NextResponse.json(
-      { text: "Error creating API Key:" },
-      { status: 500 },
+      { text: 'Error creating API Key:' },
+      { status: 500 }
     );
   }
 }

@@ -1,24 +1,27 @@
-"use client";
-import { use, useEffect, useRef, useState } from "react";
-import Image from "next/image";
-
-import useHandleFiles from "@/store/fileSlice";
-import useCollectionStore from "@/store/collectionSlice";
-import FilterComponent from "@/components/topFilter";
-import { IFileStore, PinataFile } from "@/types";
-import ListingCard from "@/components/listingCard";
-import ApprovePurchaseModal from "@/components/purchaseModal";
-import BidModal from "@/components/bidModal";
-import ethPriceConvertor from "@/components/ethPriceConvertor";
-import { ICollectionStore } from "@/types";
+'use client';
+import { use, useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
+import { useAccount } from 'wagmi';
+import useHandleFiles from '@/store/fileSlice';
+import useCollectionStore from '@/store/collectionSlice';
+import FilterComponent from '@/components/topFilter';
+import { IFileStore, PinataFile } from '@/types';
+import ListingCard from '@/components/listingCard';
+import ApprovePurchaseModal from '@/components/purchaseModal';
+import BidModal from '@/components/bidModal';
+import { EthPriceConvertor } from '@/components/ethPriceConvertor';
+import { ICollectionStore } from '@/types';
 
 interface ICollectionPageParams {
   collectionId: string;
 }
 export default function CollectionPage({ params }) {
   const { files, getFiles } = useHandleFiles((state: IFileStore) => state);
-  const { collections, getCollections } = useCollectionStore((state: ICollectionStore) => state);
-  const { handleEthToUsd } = ethPriceConvertor();
+  const { collections, getCollections } = useCollectionStore(
+    (state: ICollectionStore) => state
+  );
+  const { address } = useAccount();
+  const { handleEthToUsd } = EthPriceConvertor();
   const [showEditButton, setShowEditButton] = useState(false);
   const [bannerImage, setBannerImage] = useState<string | null>();
   const [profileImage, setProfileImage] = useState<string | null>();
@@ -32,27 +35,27 @@ export default function CollectionPage({ params }) {
   const profileFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    getFiles(unwrappedParams?.collectionId, "");
+    getFiles(unwrappedParams?.collectionId, '');
     getCollections(null, unwrappedParams?.collectionId);
-  }, [unwrappedParams.collectionId, getFiles]);
+  }, [unwrappedParams.collectionId, getFiles, getCollections]);
 
   const handleBannerClick = () => {
     bannerFileInputRef.current?.click();
   };
   const handleProfileClick = () => profileFileInputRef.current?.click();
 
-  const handleImageUpload = async (file: File, type: "profile" | "banner") => {
-    if (!file || !user?.walletAddress) return;
+  const handleImageUpload = async (file: File, type: 'profile' | 'banner') => {
+    if (!file || !address) return;
     const formData = new FormData();
-    formData.append("walletAddress", user.walletAddress);
+    formData.append('walletAddress', address);
     formData.append(
-      type === "profile" ? "profileImage" : "profileBanner",
-      file,
+      type === 'profile' ? 'profileImage' : 'profileBanner',
+      file
     );
   };
 
   const handleFileSelect =
-    (type: "profile" | "banner") =>
+    (type: 'profile' | 'banner') =>
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       if (!file) return;
@@ -61,7 +64,7 @@ export default function CollectionPage({ params }) {
       const reader = new FileReader();
       reader.onload = (e) => {
         if (e.target?.result) {
-          if (type === "profile") {
+          if (type === 'profile') {
             setProfileImage(e.target.result as string);
           } else {
             setBannerImage(e.target.result as string);
@@ -74,11 +77,11 @@ export default function CollectionPage({ params }) {
   const handlePurchaseModal = (file: PinataFile) => {
     setFileForPurchase(file);
     setPurchaseModal(true);
-  }
+  };
   const handleBidModal = (file: PinataFile) => {
     setFileForPurchase(file);
     setBidModalOpen(true);
-  }
+  };
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
       {/* Banner */}
@@ -93,7 +96,7 @@ export default function CollectionPage({ params }) {
             bannerImage
               ? {
                   backgroundImage: `url(${bannerImage})`,
-                  backgroundSize: "cover",
+                  backgroundSize: 'cover',
                 }
               : {}
           }
@@ -135,7 +138,7 @@ export default function CollectionPage({ params }) {
           ref={bannerFileInputRef}
           accept="image/*"
           className="hidden"
-          onChange={handleFileSelect("banner")}
+          onChange={handleFileSelect('banner')}
         />
       </div>
 
@@ -201,7 +204,7 @@ export default function CollectionPage({ params }) {
                     ref={profileFileInputRef}
                     accept="image/*"
                     className="hidden"
-                    onChange={handleFileSelect("profile")}
+                    onChange={handleFileSelect('profile')}
                   />
 
                   {/* Rest of profile info remains same */}
@@ -215,12 +218,29 @@ export default function CollectionPage({ params }) {
       <div className="w-screen sticky top-0 z-50">
         <FilterComponent />
       </div>
-      {purchaseModal && <ApprovePurchaseModal file={fileForPurchase} contractName={collections[0].contractName} setClose={setPurchaseModal}/> }
-      {bidModalOpen && <BidModal setClose={setBidModalOpen} handleEthToUsd={handleEthToUsd} fileForListing={fileForPurchase} />} 
+      {purchaseModal && (
+        <ApprovePurchaseModal
+          file={fileForPurchase}
+          contractName={collections[0].contractName}
+          setClose={setPurchaseModal}
+        />
+      )}
+      {bidModalOpen && (
+        <BidModal
+          setClose={setBidModalOpen}
+          handleEthToUsd={handleEthToUsd}
+          fileForListing={fileForPurchase}
+        />
+      )}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {files &&
           files?.map((file) => (
-              <ListingCard key={file._id} file={file} handlePurchaseModal={handlePurchaseModal} handleBidModal={handleBidModal} />
+            <ListingCard
+              key={file._id}
+              file={file}
+              handlePurchaseModal={handlePurchaseModal}
+              handleBidModal={handleBidModal}
+            />
           ))}
       </div>
     </div>
