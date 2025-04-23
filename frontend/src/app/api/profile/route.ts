@@ -4,24 +4,36 @@ import connectMongo from '@/lib/mongodb';
 import User from '@/mongoSchemas/User';
 import { saveFile } from '@/utils/routeHelper/saveImage';
 import { user } from '@/types';
+import { isAddress } from 'ethers';
 
 export async function GET(req: NextRequest) {
   await connectMongo();
   const { searchParams } = new URL(req.url);
   try {
     const walletAddress = searchParams.get('walletAddress');
-    if (!walletAddress) {
-      return NextResponse.json(
-        { error: 'walletAddress is required' },
-        { status: 400 }
-      );
-    }
 
     const user = await User.findOne({ walletAddress });
-    if (!user) {
+    if (!user && isAddress(walletAddress)) {
+      const newLogger = await User.create(
+        {
+          walletAddress,
+          username: '',
+          email: '',
+          bio: '',
+          profileImage: '',
+          profileBanner: '',
+          socials: {
+            twitter: '',
+            instagram: '',
+          },
+          links: [],
+        },
+        { new: true }
+      );
+      return NextResponse.json({ newLogger }, { status: 200 });
+    } else if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
-
     return NextResponse.json({ user }, { status: 200 });
   } catch (error) {
     console.error('Error fetching user:', error);

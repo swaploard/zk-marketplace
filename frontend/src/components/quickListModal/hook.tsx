@@ -90,7 +90,6 @@ export const useQuickListingModal = ({
     functionName: 'isApprovedForAll',
     args: [address, contractAddress],
   });
-
   const { data } = useReadContract({
     address: file.tokenAddress as `0x${string}`,
     abi: AdvancedERC1155.abi,
@@ -119,42 +118,35 @@ export const useQuickListingModal = ({
 
     setDisableButton(true);
     const approveTransfer = () => {
-      writeContract(
-        {
-          abi: AdvancedERC1155.abi as Abi,
-          account: address,
-          address: file.tokenAddress as `0x${string}`,
-          functionName: 'setApprovalForAll',
-          args: [contractAddress, true],
-          chainId: chainId,
-          chain: chain,
-        },
-        {
-          onSuccess: async (transactionHash) => {
-            const receipt = await publicClient.waitForTransactionReceipt({
-              hash: transactionHash,
-            });
-            if (receipt.status.toLowerCase() === 'success') {
-              setDisableButton(false);
-            }
+      if (!isApproved && isApproved != undefined) {
+        writeContract(
+          {
+            abi: AdvancedERC1155.abi as Abi,
+            account: address,
+            address: file.tokenAddress as `0x${string}`,
+            functionName: 'setApprovalForAll',
+            args: [contractAddress, true],
+            chainId: chainId,
+            chain: chain,
           },
-          onError: (error) => {
-            console.log('onError', error);
-          },
-        }
-      );
+          {
+            onSuccess: async (transactionHash) => {
+              const receipt = await publicClient.waitForTransactionReceipt({
+                hash: transactionHash,
+              });
+              if (receipt.status.toLowerCase() === 'success') {
+                setDisableButton(false);
+              }
+            },
+            onError: (error) => {
+              console.log('onError', error);
+            },
+          }
+        );
+      }
     };
     approveTransfer();
-  }, [
-    isApproved,
-    address,
-    chainId,
-    chain,
-    contractAddress,
-    file.tokenAddress,
-    publicClient,
-    writeContract,
-  ]);
+  }, [isApproved]);
 
   const updateStepStatus = (stepIndex: number, newStatus: StepStatus) => {
     setSteps((prev) =>
