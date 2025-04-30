@@ -151,6 +151,7 @@ export default function NFTForm() {
   const handleRemoveImage = useCallback(() => {
     setValue('media', null);
     setFile(null);
+    setPreviewUrl(null);
   }, [setValue]);
 
   const handleEventData = useCallback(

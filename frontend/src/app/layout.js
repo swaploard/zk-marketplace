@@ -5,7 +5,6 @@ import { getServerSession } from 'next-auth';
 import { Toaster } from 'react-hot-toast';
 import { authConfig } from '../../auth';
 import Providers from './authProviders/Providers';
-import AutoConnect from '../components/connection';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -23,7 +22,6 @@ export default async function RootLayout({ children }) {
     <html lang="en">
       <body className={inter.className}>
         <Providers session={session} cookie={cookie}>
-          <AutoConnect />
           <Toaster position="top-right" cy-toaster="global-toaster" />
           {children}
         </Providers>
