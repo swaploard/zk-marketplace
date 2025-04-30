@@ -4,7 +4,6 @@ import '@rainbow-me/rainbowkit/styles.css';
 import { cookieToInitialState, WagmiProvider } from 'wagmi';
 import {
   RainbowKitProvider as NextRainbowKitProvider,
-  RainbowKitAuthenticationProvider,
 } from '@rainbow-me/rainbowkit';
 import { ReactNode, useEffect } from 'react';
 
@@ -43,16 +42,11 @@ export default function RainbowKitProvider({
   return (
     <WagmiProvider config={config} initialState={initialState}>
       <ReactQueryProvider>
-        <RainbowKitAuthenticationProvider
-          adapter={authenticationAdapter}
-          status={status}
-        >
           <NextRainbowKitProvider>
             <div className="h-full min-h-dvh overflow-x-clip font-body text-foreground">
               {children}
             </div>
           </NextRainbowKitProvider>
-        </RainbowKitAuthenticationProvider>
       </ReactQueryProvider>
     </WagmiProvider>
   );

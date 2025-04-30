@@ -18,8 +18,12 @@ import { Textarea } from '@/components/ui/textarea';
 import useUserStore, { IUserStore } from '../../../store/userSlice';
 import { ProfileFormValues, profileFormSchema } from './shemas';
 import { useAccount } from 'wagmi';
+import { usePathname, useSearchParams } from 'next/navigation';
+import RequireWallet from '@/components/connection';
 
 export default function ProfileUpdate() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { address } = useAccount();
   const { user, updateUser, getUser } = useUserStore(
     (state: IUserStore) => state
@@ -129,230 +133,236 @@ export default function ProfileUpdate() {
     });
     getUser(address);
   };
+
+  const getCurrentPageUrl = () => {
+    const params = new URLSearchParams(searchParams);
+    const fullUrl = `${pathname}${params.toString() ? `?${params.toString()}` : ''}`;
+    return fullUrl;
+  };
   return (
-    <div className="min-h-screen bg-black text-white p-6 flex justify-center">
-      {user ? (
-        <div className="w-full max-w-4xl grid md:grid-cols-[1fr_300px] gap-8">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="space-y-2">
-              <label htmlFor="username" className="text-lg font-medium">
-                Username
-              </label>
-              <Input
-                id="username"
-                placeholder="Enter username"
-                className="bg-black border-gray-700 text-white h-12 rounded-md"
-                {...register('username')}
-              />
-              {errors.username && (
-                <p className="text-red-500 text-sm">
-                  {errors.username.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="bio" className="text-lg font-medium">
-                Bio
-              </label>
-              <Textarea
-                id="bio"
-                placeholder="Tell the world your story!"
-                className="bg-black border-gray-700 text-white min-h-[100px] rounded-md"
-                {...register('bio')}
-              />
-              {errors.bio && (
-                <p className="text-red-500 text-sm">{errors.bio.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-lg font-medium">
-                Email Address
-              </label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter email"
-                className="bg-black border-gray-700 text-white h-12 rounded-md"
-                {...register('email')}
-              />
-              {errors.email && (
-                <p className="text-red-500 text-sm">{errors.email.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-lg font-medium">Social Connections</h3>
-                <p className="text-sm text-gray-400">
-                  Help collectors verify your account by connecting social
-                  accounts
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Twitter className="text-gray-400" />
-                  <span>Twitter</span>
-                </div>
-                <Button
-                  type="button"
-                  className="bg-blue-500 hover:bg-blue-600 text-white rounded-md"
-                >
-                  Connect
-                </Button>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Instagram className="text-gray-400" />
-                  <span>Instagram</span>
-                </div>
-                <Button
-                  type="button"
-                  className="bg-blue-500 hover:bg-blue-600 text-white rounded-md"
-                >
-                  Connect
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="website" className="text-lg font-medium">
-                Links
-              </label>
-              <div className="relative">
-                <Globe className="absolute left-3 top-3.5 text-gray-400" />
+    <RequireWallet callbackUrl={getCurrentPageUrl()}>
+      <div className="min-h-screen bg-black text-white p-6 flex justify-center">
+        {user ? (
+          <div className="w-full max-w-4xl grid md:grid-cols-[1fr_300px] gap-8">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <div className="space-y-2">
+                <label htmlFor="username" className="text-lg font-medium">
+                  Username
+                </label>
                 <Input
-                  id="website"
-                  placeholder="yoursite.io"
-                  className="bg-black border-gray-700 text-white h-12 pl-10 rounded-md"
-                  {...register('links')}
+                  id="username"
+                  placeholder="Enter username"
+                  className="bg-black border-gray-700 text-white h-12 rounded-md"
+                  {...register('username')}
                 />
+                {errors.username && (
+                  <p className="text-red-500 text-sm">
+                    {errors.username.message}
+                  </p>
+                )}
               </div>
-              {errors.links && (
-                <p className="text-red-500 text-sm">{errors.links.message}</p>
-              )}
-            </div>
 
-            <div className="space-y-2">
-              <label className="text-lg font-medium">Wallet Address</label>
-              <div className="flex items-center gap-2">
+              <div className="space-y-2">
+                <label htmlFor="bio" className="text-lg font-medium">
+                  Bio
+                </label>
+                <Textarea
+                  id="bio"
+                  placeholder="Tell the world your story!"
+                  className="bg-black border-gray-700 text-white min-h-[100px] rounded-md"
+                  {...register('bio')}
+                />
+                {errors.bio && (
+                  <p className="text-red-500 text-sm">{errors.bio.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="email" className="text-lg font-medium">
+                  Email Address
+                </label>
                 <Input
-                  id="walletAddress"
-                  className="bg-black border-gray-700 text-white"
-                  {...register('walletAddress')}
+                  id="email"
+                  type="email"
+                  placeholder="Enter email"
+                  className="bg-black border-gray-700 text-white h-12 rounded-md"
+                  {...register('email')}
                 />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-gray-400"
-                  onClick={() => navigator.clipboard.writeText('0x704c...3340')}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
+                {errors.email && (
+                  <p className="text-red-500 text-sm">{errors.email.message}</p>
+                )}
               </div>
-              {errors.walletAddress && (
-                <p className="text-red-500 text-sm">
-                  {errors.walletAddress.message}
-                </p>
-              )}
-            </div>
 
-            <input
-              type="file"
-              accept="image/*"
-              ref={profileImageInputRef}
-              onChange={handleProfileImageChange}
-              className="hidden"
-            />
-            <input
-              type="file"
-              accept="image/*"
-              ref={bannerImageInputRef}
-              onChange={handleBannerImageChange}
-              className="hidden"
-            />
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-medium">Social Connections</h3>
+                  <p className="text-sm text-gray-400">
+                    Help collectors verify your account by connecting social
+                    accounts
+                  </p>
+                </div>
 
-            <Button
-              type="submit"
-              className={`${
-                !isDirty || !isValid || isSubmitting
-                  ? 'bg-gray-600 hover:bg-gray-600 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700'
-              } text-white px-8 py-2 rounded-md transition-colors`}
-              disabled={!isDirty || !isValid || isSubmitting}
-            >
-              {isSubmitting ? 'Saving...' : 'Save'}
-            </Button>
-          </form>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Twitter className="text-gray-400" />
+                    <span>Twitter</span>
+                  </div>
+                  <Button
+                    type="button"
+                    className="bg-blue-500 hover:bg-blue-600 text-white rounded-md"
+                  >
+                    Connect
+                  </Button>
+                </div>
 
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <div className="flex items-center gap-1">
-                <span className="text-lg font-medium">Profile Image</span>
-                <HelpCircle className="h-4 w-4 text-gray-400" />
-              </div>
-              <div
-                className="relative w-36 h-36 rounded-full mx-auto cursor-pointer"
-                onMouseEnter={() => setIsHoveringProfile(true)}
-                onMouseLeave={() => setIsHoveringProfile(false)}
-                onClick={() => profileImageInputRef.current?.click()}
-              >
-                <div
-                  className={`w-full h-full rounded-full bg-cover bg-center ${
-                    !profileImage &&
-                    'bg-gradient-to-br from-pink-500 to-purple-500'
-                  }`}
-                  style={{
-                    backgroundImage: profileImage
-                      ? `url(${profileImage})`
-                      : undefined,
-                  }}
-                >
-                  {isHoveringProfile && (
-                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
-                      <Pencil className="h-6 w-6 text-white" />
-                    </div>
-                  )}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Instagram className="text-gray-400" />
+                    <span>Instagram</span>
+                  </div>
+                  <Button
+                    type="button"
+                    className="bg-blue-500 hover:bg-blue-600 text-white rounded-md"
+                  >
+                    Connect
+                  </Button>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center gap-1">
-                <span className="text-lg font-medium">Profile Banner</span>
-                <HelpCircle className="h-4 w-4 text-gray-400" />
+              <div className="space-y-2">
+                <label htmlFor="website" className="text-lg font-medium">
+                  Links
+                </label>
+                <div className="relative">
+                  <Globe className="absolute left-3 top-3.5 text-gray-400" />
+                  <Input
+                    id="website"
+                    placeholder="yoursite.io"
+                    className="bg-black border-gray-700 text-white h-12 pl-10 rounded-md"
+                    {...register('links')}
+                  />
+                </div>
+                {errors.links && (
+                  <p className="text-red-500 text-sm">{errors.links.message}</p>
+                )}
               </div>
-              <div
-                className="relative w-full h-28 bg-gray-800 rounded-md cursor-pointer"
-                onMouseEnter={() => setIsHoveringBanner(true)}
-                onMouseLeave={() => setIsHoveringBanner(false)}
-                onClick={() => bannerImageInputRef.current?.click()}
+
+              <div className="space-y-2">
+                <label className="text-lg font-medium">Wallet Address</label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="walletAddress"
+                    className="bg-black border-gray-700 text-white"
+                    {...register('walletAddress')}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-gray-400"
+                    onClick={() => navigator.clipboard.writeText('0x704c...3340')}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+                {errors.walletAddress && (
+                  <p className="text-red-500 text-sm">
+                    {errors.walletAddress.message}
+                  </p>
+                )}
+              </div>
+
+              <input
+                type="file"
+                accept="image/*"
+                ref={profileImageInputRef}
+                onChange={handleProfileImageChange}
+                className="hidden"
+              />
+              <input
+                type="file"
+                accept="image/*"
+                ref={bannerImageInputRef}
+                onChange={handleBannerImageChange}
+                className="hidden"
+              />
+
+              <Button
+                type="submit"
+                className={`${!isDirty || !isValid || isSubmitting
+                    ? 'bg-gray-600 hover:bg-gray-600 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700'
+                  } text-white px-8 py-2 rounded-md transition-colors`}
+                disabled={!isDirty || !isValid || isSubmitting}
               >
+                {isSubmitting ? 'Saving...' : 'Save'}
+              </Button>
+            </form>
+
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <div className="flex items-center gap-1">
+                  <span className="text-lg font-medium">Profile Image</span>
+                  <HelpCircle className="h-4 w-4 text-gray-400" />
+                </div>
                 <div
-                  className="w-full h-full rounded-md bg-cover bg-center"
-                  style={{
-                    backgroundImage: bannerImage
-                      ? `url(${bannerImage})`
-                      : undefined,
-                  }}
+                  className="relative w-36 h-36 rounded-full mx-auto cursor-pointer"
+                  onMouseEnter={() => setIsHoveringProfile(true)}
+                  onMouseLeave={() => setIsHoveringProfile(false)}
+                  onClick={() => profileImageInputRef.current?.click()}
                 >
-                  {isHoveringBanner && (
-                    <div className="absolute inset-0 bg-black/50 rounded-md flex items-center justify-center">
-                      <Pencil className="h-6 w-6 text-white" />
-                    </div>
-                  )}
+                  <div
+                    className={`w-full h-full rounded-full bg-cover bg-center ${!profileImage &&
+                      'bg-gradient-to-br from-pink-500 to-purple-500'
+                      }`}
+                    style={{
+                      backgroundImage: profileImage
+                        ? `url(${profileImage})`
+                        : undefined,
+                    }}
+                  >
+                    {isHoveringProfile && (
+                      <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                        <Pencil className="h-6 w-6 text-white" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-1">
+                  <span className="text-lg font-medium">Profile Banner</span>
+                  <HelpCircle className="h-4 w-4 text-gray-400" />
+                </div>
+                <div
+                  className="relative w-full h-28 bg-gray-800 rounded-md cursor-pointer"
+                  onMouseEnter={() => setIsHoveringBanner(true)}
+                  onMouseLeave={() => setIsHoveringBanner(false)}
+                  onClick={() => bannerImageInputRef.current?.click()}
+                >
+                  <div
+                    className="w-full h-full rounded-md bg-cover bg-center"
+                    style={{
+                      backgroundImage: bannerImage
+                        ? `url(${bannerImage})`
+                        : undefined,
+                    }}
+                  >
+                    {isHoveringBanner && (
+                      <div className="absolute inset-0 bg-black/50 rounded-md flex items-center justify-center">
+                        <Pencil className="h-6 w-6 text-white" />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      ) : (
-        <div>Loading...</div>
-      )}
-    </div>
+        ) : (
+          <div>Loading...</div>
+        )}
+      </div>
+    </RequireWallet>
   );
 }

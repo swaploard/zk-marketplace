@@ -27,7 +27,8 @@ import useCollectionStore from '@/store/collectionSlice';
 import AddTraitModal from '@/components/traitsModal';
 import Stepper from '@/components/steppers/createNftStepper';
 import { mintingSteps } from './constants';
-
+import RequireWallet from '@/components/connection';
+import { usePathname, useSearchParams } from 'next/navigation';
 const nftSchema = z.object({
   media: z
     .instanceof(File, { message: 'File is required' })
@@ -76,6 +77,8 @@ const nftSchema = z.object({
 type NFTFormData = z.infer<typeof nftSchema>;
 
 export default function NFTForm() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const publicClient = usePublicClient();
   const { addFile, getLatestFile, deleteFile, addTokenData, getFiles } =
     useHandleFiles((state: IFileStore) => state);
@@ -294,7 +297,14 @@ export default function NFTForm() {
     }
   };
 
-  return (
+const getCurrentPageUrl = () => {
+  const params = new URLSearchParams(searchParams);
+  const fullUrl = `${pathname}${params.toString() ? `?${params.toString()}` : ''}`;
+  return fullUrl;
+};
+
+return (
+  <RequireWallet callbackUrl={getCurrentPageUrl()}>
     <div className="min-h-screen bg-black text-white p-6">
       <div className="max-w-6xl mx-auto space-y-8">
         {showStepper && <Stepper steps={steps} />}
@@ -586,5 +596,6 @@ export default function NFTForm() {
         </form>
       </div>
     </div>
+    </RequireWallet>
   );
 }
