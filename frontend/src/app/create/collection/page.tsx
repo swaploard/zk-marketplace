@@ -211,7 +211,7 @@ export default function CreateNFTCollection() {
   };
 
   return (
-    <RequireWallet  callbackUrl={getCurrentPageUrl()}>
+    <RequireWallet callbackUrl={getCurrentPageUrl()}>
       <form
         onSubmit={handleSubmit(onSubmit)}
         className="min-h-screen bg-black text-white"
@@ -312,8 +312,8 @@ export default function CreateNFTCollection() {
                           You may change this after deploying your contract.
                         </p>
                         <p className="text-sm text-gray-400 mt-2">
-                          Recommended size: 350 x 350. File types: JPG, PNG, SVG,
-                          or GIF
+                          Recommended size: 350 x 350. File types: JPG, PNG,
+                          SVG, or GIF
                         </p>
                       </div>
                     </div>

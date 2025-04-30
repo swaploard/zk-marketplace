@@ -2,10 +2,10 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAccount } from 'wagmi';
 
-export default function RequireWallet({ 
+export default function RequireWallet({
   children,
-  callbackUrl = '/' 
-}: { 
+  callbackUrl = '/',
+}: {
   children: React.ReactNode;
   callbackUrl?: string;
 }) {

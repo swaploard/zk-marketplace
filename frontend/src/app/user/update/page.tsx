@@ -260,7 +260,9 @@ export default function ProfileUpdate() {
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6 text-gray-400"
-                    onClick={() => navigator.clipboard.writeText('0x704c...3340')}
+                    onClick={() =>
+                      navigator.clipboard.writeText('0x704c...3340')
+                    }
                   >
                     <Copy className="h-4 w-4" />
                   </Button>
@@ -289,10 +291,11 @@ export default function ProfileUpdate() {
 
               <Button
                 type="submit"
-                className={`${!isDirty || !isValid || isSubmitting
+                className={`${
+                  !isDirty || !isValid || isSubmitting
                     ? 'bg-gray-600 hover:bg-gray-600 cursor-not-allowed'
                     : 'bg-blue-600 hover:bg-blue-700'
-                  } text-white px-8 py-2 rounded-md transition-colors`}
+                } text-white px-8 py-2 rounded-md transition-colors`}
                 disabled={!isDirty || !isValid || isSubmitting}
               >
                 {isSubmitting ? 'Saving...' : 'Save'}
@@ -312,9 +315,10 @@ export default function ProfileUpdate() {
                   onClick={() => profileImageInputRef.current?.click()}
                 >
                   <div
-                    className={`w-full h-full rounded-full bg-cover bg-center ${!profileImage &&
+                    className={`w-full h-full rounded-full bg-cover bg-center ${
+                      !profileImage &&
                       'bg-gradient-to-br from-pink-500 to-purple-500'
-                      }`}
+                    }`}
                     style={{
                       backgroundImage: profileImage
                         ? `url(${profileImage})`

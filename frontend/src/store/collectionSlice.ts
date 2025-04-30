@@ -50,10 +50,10 @@ const useCollectionStore = create<ICollectionStore>((set, get) => ({
     }
   },
 
-  updateCollection: (body) => {
+  updateCollection: async (body) => {
     set({ loading: true, error: null });
     try {
-      const promise = axiosInstance.put(COLLECTION_URL, body, {
+      await axiosInstance.put(COLLECTION_URL, body, {
         responseType: 'json',
       });
     } catch (error) {

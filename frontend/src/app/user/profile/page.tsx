@@ -72,23 +72,23 @@ export default function Profile() {
 
   const handleFileSelect =
     (type: 'profile' | 'banner') =>
-      async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          if (e.target?.result) {
-            if (type === 'profile') {
-              setProfileImage(e.target.result as string);
-            } else {
-              setBannerImage(e.target.result as string);
-            }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          if (type === 'profile') {
+            setProfileImage(e.target.result as string);
+          } else {
+            setBannerImage(e.target.result as string);
           }
-        };
-        reader.readAsDataURL(file);
-        await handleImageUpload(file, type);
+        }
       };
+      reader.readAsDataURL(file);
+      await handleImageUpload(file, type);
+    };
 
   const handleImageUpload = async (file: File, type: 'profile' | 'banner') => {
     if (!file || !user?.walletAddress) return;

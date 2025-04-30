@@ -297,305 +297,309 @@ export default function NFTForm() {
     }
   };
 
-const getCurrentPageUrl = () => {
-  const params = new URLSearchParams(searchParams);
-  const fullUrl = `${pathname}${params.toString() ? `?${params.toString()}` : ''}`;
-  return fullUrl;
-};
+  const getCurrentPageUrl = () => {
+    const params = new URLSearchParams(searchParams);
+    const fullUrl = `${pathname}${params.toString() ? `?${params.toString()}` : ''}`;
+    return fullUrl;
+  };
 
-return (
-  <RequireWallet callbackUrl={getCurrentPageUrl()}>
-    <div className="min-h-screen bg-black text-white p-6">
-      <div className="max-w-6xl mx-auto space-y-8">
-        {showStepper && <Stepper steps={steps} />}
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/">
-              <ArrowLeft className="h-6 w-6" />
-            </Link>
-            <div className="space-y-1">
-              <h1 className="text-2xl font-semibold">Create an NFT</h1>
-              <p className="text-sm text-gray-400">
-                Once your item is minted you will not be able to change any of
-                its information.
-              </p>
-            </div>
-          </div>
-        </div>
-        {traitsModal && (
-          <AddTraitModal
-            onClose={setTraitsModal}
-            setValue={setValue}
-            getValues={getValues}
-          />
-        )}
-        {/* Main Content */}
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="grid grid-cols-1 md:grid-cols-2 gap-8"
-        >
-          {/* Upload Area */}
-          <div
-            className="border-2 border-dashed border-zinc-800 rounded-lg aspect-square flex flex-col items-center justify-center p-8 text-center cursor-pointer"
-            onClick={() => document.getElementById('file-input')?.click()}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-          >
-            {previewUrl ? (
-              <>
-                {file?.type.startsWith('image/') ? (
-                  <div className="relative w-full h-full z-0">
-                    {/* Use regular img tag for blob URLs */}
-                    <Image
-                      src={previewUrl}
-                      alt="Preview"
-                      className="w-full h-full object-cover rounded-lg"
-                      width={500}
-                      height={500}
-                    />
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveImage();
-                      }}
-                      className="absolute top-2 right-2 bg-transparent rounded-full p-1 bg-slate-100 hover:bg-gray-600 transition-colors"
-                    >
-                      <Trash2
-                        size={20}
-                        className="bg-transparent text-red-500"
-                      />
-                    </button>
-                  </div>
-                ) : file?.type.startsWith('video/') ? (
-                  <div className="relative w-full h-full">
-                    <video
-                      src={previewUrl}
-                      controls
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveImage();
-                      }}
-                      className="absolute top-2 right-2 bg-transparent rounded-full p-1 bg-slate-100 hover:bg-gray-600 transition-colors"
-                    >
-                      <Trash2
-                        size={20}
-                        className="bg-transparent text-red-500"
-                      />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center">
-                    <Upload className="h-8 w-8 mb-4 text-gray-400" />
-                    <p className="text-sm text-gray-400">
-                      Unsupported file type
-                    </p>
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                <Upload className="h-8 w-8 mb-4 text-gray-400" />
-                <h3 className="font-medium mb-2">Drag and drop media</h3>
-                <input
-                  id="file-input"
-                  type="file"
-                  {...register('media')}
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-                <p className="text-sm text-gray-400 mb-4">Browse files</p>
-                <p className="text-xs text-gray-500">
-                  Max size: 50MB
-                  <br />
-                  JPG, PNG, GIF, SVG, MP4
+  return (
+    <RequireWallet callbackUrl={getCurrentPageUrl()}>
+      <div className="min-h-screen bg-black text-white p-6">
+        <div className="max-w-6xl mx-auto space-y-8">
+          {showStepper && <Stepper steps={steps} />}
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Link href="/">
+                <ArrowLeft className="h-6 w-6" />
+              </Link>
+              <div className="space-y-1">
+                <h1 className="text-2xl font-semibold">Create an NFT</h1>
+                <p className="text-sm text-gray-400">
+                  Once your item is minted you will not be able to change any of
+                  its information.
                 </p>
-              </>
-            )}
-            {errors.media && (
-              <p className="text-red-500 text-xs">{errors.media.message}</p>
-            )}
-          </div>
-
-          {/* Form Fields */}
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <label className="block text-sm font-medium">
-                Collection <span className="text-red-500">*</span>
-              </label>
-              <CollectionListPopover
-                PopoverTriggerElement={
-                  <Button
-                    cy-test="popover-trigger-collection-list"
-                    type="button"
-                    variant="outline"
-                    className="w-full justify-between h-auto py-3 bg-zinc-900 border-zinc-800"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="h-10 w-10 bg-zinc-800 rounded-lg flex items-center justify-center">
-                        <LayoutGrid className="h-5 w-5" />
-                      </div>
-                      <span>Create a new collection</span>
-                    </div>
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                }
-                collections={collections}
-                setValue={setValue}
-                setContractAddress={setContractAddress}
-              ></CollectionListPopover>
-
-              <p className="text-xs text-gray-400">
-                Not all collections are eligible.{' '}
-                <Link href="#" className="text-blue-500">
-                  Learn more
-                </Link>
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium">
-                Collection <span className="text-red-500">*</span>
-              </label>
-              <Input
-                placeholder="Enter collection name"
-                {...register('collection')}
-                className="bg-zinc-900 border-zinc-800"
-              />
-              {errors.collection && (
-                <p className="text-red-500 text-xs">
-                  {errors.collection.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium">
-                Name <span className="text-red-500">*</span>
-              </label>
-              <Input
-                placeholder="Name your NFT"
-                {...register('name')}
-                className="bg-zinc-900 border-zinc-800"
-              />
-              {errors.name && (
-                <p className="text-red-500 text-xs">{errors.name.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium">
-                Supply <span className="text-red-500">*</span>
-              </label>
-              <Input
-                type="number"
-                defaultValue="1"
-                {...register('supply')}
-                className="bg-zinc-900 border-zinc-800"
-              />
-              {errors.supply && (
-                <p className="text-red-500 text-xs">{errors.supply.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium">Description</label>
-              <Textarea
-                placeholder="Enter a description"
-                {...register('description')}
-                className="min-h-[120px] bg-zinc-900 border-zinc-800"
-              />
-              {errors.description && (
-                <p className="text-red-500 text-xs">
-                  {errors.description.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium">External link</label>
-              <Input
-                placeholder="https://"
-                {...register('externalLink')}
-                className="bg-zinc-900 border-zinc-800"
-              />
-              {errors.externalLink && (
-                <p className="text-red-500 text-xs">
-                  {errors.externalLink.message}
-                </p>
-              )}
-            </div>
-
-            {/* Updated traits section */}
-            <div className="space-y-2">
-              <h6 className="text-semibold text-sm">Traits</h6>
-              <p className="text-xs my-2">
-                Traits describe attributes of your item. They appear as filters
-                inside your collection page and are also listed out inside your
-                item page.
-              </p>
-
-              {Object.entries(watch('additionalAttributes') || {}).map(
-                ([key, value]) => (
-                  <div
-                    key={key}
-                    className="bg-zinc-900 border-zinc-800 flex items-center py-2 px-4 justify-between rounded-md mb-2"
-                  >
-                    <div className="flex gap-2">
-                      <span className="text-sm font-medium">{key}</span>
-                      <span className="text-sm">:</span>
-                      <span className="text-sm">{value}</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const currentAttributes = {
-                          ...getValues('additionalAttributes'),
-                        };
-                        delete currentAttributes[key];
-                        setValue('additionalAttributes', {
-                          ...currentAttributes,
-                        });
-                      }}
-                      className="hover:text-red-500 transition-colors"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                )
-              )}
-
-              <div
-                className="text-semibold text-base my-3 cursor-pointer text-blue-500 hover:text-blue-400"
-                onClick={() => setTraitsModal(true)}
-              >
-                + Add trait
               </div>
             </div>
-            <Button
-              type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-500 disabled:cursor-not-allowed"
+          </div>
+          {traitsModal && (
+            <AddTraitModal
+              onClose={setTraitsModal}
+              setValue={setValue}
+              getValues={getValues}
+            />
+          )}
+          {/* Main Content */}
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="grid grid-cols-1 md:grid-cols-2 gap-8"
+          >
+            {/* Upload Area */}
+            <div
+              className="border-2 border-dashed border-zinc-800 rounded-lg aspect-square flex flex-col items-center justify-center p-8 text-center cursor-pointer"
+              onClick={() => document.getElementById('file-input')?.click()}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
             >
-              Create
-            </Button>
+              {previewUrl ? (
+                <>
+                  {file?.type.startsWith('image/') ? (
+                    <div className="relative w-full h-full z-0">
+                      {/* Use regular img tag for blob URLs */}
+                      <Image
+                        src={previewUrl}
+                        alt="Preview"
+                        className="w-full h-full object-cover rounded-lg"
+                        width={500}
+                        height={500}
+                      />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveImage();
+                        }}
+                        className="absolute top-2 right-2 bg-transparent rounded-full p-1 bg-slate-100 hover:bg-gray-600 transition-colors"
+                      >
+                        <Trash2
+                          size={20}
+                          className="bg-transparent text-red-500"
+                        />
+                      </button>
+                    </div>
+                  ) : file?.type.startsWith('video/') ? (
+                    <div className="relative w-full h-full">
+                      <video
+                        src={previewUrl}
+                        controls
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveImage();
+                        }}
+                        className="absolute top-2 right-2 bg-transparent rounded-full p-1 bg-slate-100 hover:bg-gray-600 transition-colors"
+                      >
+                        <Trash2
+                          size={20}
+                          className="bg-transparent text-red-500"
+                        />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center">
+                      <Upload className="h-8 w-8 mb-4 text-gray-400" />
+                      <p className="text-sm text-gray-400">
+                        Unsupported file type
+                      </p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Upload className="h-8 w-8 mb-4 text-gray-400" />
+                  <h3 className="font-medium mb-2">Drag and drop media</h3>
+                  <input
+                    id="file-input"
+                    type="file"
+                    {...register('media')}
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                  <p className="text-sm text-gray-400 mb-4">Browse files</p>
+                  <p className="text-xs text-gray-500">
+                    Max size: 50MB
+                    <br />
+                    JPG, PNG, GIF, SVG, MP4
+                  </p>
+                </>
+              )}
+              {errors.media && (
+                <p className="text-red-500 text-xs">{errors.media.message}</p>
+              )}
+            </div>
 
-            <style>
-              {`
+            {/* Form Fields */}
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium">
+                  Collection <span className="text-red-500">*</span>
+                </label>
+                <CollectionListPopover
+                  PopoverTriggerElement={
+                    <Button
+                      cy-test="popover-trigger-collection-list"
+                      type="button"
+                      variant="outline"
+                      className="w-full justify-between h-auto py-3 bg-zinc-900 border-zinc-800"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="h-10 w-10 bg-zinc-800 rounded-lg flex items-center justify-center">
+                          <LayoutGrid className="h-5 w-5" />
+                        </div>
+                        <span>Create a new collection</span>
+                      </div>
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  }
+                  collections={collections}
+                  setValue={setValue}
+                  setContractAddress={setContractAddress}
+                ></CollectionListPopover>
+
+                <p className="text-xs text-gray-400">
+                  Not all collections are eligible.{' '}
+                  <Link href="#" className="text-blue-500">
+                    Learn more
+                  </Link>
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium">
+                  Collection <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  placeholder="Enter collection name"
+                  {...register('collection')}
+                  className="bg-zinc-900 border-zinc-800"
+                />
+                {errors.collection && (
+                  <p className="text-red-500 text-xs">
+                    {errors.collection.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium">
+                  Name <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  placeholder="Name your NFT"
+                  {...register('name')}
+                  className="bg-zinc-900 border-zinc-800"
+                />
+                {errors.name && (
+                  <p className="text-red-500 text-xs">{errors.name.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium">
+                  Supply <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  type="number"
+                  defaultValue="1"
+                  {...register('supply')}
+                  className="bg-zinc-900 border-zinc-800"
+                />
+                {errors.supply && (
+                  <p className="text-red-500 text-xs">
+                    {errors.supply.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium">Description</label>
+                <Textarea
+                  placeholder="Enter a description"
+                  {...register('description')}
+                  className="min-h-[120px] bg-zinc-900 border-zinc-800"
+                />
+                {errors.description && (
+                  <p className="text-red-500 text-xs">
+                    {errors.description.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium">
+                  External link
+                </label>
+                <Input
+                  placeholder="https://"
+                  {...register('externalLink')}
+                  className="bg-zinc-900 border-zinc-800"
+                />
+                {errors.externalLink && (
+                  <p className="text-red-500 text-xs">
+                    {errors.externalLink.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Updated traits section */}
+              <div className="space-y-2">
+                <h6 className="text-semibold text-sm">Traits</h6>
+                <p className="text-xs my-2">
+                  Traits describe attributes of your item. They appear as
+                  filters inside your collection page and are also listed out
+                  inside your item page.
+                </p>
+
+                {Object.entries(watch('additionalAttributes') || {}).map(
+                  ([key, value]) => (
+                    <div
+                      key={key}
+                      className="bg-zinc-900 border-zinc-800 flex items-center py-2 px-4 justify-between rounded-md mb-2"
+                    >
+                      <div className="flex gap-2">
+                        <span className="text-sm font-medium">{key}</span>
+                        <span className="text-sm">:</span>
+                        <span className="text-sm">{value}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentAttributes = {
+                            ...getValues('additionalAttributes'),
+                          };
+                          delete currentAttributes[key];
+                          setValue('additionalAttributes', {
+                            ...currentAttributes,
+                          });
+                        }}
+                        className="hover:text-red-500 transition-colors"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )
+                )}
+
+                <div
+                  className="text-semibold text-base my-3 cursor-pointer text-blue-500 hover:text-blue-400"
+                  onClick={() => setTraitsModal(true)}
+                >
+                  + Add trait
+                </div>
+              </div>
+              <Button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-500 disabled:cursor-not-allowed"
+              >
+                Create
+              </Button>
+
+              <style>
+                {`
                 .disabled {
                   opacity: 0.5;
                   cursor: not-allowed;
                 }
               `}
-            </style>
-          </div>
-        </form>
+              </style>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
     </RequireWallet>
   );
 }
