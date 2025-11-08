@@ -77,7 +77,7 @@ export default function CollectionPage({ params }) {
     setFileForPurchase(file);
     setPurchaseModal(true);
   };
-  
+
   const handleBidModal = (file: PinataFile) => {
     setFileForPurchase(file);
     setBidModalOpen(true);
