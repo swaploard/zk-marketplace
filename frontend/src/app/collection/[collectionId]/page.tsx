@@ -1,16 +1,15 @@
 'use client';
-import { use, useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
-import { useAccount } from 'wagmi';
-import useHandleFiles from '@/store/fileSlice';
-import useCollectionStore from '@/store/collectionSlice';
-import FilterComponent from '@/components/topFilter';
-import { IFileStore, PinataFile } from '@/types';
-import ListingCard from '@/components/listingCard';
-import ApprovePurchaseModal from '@/components/purchaseModal';
 import BidModal from '@/components/bidModal';
 import { EthPriceConvertor } from '@/components/ethPriceConvertor';
-import { ICollectionStore } from '@/types';
+import ListingCard from '@/components/listingCard';
+import ApprovePurchaseModal from '@/components/purchaseModal';
+import FilterComponent from '@/components/topFilter';
+import useCollectionStore from '@/store/collectionSlice';
+import useHandleFiles from '@/store/fileSlice';
+import { ICollectionStore, IFileStore, PinataFile } from '@/types';
+import Image from 'next/image';
+import { use, useEffect, useRef, useState } from 'react';
+import { useAccount } from 'wagmi';
 
 interface ICollectionPageParams {
   collectionId: string;
@@ -35,9 +34,9 @@ export default function CollectionPage({ params }) {
   const profileFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    getFiles(unwrappedParams?.collectionId, '');
+    getFiles(unwrappedParams?.collectionId, address);
     getCollections(null, unwrappedParams?.collectionId);
-  }, [unwrappedParams.collectionId, getFiles, getCollections]);
+  }, [unwrappedParams.collectionId, getFiles, getCollections, address]);
 
   const handleBannerClick = () => {
     bannerFileInputRef.current?.click();
@@ -78,6 +77,7 @@ export default function CollectionPage({ params }) {
     setFileForPurchase(file);
     setPurchaseModal(true);
   };
+  
   const handleBidModal = (file: PinataFile) => {
     setFileForPurchase(file);
     setBidModalOpen(true);
