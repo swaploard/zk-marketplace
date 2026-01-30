@@ -85,11 +85,10 @@ export default function AddTraitModal({
           {/* Edit button */}
         </div>
         <button
-          className={`w-full bg-blue-700 hover:bg-[#3b78e7] text-white font-medium py-2 px-4 rounded-[10px] text-xl mt-6 ${
-            !traits.key || !traits.value
-              ? 'opacity-50 cursor-not-allowed bg-blue-900'
-              : ''
-          }`}
+          className={`w-full bg-blue-700 hover:bg-[#3b78e7] text-white font-medium py-2 px-4 rounded-[10px] text-xl mt-6 ${!traits.key || !traits.value
+            ? 'opacity-50 cursor-not-allowed bg-blue-900'
+            : ''
+            }`}
           onClick={handleAddTrait}
           disabled={!traits.key || !traits.value}
         >
