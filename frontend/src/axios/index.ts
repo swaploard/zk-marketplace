@@ -29,6 +29,7 @@ axiosInstance.interceptors.response.use(
       status: 500,
     };
 
+
     if (axios.isAxiosError(error)) {
       apiError.message = error.response?.data?.message || error.message;
       apiError.status = error.response?.status;
